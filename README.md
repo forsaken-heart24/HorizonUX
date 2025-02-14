@@ -1,6 +1,6 @@
 ![HorizonUX Banner](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/HorizonUX.png?raw=true)
 
-# ⭐ HorizonUX
+# ⭐ HorizonUX [Still in active development]
 
 **What’s poppin’, fam? Welcome to the wild world of HorizonUX!**
 
