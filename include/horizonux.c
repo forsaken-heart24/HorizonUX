@@ -26,14 +26,15 @@ bool screen_state() {
 
 int getPeakRefreshRate() {
     char buffer[50];
-    FILE *fp = popen("dumpsys SurfaceFlinger | grep -oE '[0-9]+(\\.[0-9]+)? fps' | sort -nr | head -n1 | awk '{print $1}'", "r");
+    FILE *fp = popen("dumpsys SurfaceFlinger | grep 'refresh-rate' | awk '{print $3}'", "r");
     if(!fp) {
         return -1;
     }
-    if (fgets(buffer, sizeof(buffer), fp) == NULL) {
+    if(fgets(buffer, sizeof(buffer), fp) == NULL) {
         pclose(fp);
         return -1;
     }
     pclose(fp);
-    return (int)strtof(buffer, NULL);
+    float refreshRate = strtof(buffer, NULL);
+    return (int)(refreshRate);
 }

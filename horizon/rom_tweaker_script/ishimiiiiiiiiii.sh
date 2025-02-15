@@ -7,6 +7,7 @@ function grep_prop() {
 	if [ ! "$args" -eq "2" ]; then
 		return 1
 	fi
+    [ -z "$prop_file" ] && prop_file=/system/build.prop 
 	grep "$variable_name" $prop_file | cut -d '=' -f 2 | sed 's/"//g'
 }
 
@@ -79,7 +80,7 @@ function string_case() {
     esac
 }
 
-function horizon_ishiiimi_logfile() {
+function horizon_log() {
     local message="$2"
     local service="$(string_case -u "$1")"
     if is_boot_completed; then
@@ -93,10 +94,10 @@ function maybe_kill_daemons() {
     local daemon_name=$1
     local daemon_pid=$(pidof $daemon_name)
     if [ -z "${daemon_pid}" ]; then
-        horizon_ishiiimi_logfile "DAEMON_KILLER" "- The $daemon_name wasn't running or it's removed i guess, well uhh i can't do anything about. Sorry!"
+        horizon_log "DAEMON_KILLER" "- The $daemon_name wasn't running or it's removed i guess, well uhh i can't do anything about. Sorry!"
     else
         if ! kill ${daemon_name}; then
-            horizon_ishiiimi_logfile "DAEMON_KILLER" "- The $daemon_name can't be killed, well uhh i can't do anything about. Sorry!"
+            horizon_log "DAEMON_KILLER" "- The $daemon_name can't be killed, well uhh i can't do anything about. Sorry!"
         fi
     fi
 }
@@ -123,97 +124,29 @@ function maybe_nuke_prop() {
     local variable="$@"
     if [[ ! -z "$(command -v resetprop)" && ! -z "$(resetprop $variable)" ]]; then
         if ! resetprop -d $variable; then
-            horizon_ishiiimi_logfile "resetprop_services" "Can't remove $variable for some unknown reason..."
+            horizon_log "resetprop_services" "Can't remove $variable for some unknown reason..."
         fi
     fi
 }
 
-check_reset_prop() {
+function check_reset_prop() {
     local NAME=$1
     local EXPECTED=$2
     local VALUE=$(resetprop $NAME)
     [ -z $VALUE ] || [ $VALUE = $EXPECTED ] || resetprop $NAME $EXPECTED
-} 
+}
 
-# let's cook an tmp file to save our logs because we have to save things on it
-# and after that we have to move it to the /data/horizonux/logs because we
-# still have no idea whether the device is freaking encrypted or not. You might say that
-# we can plug things but idc, im just gonna f'round with the temp file and fuckin' move
-# it to the directory.
-if is_boot_completed; then
-    the_logfile="/data/horizonux/logs/horizon_ishiiimi_logfile.log"; 
-    horizon_ishiiimi_logfile "ishimi" "The ROM decryped the storage, using the $the_logfile file to store logs..."
-else
-    the_logfile=$(mktemp)
-    horizon_ishiiimi_logfile "ishimi" "using the $the_logfile file to store logs because the storage haven't decryped yet!"
-fi
-dawn "/data/horizonux/logs/" && rm -rf /data/horizonux/logs/*
-# we are gonna remove everything inside the dir if uhhh... it takes up an megabyte(s) of space
-
-########################################### effectless services #####################################
-
+########################################### main() #############################################
 # let's change the default theme to dark, Thanks to nobletaro for the idea!
 if [ "$(settings get secure device_provisioned)" == "0" ]; then
     settings put secure ui_night_mode 2
     cmd uimode night yes
 fi
-
-# gms doze crap 
-horizon_ishiiimi_logfile "GMSDoze" "Tweaking gms..."
-horizon_ishiiimi_logfile "GMSDoze" "The logs of this commands can be seen below:"
-{
-    # Disable collective device administrators for all users
-    for U in $(ls /data/user); do
-        for C in "auth.managed.admin.DeviceAdminReceiver" "mdm.receivers.MdmDeviceAdminReceiver"; do
-            pm disable --user $U com.google.android.gms/com.google.android.gms.$C
-        done
-    done
-    # The GMS0 variable holds the Google Mobile Services package name
-    GMS0="\"com.google.android.gms\""
-    STR1="allow-unthrottled-location package=$GMS0"
-    STR2="allow-ignore-location-settings package=$GMS0"
-    STR3="allow-in-power-save package=$GMS0"
-    STR4="allow-in-data-usage-save package=$GMS0"
-    # Find all XML files under /data/adb directory (case-insensitive search for .xml files)
-    find /data/adb/* -type f -iname "*.xml" -print |
-    while IFS= read -r XML; do
-        for X in $XML; do
-        # If any of the defined strings (STR1, STR2, STR3, STR4) are found in the file,
-        # execute the following block
-        if grep -qE "$STR1|$STR2|$STR3|$STR4" $X 2>/dev/null; then
-            # Use sed to remove the matched strings from the XML file
-            # It deletes lines containing any of STR1, STR2, STR3, or STR4
-            sed -i "/$STR1/d;/$STR2/d;/$STR3/d;/$STR4/d" $X
-        fi
-        done
-    done
-    # Add GMS to battery optimization
-    dumpsys deviceidle whitelist com.google.android.gms
-} >> ${the_logfile}
-
-########################################### effectless services #####################################
-
-############################################ late_start_services ############################################################
-
-# let's initialize the resampler thing.
-if horizon_features "persist.horizonux.audio.resampler"; then
-    horizon_ishiiimi_logfile "horizonux_features_verifier" "The audio resampler is enabled in this build...."
-    if is_boot_completed; then
-        horizon_ishiiimi_logfile "late_start_service" "Starting HorizonUX resampler..."
-        resetprop ro.audio.resampler.psd.enable_at_samplerate 44100
-        resetprop ro.audio.resampler.psd.stopband 194
-        resetprop ro.audio.resampler.psd.halflength 520
-        resetprop ro.audio.resampler.psd.cutoff_percent 85
-        horizon_ishiiimi_logfile "late_start_service" "Restarting audioserver to apply the changes in your device..."
-        if restart_audioserver; then
-            horizon_ishiiimi_logfile "late_start_service" "audioserver restarted successfully..."
-        else
-            horizon_ishiiimi_logfile "late_start_service" "failed to reboot audioserver, the resampler stuffs aren't saved.. sorryyy"
-        fi
-    fi
-fi
-
-if boot_completed; then
+if is_boot_completed; then
+    # we are gonna remove everything inside the dir if uhhh... it takes up an megabyte(s) of space
+    dawn "/data/horizonux/logs/" && rm -rf /data/horizonux/logs/*
+    the_logfile="/data/horizonux/logs/horizon_ishimi_tweaker_logs.log"
+    horizon_log "ishimi" "The ROM decryped the storage, using the $the_logfile file to store logs..."
     # spoof the device to green state, making it seem like an locked device.
     check_reset_prop "ro.boot.vbmeta.device_state" "locked"
     check_reset_prop "ro.boot.verifiedbootstate" "green"
@@ -243,11 +176,64 @@ if boot_completed; then
     [ "$(grep_prop persist.horizonux.brotherboard.touch_fix)" == "$(string_case --lower "available")" ] && start brotherboard_touch_fix
     # let's try to disable user apps log visibitlity...
     for idkmanwtfdowhateveridcyouarebomblikemefrfr in $(pm list packages | cut -d':' -f2); do
-        cmd package log-visibility --disable $idkmanwtfdowhateveridcyouarebomblikemefrfr || horizon_ishiiimi_logfile "ishimi" "Can't disable logs for this application: ${idkmanwtfdowhateveridcyouarebomblikemefrfr}..."
+        cmd package log-visibility --disable $idkmanwtfdowhateveridcyouarebomblikemefrfr || horizon_log "ishimi" "Can't disable logs for this application: ${idkmanwtfdowhateveridcyouarebomblikemefrfr}..."
     done
+    # gms doze crap 
+    horizon_log "GMSDoze" "Tweaking gms..."
+    horizon_log "GMSDoze" "The logs of the tweaks can be seen below:"
+    {
+            # Disable collective device administrators for all users
+            for U in $(ls /data/user); do
+                for C in "auth.managed.admin.DeviceAdminReceiver" "mdm.receivers.MdmDeviceAdminReceiver"; do
+                    pm disable --user $U com.google.android.gms/com.google.android.gms.$C
+                done
+            done
+            # The GMS0 variable holds the Google Mobile Services package name
+            GMS0="\"com.google.android.gms\""
+            STR1="allow-unthrottled-location package=$GMS0"
+            STR2="allow-ignore-location-settings package=$GMS0"
+            STR3="allow-in-power-save package=$GMS0"
+            STR4="allow-in-data-usage-save package=$GMS0"
+            # Find all XML files under /data/adb directory (case-insensitive search for .xml files)
+            find /data/adb/* -type f -iname "*.xml" -print |
+            while IFS= read -r XML; do
+                for X in $XML; do
+                # If any of the defined strings (STR1, STR2, STR3, STR4) are found in the file,
+                # execute the following block
+                if grep -qE "$STR1|$STR2|$STR3|$STR4" $X 2>/dev/null; then
+                    # Use sed to remove the matched strings from the XML file
+                    # It deletes lines containing any of STR1, STR2, STR3, or STR4
+                    sed -i "/$STR1/d;/$STR2/d;/$STR3/d;/$STR4/d" $X
+                fi
+                done
+            done
+            # Add GMS to battery optimization
+            dumpsys deviceidle whitelist com.google.android.gms
+    } >> ${the_logfile}
+    if horizon_features "persist.horizonux.audio.resampler"; then
+        horizon_log "horizonux_features_verifier" "The audio resampler is enabled in this build...."
+        horizon_log "late_start_service" "Starting HorizonUX resampler..."
+        resetprop ro.audio.resampler.psd.enable_at_samplerate 44100
+        resetprop ro.audio.resampler.psd.stopband 194
+        resetprop ro.audio.resampler.psd.halflength 520
+        resetprop ro.audio.resampler.psd.cutoff_percent 85
+        horizon_log "late_start_service" "Restarting audioserver to apply the changes in your device..."
+        if restart_audioserver; then
+            horizon_log "late_start_service" "audioserver restarted successfully..."
+        else
+            horizon_log "late_start_service" "failed to reboot audioserver, the resampler stuffs aren't saved.. sorryyy"
+        fi
+    fi
+else
+    # let's cook an tmp file to save our logs because we have to save things on it
+    # and after that we have to move it to the /data/horizonux/logs because we
+    # still have no idea whether the device is freaking encrypted or not. You might say that
+    # we can plug things but idc, im just gonna f'round with the temp file and fuckin' move
+    # it to the directory.
+    the_logfile=$(mktemp)
+    horizon_log "ishimi" "using the $the_logfile file to store logs because the storage haven't decryped yet!"
 fi
-
-############################################ late_start_services ############################################################
+########################################### main() #############################################
 
 # let's clear the system logs and exit with '0' because we dont want to f-around things lol
 logcat -c

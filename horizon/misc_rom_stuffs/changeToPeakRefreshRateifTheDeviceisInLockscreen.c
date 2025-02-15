@@ -3,21 +3,22 @@
 
 bool DEBUG_MESSAGES_ARE_ENABLED = false;
 bool WRITE_LOGS_INTO_A_FILE = false;
+//char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/tst_log_changeToPeakRefreshRateifTheDeviceisInLockscreen.log";
 char *LOG4HORIZONFILE = "/sdcard/Horizon/changeToPeakRefreshRateifTheDeviceisInLockscreen.log";
 
 int main() {
     int MaxRefreshRate = getPeakRefreshRate();
     if(screen_state()) {
-        if(MaxRefreshRate > 60 && MaxRefreshRate <= 90) {
+        if(MaxRefreshRate == 90) {
             executeCommands("settings put system peak_refresh_rate 90");
             executeCommands("settings put system min_refresh_rate 90");
-        } 
-        else if(MaxRefreshRate > 90 && MaxRefreshRate <= 120) {
+        }
+        else if(MaxRefreshRate == 120) {
             executeCommands("settings put system peak_refresh_rate 120");
             executeCommands("settings put system min_refresh_rate 120");
-        } 
-        else {
-            printdbg("Weird device refresh rate, please send the log file (located in /sdcard/Horizon/changeToPeakRefreshRateifTheDeviceisInLockscreen.log) to @luna_project_bugreporter_bot in Telegram.");
         }
+        return 0;
     }
+    error_print("Unable to switch or detect the screen refresh rate of your device, please try again and be sure to report this issue.");
+    return 1;
 }

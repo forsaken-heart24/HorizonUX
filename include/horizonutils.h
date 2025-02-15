@@ -16,5 +16,6 @@ int touch(const char *__file);
 int printdbg(const char *Message);
 bool erase_file_content(const char *__file);
 void executeCommands(const char *command);
+int error_print(const char *Message);
 
 #endif

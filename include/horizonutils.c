@@ -23,15 +23,11 @@ int printdbg(const char *Message) {
                 fprintf(log4horizon, "%s\n", actual_message);
                 fclose(log4horizon);
             }
-            else {
-                fprintf(stderr, "Failed to open log file: %s\n", LOG4HORIZONFILE);
-            }
         }
         else {
             printf("\033[0;31m%s\n", actual_message);
         }
     }
-    return 0;
 }
 
 bool erase_file_content(const char *__file) {
@@ -71,4 +67,18 @@ void executeCommands(const char *command) {
         printdbg(buffer);
     }    
     pclose(fp);
+}
+
+int error_print(const char *Message) {
+    char actual_message[1028];
+    snprintf(actual_message, sizeof(actual_message), "DEBUG_MESSAGE: %s", Message);
+    FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
+    if(!log4horizon) { 
+        LOG4HORIZONFILE = "/data/local/tmp/logs.log";
+        log4horizon = fopen(LOG4HORIZONFILE, "a");
+    }
+    if(log4horizon) {
+        fprintf(log4horizon, "%s\n", actual_message);
+        fclose(log4horizon);
+    }
 }
