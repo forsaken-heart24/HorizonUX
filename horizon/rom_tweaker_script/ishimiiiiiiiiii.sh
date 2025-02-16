@@ -143,6 +143,15 @@ if [ "$(settings get secure device_provisioned)" == "0" ]; then
     cmd uimode night yes
 fi
 if is_boot_completed; then
+    # idgaf i just want to get the maximum rr of the device.
+    {
+        max_device_refresh_rate=$(timeout 3 dumpsys 2>/dev/null | grep --line-buffered refresh-rate | head -n 1 | awk '{print $3}' | cut -d'.' -f1)
+        if [[ "${max_device_refresh_rate}" == "60" || "${max_device_refresh_rate}" == "90" || "${max_device_refresh_rate}" == "120" ]]; then
+            resetprop persist.horizonux.device_max_refresh_rate "${max_device_refresh_rate}"
+            settings put global horizon_device_max_refresh_rate__ "${max_device_refresh_rate}"
+        fi
+    }
+
     # we are gonna remove everything inside the dir if uhhh... it takes up an megabyte(s) of space
     dawn "/data/horizonux/logs/" && rm -rf /data/horizonux/logs/*
     the_logfile="/data/horizonux/logs/horizon_ishimi_tweaker_logs.log"

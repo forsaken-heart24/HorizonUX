@@ -17,7 +17,7 @@ bool is_boot_completed() {
 
 bool screen_state() {
     FILE *fp = popen("dumpsys power | grep -q 'state=OFF' && echo 1", "r");
-    if (!fp) return false;
+    if(!fp) return false;
     char buffer[2];
     bool screen_off = (fgets(buffer, sizeof(buffer), fp) != NULL && buffer[0] == '1');
     pclose(fp);
@@ -26,9 +26,11 @@ bool screen_state() {
 
 int getPeakRefreshRate() {
     char buffer[50];
-    FILE *fp = popen("dumpsys SurfaceFlinger | grep 'refresh-rate' | awk '{print $3}'", "r");
+    FILE *fp = popen("getprop persist.horizonux.device_max_refresh_rate", "r");
     if(!fp) {
-        return -1;
+        fp = popen("settings get global horizon_device_max_refresh_rate", "r");
+        if(!fp)
+            return 1;
     }
     if(fgets(buffer, sizeof(buffer), fp) == NULL) {
         pclose(fp);
@@ -36,5 +38,5 @@ int getPeakRefreshRate() {
     }
     pclose(fp);
     float refreshRate = strtof(buffer, NULL);
-    return (int)(refreshRate);
+    return (int)refreshRate;
 }
