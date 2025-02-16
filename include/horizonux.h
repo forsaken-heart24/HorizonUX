@@ -11,5 +11,7 @@
 bool is_boot_completed();
 bool screen_state();
 int getPeakRefreshRate();
+int isPackageInstalled(const char *packageName);
+int sendToastMessages(const char *service, const char *message);
 
 #endif

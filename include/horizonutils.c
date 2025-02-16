@@ -45,9 +45,6 @@ bool check_device_status(const char *requiredState) {
     if(strcmp(requiredState, "recovery") == 0 || strcmp(requiredState, "rcm") == 0) {
         fp = fopen("/sbin/recovery", "r");
     }
-    else if(strcmp(requiredState, "android") == 0) {
-        fp = fopen("/system/bin/sh", "r");
-    }
     if(fp != NULL) {
         fclose(fp);
         return true;
@@ -62,7 +59,7 @@ void executeCommands(const char *command) {
         printdbg("Failed to run the given command, please contact the developer with the errors below.");
         return;
     }
-    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+    while(fgets(buffer, sizeof(buffer), fp) != NULL) {
         buffer[strcspn(buffer, "\n")] = '\0';
         printdbg(buffer);
     }    
@@ -71,13 +68,14 @@ void executeCommands(const char *command) {
 
 int error_print(const char *Message) {
     char actual_message[1028];
-    snprintf(actual_message, sizeof(actual_message), "DEBUG_MESSAGE: %s", Message);
+    snprintf(actual_message, sizeof(actual_message), "Error: %s", Message);
     FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
-    if(!log4horizon) { 
+    if(!log4horizon) {
         LOG4HORIZONFILE = "/data/local/tmp/logs.log";
         log4horizon = fopen(LOG4HORIZONFILE, "a");
     }
     if(log4horizon) {
+        erase_file_content(LOG4HORIZONFILE);
         fprintf(log4horizon, "%s\n", actual_message);
         fclose(log4horizon);
     }
