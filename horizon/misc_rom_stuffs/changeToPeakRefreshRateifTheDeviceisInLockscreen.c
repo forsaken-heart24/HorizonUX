@@ -28,6 +28,4 @@ int main() {
             return 1;
         }
     }
-    error_print("Unable to switch or detect the screen refresh rate of your device, please try again and be sure to report this issue.");
-    return 1;
 }

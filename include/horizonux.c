@@ -66,3 +66,47 @@ int sendToastMessages(const char *service, const char *message) {
         executeCommands(toastTextWithArguments);
     }
 }
+
+int manageBlocks(const char *infile, const char *outfile, size_t block_size, size_t count) {
+    FILE *in = fopen(infile, "rb");
+    FILE *out = fopen(outfile, "wb");
+    if(!in) {
+        error_print("Failed to open input file");
+        return 1;
+    }
+    if(!out) {
+        error_print("Failed to open output file");
+        fclose(in);
+        return 1;
+    }
+    char *buffer = (char *)malloc(block_size);
+    if (!buffer) {
+        error_print("Memory allocation failed");
+        fclose(in);
+        fclose(out);
+        return 1;
+    }
+    size_t blocks_read, blocks_written;
+    size_t total_read = 0, total_written = 0;
+    for (size_t i = 0; i < count; i++) {
+        blocks_read = fread(buffer, 1, block_size, in);
+        // Stop if the EOF (end of file) is reached
+        if(blocks_read == 0 && feof(in)) break;
+        if(blocks_read == 0 && ferror(in)) {
+            error_print("Error reading input file");
+            break;
+        }
+        total_read += blocks_read;
+        blocks_written = fwrite(buffer, 1, blocks_read, out);
+        if(blocks_written < blocks_read) {
+            error_print("Error writing to output file");
+            break;
+        }
+        total_written += blocks_written;
+    }
+    error_print("Copied %zu bytes (%.2f KB)\n", total_written, total_written / 1024.0);
+    free(buffer);
+    fclose(in);
+    fclose(out);
+    return 0;
+}
