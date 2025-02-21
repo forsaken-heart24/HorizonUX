@@ -1,5 +1,5 @@
-# To compile haystack.c:
-- ```gcc -I../include ../include/horizonutils.c ../include/modulesLoader.c haystack.c -o haystack.elf```
+# To compile mainModuleLoader.c:
+- ```gcc -I../include ../include/horizonutils.c ../include/modulesLoader.c mainModuleLoader.c -o mainModuleLoader.elf```
 
 # Build Errors:
     - ignore the non-critical ones and drop a comment if it's critical

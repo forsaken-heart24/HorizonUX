@@ -8,15 +8,18 @@
 int searchBlockListedStrings(char *__filename, char *__search_str) {
     char haystack[1028];
     FILE *file = fopen(__filename, "r");
-    while(fgets(haystack, sizeof(haystack), file)) {
-        if(strstr(haystack, __search_str)) {
-            fclose(file);
-            error_print("Malicious code execution was detected in the script file");
-            return 1;
+    if(file != NULL) {
+        while(fgets(haystack, sizeof(haystack), file)) {
+            if(strstr(haystack, __search_str)) {
+                fclose(file);
+                error_print("Malicious code execution was detected in the script file");
+                return 1;
+            }
         }
+        fclose(file);
+        return 0;
     }
-    fclose(file);
-    return 0;
+    return 1;
 }
 
 // yet another thing to protect good peoples from getting fucked
@@ -30,10 +33,11 @@ int verifyScriptStatusUsingShell(char *__filename) {
 }
 
 int mainModuleLoader(char *__haystack) {
-    // int searchBlockListedStrings(const char *__fileName, const char *__search_str)
-    int blocklistedStringArray = 16;
+    // Thnx Pranav 🩷
     char *blocklistedStrings[] = {
         "xbl_config",
+        "xbl_config_a",
+        "xbl_config_b",
         "fsc",
         "fsg",
         "modem",
@@ -42,6 +46,26 @@ int mainModuleLoader(char *__haystack) {
         "abl",
         "abl_a",
         "abl_b",
+        "keymaster",
+        "keymaster_a",
+        "keymaster_b",
+        "sda",
+        "sdb",
+        "sdc",
+        "sdd",
+        "sde",
+        "sdf",
+        "splash",
+        "dtbo",
+        "dtbo_a",
+        "dtbo_b",
+        "bluetooth",
+        "bluetooth_a",
+        "bluetooth_b",
+        "cust",
+        "xbl_a",
+        "xbl_b",
+        "persist",
         "/dev/block/bootdevice/by-name/",
         "/dev/block/by-name/",
         "/dev/block/",
@@ -51,11 +75,12 @@ int mainModuleLoader(char *__haystack) {
         "/vendor/bin/dd",
         "dd"
     };
+    int blocklistedStringArraySize = sizeof(blocklistedStrings) / sizeof(blocklistedStrings[0]);
     if(verifyScriptStatusUsingShell(__haystack) == 1) {
         error_print("This file is not a ascii executable, please try again later with a ascii executable.");
         exit(1);
     }
-    for(int i = 0; i < blocklistedStringArray; i++) {
+    for(int i = 0; i < blocklistedStringArraySize; i++) {
         if(searchBlockListedStrings(__haystack, blocklistedStrings[i]) == 1) {
             return 1;
         }

@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
 // FUCKING global FUCKING variables.
 extern bool DEBUG_MESSAGES_ARE_ENABLED;

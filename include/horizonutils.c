@@ -67,30 +67,23 @@ void executeCommands(const char *command) {
 }
 
 int executeScripts(char *__script__file, char *__args) {
-    char fuckingFileFuckingPath[200];
+    char fuckingFileFuckingPath[256];
     char fuckingBufferFuckingShit[128];
-    // Prevents command injection attempts
-    if(strchr(__args, ';') || strchr(__args, '|') || strchr(__args, '&')) {
+    if(strstr(__args, ";") || strstr(__args, "&&")) {
         return 0;
     }
-    snprintf(fuckingFileFuckingPath, 200, "%s %s", __script__file, __args);
-    FILE *fp = fopen(fuckingFileFuckingPath, "r");
+    snprintf(fuckingFileFuckingPath, sizeof(fuckingFileFuckingPath), "%s %s", __script__file, __args);
+    FILE *fp = popen(fuckingFileFuckingPath, "r");
     if(fp == NULL) {
-        printdbg("Failed to run the given command, please contact the developer with the errors below.");
+        error_print("Failed to run the given command, please contact the developer with the errors below.\n");
         return 1;
     }
-    while(fgets(fuckingBufferFuckingShit, 128, fp) != NULL) {
+    while(fgets(fuckingBufferFuckingShit, sizeof(fuckingBufferFuckingShit), fp) != NULL) {
         fuckingBufferFuckingShit[strcspn(fuckingBufferFuckingShit, "\n")] = '\0';
         printdbg(fuckingBufferFuckingShit);
     }
-    FILE *damp = popen("[ $(echo $?) -ge '1' ] && echo W", "r");
-    while(fgets(fuckingBufferFuckingShit, 128, damp) != NULL) {
-        if(strstr(fuckingBufferFuckingShit, "W")) {
-            return 0;
-        }
-    }
-    pclose(fp);
-    return 1;
+    int status = pclose(fp);
+    return (WIFEXITED(status)) ? WEXITSTATUS(status) : 1;
 }
 
 int error_print(const char *Message) {

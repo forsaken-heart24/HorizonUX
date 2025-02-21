@@ -19,6 +19,7 @@ Shoutout to the real MVPs who made this project pop! Without you, it would just 
 - [BrotherBoard](https://github.com/BrotherBoard)
 - [Ishan](https://github.com/meizishandev)
 - [Ravindu Deshan](https://github.com/ravindu644)
+- [Pranav](https://github.com/Pranav-Game-Dev)
 
 ### Let’s Make This Project Lit 🔥
 
