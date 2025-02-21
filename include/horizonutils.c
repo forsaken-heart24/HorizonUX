@@ -94,8 +94,6 @@ int executeScripts(char *__script__file, char *__args) {
 }
 
 int error_print(const char *Message) {
-    char actual_message[1028];
-    snprintf(actual_message, sizeof(actual_message), "Error: %s", Message);
     FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
     if(!log4horizon) {
         LOG4HORIZONFILE = "/data/local/tmp/logs.log";
@@ -103,7 +101,14 @@ int error_print(const char *Message) {
     }
     if(log4horizon) {
         erase_file_content(LOG4HORIZONFILE);
-        fprintf(log4horizon, "%s\n", actual_message);
-        fclose(log4horizon);
+        if(DEBUG_MESSAGES_ARE_ENABLED == true) {
+            printf("\e[0;31mError: %s\e[0;37m\n", Message);
+        }
+        else {
+            char actual_message[1028];
+            snprintf(actual_message, sizeof(actual_message), "Error: %s", Message);
+            fprintf(log4horizon, "%s\n", actual_message);
+            fclose(log4horizon);
+        }
     }
 }
