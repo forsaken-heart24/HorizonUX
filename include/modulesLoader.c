@@ -1,47 +1,67 @@
+#include "modulesLoader.h"
 #include "horizonutils.h"
 #include "horizonux.h"
 
 // prevents bastards from running any malicious commands
 // this searches some sensitive strings to ensure that the script is safe
 // please verify your scripts before running it PLEASE 🙏
-int searchBlockListedStrings(const char *__fileName, const char *search_str) {
-    FILE *file = fopen(__fileName, "r");
-    if (!file) {
-        perror("Error opening file");
-        return 1;
-    }
-    char buffer[1024];
-    while(fgets(buffer, sizeof(buffer), file)) {
-        if(strstr(buffer, search_str)) {
+int searchBlockListedStrings(char *__filename, char *__search_str) {
+    char haystack[1028];
+    FILE *file = fopen(__filename, "r");
+    while(fgets(haystack, sizeof(haystack), file)) {
+        if(strstr(haystack, __search_str)) {
             fclose(file);
-            exit(0);
+            error_print("Malicious code execution was detected in the script file");
+            return 1;
         }
     }
     fclose(file);
     return 0;
 }
 
-
-// this checks if the script has the +x module permission or not
-// otherwise we skip the given script.
-int verifyScriptExecutableStatusIntegrity(const char *__fileName) {
-    struct stat st;
-    return (stat(__fileName, &st) == 0) && (st.st_mode & S_IXUSR);
-}
-
 // yet another thing to protect good peoples from getting fucked
 // this ensures that the chosen is a bash script and if it's not one
 // it'll return 1 to make the program to stop executing that bastard
-int verifyScriptStatusUsingShell(const char *__fileName) {
-    FILE *__input = fopen(__fileName, "r");
-    if(!__input) {
-        fclose(__input);
-        error_print("Failed to open the shell script file.");
-        return 1;
-    }
+int verifyScriptStatusUsingShell(char *__filename) {
     char explainNowBitch[1028];
-    snprintf(explainNowBitch, sizeof(explainNowBitch), "file %s | grep -q 'Bourne-Again shell script, ASCII text executable'", __fileName);
+    snprintf(explainNowBitch, sizeof(explainNowBitch), "file %s | grep -q 'ASCII text executable'", __filename);
     int returnState = system(explainNowBitch);
-    fclose(__input);
     return (returnState == 0) ? 0 : 1;
+}
+
+int mainModuleLoader(char *__haystack) {
+    // int searchBlockListedStrings(const char *__fileName, const char *__search_str)
+    int blocklistedStringArray = 17;
+    char *blocklistedStrings[] = {
+        "xbl_config",
+        "recovery",
+        "fsc",
+        "fsg",
+        "modem",
+        "modemst1",
+        "modemst2",
+        "abl",
+        "abl_a",
+        "abl_b",
+        "/dev/block/bootdevice/by-name/",
+        "/dev/block/by-name/",
+        "/dev/block/",
+        "blockdev",
+        "--setrw",
+        "/system/bin/dd",
+        "/vendor/bin/dd",
+        "dd"
+    };
+    if(verifyScriptStatusUsingShell(__haystack) == 1) {
+        error_print("This file is not a ascii executable, please try again later with a ascii executable.");
+        exit(1);
+    }
+    for(int i = 0; i < blocklistedStringArray; i++) {
+        if(searchBlockListedStrings(__haystack, blocklistedStrings[i]) == 1) {
+            return 1;
+        }
+    }
+    // blud is highkey good asf
+    // int executeScripts(char *__script__file, char *__args)
+    return (executeScripts(__haystack, "--mango") == 0) ? 0 : 1;
 }
