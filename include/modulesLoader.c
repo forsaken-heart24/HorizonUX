@@ -31,10 +31,9 @@ int verifyScriptStatusUsingShell(char *__filename) {
 
 int mainModuleLoader(char *__haystack) {
     // int searchBlockListedStrings(const char *__fileName, const char *__search_str)
-    int blocklistedStringArray = 17;
+    int blocklistedStringArray = 16;
     char *blocklistedStrings[] = {
         "xbl_config",
-        "recovery",
         "fsc",
         "fsg",
         "modem",
