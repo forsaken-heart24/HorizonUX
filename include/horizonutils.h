@@ -18,7 +18,7 @@ int touch(const char *__file);
 int printdbg(const char *Message);
 int error_print(const char *Message);
 bool erase_file_content(const char *__file);
-void executeCommands(const char *command);
-int executeScripts(char *__script__file, char *__args);
+void executeCommands(const char *command, bool requiresOutput);
+int executeScripts(char *__script__file, char *__args, bool requiresOutput);
 
 #endif

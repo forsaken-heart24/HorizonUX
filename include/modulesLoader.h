@@ -8,6 +8,7 @@
 
 int searchBlockListedStrings(char *__filename, char *__search_str);
 int verifyScriptStatusUsingShell(char *__filename);
+int checkBlocklistedStringsNChar(char *__haystack);
 int mainModuleLoader(char *__haystack);
 
 #endif

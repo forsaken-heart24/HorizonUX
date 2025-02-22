@@ -6,15 +6,10 @@ bool WRITE_LOGS_INTO_A_FILE = false;
 char *LOG4HORIZONFILE = "/sdcard/Horizon/changeToPeakRefreshRateifTheDeviceisInLockscreen.log";
 
 int main() {
-    // uhrm what the sigma
-    if(touch("/home/luna/bw") == 0) {
-        LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/tst_log_changeToPeakRefreshRateifTheDeviceisInLockscreen.log";
-        erase_file_content(LOG4HORIZONFILE);
-    }
     // let's clear the logs first.
     executeCommands("logcat -c");
     int MaxRefreshRate = getPeakRefreshRate();
-    if(screen_state()) {
+    if(isTheDeviceisTurnedOn()) {
         if(MaxRefreshRate == 90) {
             executeCommands("settings put system peak_refresh_rate 90");
             executeCommands("settings put system min_refresh_rate 90");

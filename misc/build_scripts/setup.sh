@@ -297,12 +297,12 @@ cp -af ./misc/etc/ringtones_and_etc/media/audio/* $HORIZON_SYSTEM_DIR/media/audi
 cp -af ./horizon/rom_tweaker_script/init.ishimiiiiiiiiiiiiiii.rc $HORIZON_SYSTEM_DIR/etc/init/
 cp -af ./horizon/rom_tweaker_script/ishimiiiiiiiiii.sh $HORIZON_SYSTEM_DIR/bin/
 boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX && echo -e "\nservice brotherboard_touch_fix /system/bin/sh -c /system/bin/brotherboard_touch_fix.sh\n\tuser root\n\tgroup root\n\toneshot" >> $HORIZON_SYSTEM_DIR/etc/init/init.ishimiiiiiiiiiiiiiii.rc
-boolReturn "$SWITCH_TO_HIGH_REFRESH_RATE_ON_LOCKSCREEN" && {
-	gcc -I../../include/ ../../include/horizonutils.c ../../include/horizonux.c ./changeToPeakRefreshRateifTheDeviceisInLockscreen.c -o changeToPeakRefreshRateifTheDeviceisInLockscreen.elf
-	cp changeToPeakRefreshRateifTheDeviceisInLockscreen.elf $HORIZON_SYSTEM_DIR/bin/changeToPeakRefreshRateifTheDeviceisInLockscreen
-	rm -rf changeToPeakRefreshRateifTheDeviceisInLockscreen.elf
-	echo -e "\nservice changeToPeakRefreshRateifTheDeviceisInLockscreen /system/bin/changeToPeakRefreshRateifTheDeviceisInLockscreen \n\tuser system\n\tgroup system\n\n#make this junk run after the boot\non property:sys.boot_completed=1\n\tstart changeToPeakRefreshRateifTheDeviceisInLockscreen\n" >> $HORIZON_SYSTEM_DIR/etc/init/init.ishimiiiiiiiiiiiiiii.rc
-}
+# boolReturn "$SWITCH_TO_HIGH_REFRESH_RATE_ON_LOCKSCREEN" && {
+#	gcc -I../../include/ ../../include/horizonutils.c ../../include/horizonux.c ./changeToPeakRefreshRateifTheDeviceisInLockscreen.c -o changeToPeakRefreshRateifTheDeviceisInLockscreen.elf
+#	cp changeToPeakRefreshRateifTheDeviceisInLockscreen.elf $HORIZON_SYSTEM_DIR/bin/changeToPeakRefreshRateifTheDeviceisInLockscreen
+#	rm -rf changeToPeakRefreshRateifTheDeviceisInLockscreen.elf
+#	echo -e "\nservice changeToPeakRefreshRateifTheDeviceisInLockscreen /system/bin/changeToPeakRefreshRateifTheDeviceisInLockscreen \n\tuser system\n\tgroup system\n\n#make this junk run after the boot\non property:sys.boot_completed=1\n\tstart changeToPeakRefreshRateifTheDeviceisInLockscreen\n" >> $HORIZON_SYSTEM_DIR/etc/init/init.ishimiiiiiiiiiiiiiii.rc
+#}
 change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE"
 boolReturn $TARGET_INCLUDE_CUSTOM_BRAND_NAME && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}"
 existance "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" && touch $HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so

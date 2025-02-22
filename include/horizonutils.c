@@ -33,7 +33,7 @@ int printdbg(const char *Message) {
 bool erase_file_content(const char *__file) {
     FILE *file = fopen(__file, "w");
     if(!file) {
-        printdbg("erase_file_content(): Error opening file to wipe its content.");
+        error_print("erase_file_content(): Error opening file to wipe its content.");
         return false;
     }
     fclose(file);
@@ -52,38 +52,46 @@ bool check_device_status(const char *requiredState) {
     return false;
 }
 
-void executeCommands(const char *command) {
-    char buffer[128];
-    FILE *fp = popen(command, "r");
-    if(fp == NULL) {
-        printdbg("Failed to run the given command, please contact the developer with the errors below.");
+void executeCommands(const char *command, bool requiresOutput) {
+    char buffer[1024];
+    if(strstr(command, ";") || strstr(command, "&&")) {
+        error_print("executeCommands(): Nice try diddy!");
         return;
     }
-    while(fgets(buffer, sizeof(buffer), fp) != NULL) {
-        buffer[strcspn(buffer, "\n")] = '\0';
-        printdbg(buffer);
-    }    
-    pclose(fp);
+    FILE *fp = popen(command, "r");
+    if(fp == NULL) {
+        error_print("executeCommands(): Failed to run the given command, please contact the developer with the errors below.");
+        return;
+    }
+    if(requiresOutput) {
+        while(fgets(buffer, sizeof(buffer), fp) != NULL) {
+            error_print(buffer);
+        }
+    }
+    int __exit_status = pclose(fp);
+    return (WIFEXITED(__exit_status)) ? WEXITSTATUS(__exit_status) : 1;
 }
 
-int executeScripts(char *__script__file, char *__args) {
+int executeScripts(char *__script__file, char *__args, bool requiresOutput) {
     char fuckingFileFuckingPath[256];
-    char fuckingBufferFuckingShit[128];
+    char fuckingBufferFuckingShit[1024];
     if(strstr(__args, ";") || strstr(__args, "&&")) {
+        error_print("executeScripts(): Nice try diddy!");
         return 0;
     }
     snprintf(fuckingFileFuckingPath, sizeof(fuckingFileFuckingPath), "%s %s", __script__file, __args);
     FILE *fp = popen(fuckingFileFuckingPath, "r");
     if(fp == NULL) {
-        error_print("Failed to run the given command, please contact the developer with the errors below.\n");
+        error_print("executeScripts(): Failed to run the given script\n");
         return 1;
     }
-    while(fgets(fuckingBufferFuckingShit, sizeof(fuckingBufferFuckingShit), fp) != NULL) {
-        fuckingBufferFuckingShit[strcspn(fuckingBufferFuckingShit, "\n")] = '\0';
-        printdbg(fuckingBufferFuckingShit);
+    if(requiresOutput) {
+        while(fgets(fuckingBufferFuckingShit, sizeof(fuckingBufferFuckingShit), fp) != NULL) {
+            error_print(fuckingBufferFuckingShit);
+        }
     }
-    int status = pclose(fp);
-    return (WIFEXITED(status)) ? WEXITSTATUS(status) : 1;
+    int __exit_status = pclose(fp);
+    return (WIFEXITED(__exit_status)) ? WEXITSTATUS(__exit_status) : 1;
 }
 
 int error_print(const char *Message) {
@@ -95,7 +103,7 @@ int error_print(const char *Message) {
     if(log4horizon) {
         erase_file_content(LOG4HORIZONFILE);
         if(DEBUG_MESSAGES_ARE_ENABLED == true) {
-            printf("\e[0;31mError: %s\e[0;37m\n", Message);
+            printf("\e[0;31mError: %s\e[0;37m", Message);
         }
         else {
             char actual_message[1028];

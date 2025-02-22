@@ -6,3 +6,6 @@
 
 # Tinkering stuffs:
     - look into the code and mod it in your way, if you find any bugs please do a pull-request. Thanks :D
+
+# Additional Info:
+    - The program works fine but it's not tested whether if it outputs the peak refresh rate or not.

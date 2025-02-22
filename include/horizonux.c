@@ -1,8 +1,9 @@
 #include "horizonux.h"
 
-bool is_boot_completed() {
+bool isTheDeviceBootCompleted() {
     char content[4];
-    FILE *getprop = popen("getprop sys.boot_completed", "r");
+    //FILE *getprop = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
+    FILE *getprop = popen("getprop sys.boot_completed", "r"); intended for debugging purposes.
     if(!getprop) {
         return false;
     }
@@ -15,25 +16,29 @@ bool is_boot_completed() {
     return strcmp(content, "1") == 0;
 }
 
-bool screen_state() {
-    FILE *fp = popen("dumpsys power | grep 'Display Power: state=OFF' && echo 'W'", "r");
+bool isTheDeviceisTurnedOn() {
+    //FILE *fp = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
+    FILE *fp = popen("dumpsys power | grep 'Display Power' | awk '{print $3}' | cut -c 7-10", "r"); 
     if(!fp) return false;
-    char buffer[2];
+    char buffer[4];
     if(fgets(buffer, sizeof(buffer), fp) == NULL) {
         pclose(fp);
         return false;
     }
     pclose(fp);
-    return (strcmp(buffer, "W\n") == 0);
+    if(strstr(buffer, "OFF") == 0) {
+        return true;
+    }
+    return false;
 }
 
 int getPeakRefreshRate() {
     char buffer[50];
-    FILE *fp = popen("getprop persist.horizonux.device_max_refresh_rate", "r");
+    // returns a decimal in a string format
+    //FILE *fp = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
+    FILE *fp = popen("dumpsys 2>/dev/null | grep --line-buffered refresh-rate | head -n 1 | awk '{print $3}' | cut -d'.' -f1", "r");
     if(!fp) {
-        fp = popen("settings get global horizon_device_max_refresh_rate", "r");
-        if(!fp)
-            return 1;
+        return 1;
     }
     if(fgets(buffer, sizeof(buffer), fp) == NULL) {
         pclose(fp);
@@ -47,23 +52,23 @@ int getPeakRefreshRate() {
 
 int isPackageInstalled(const char *packageName) {
     // Prevents command injection attempts
-    if(strchr(packageName, ';') || strchr(packageName, '|') || strchr(packageName, '&')) {
+    if(strchr(packageName, ';') || strstr(packageName, "&&")) {
         return 0;
     }
-    char command[256];
+    char command[100];
     snprintf(command, sizeof(command), "pm list packages | grep -q '^package:%s$'", packageName);
     return system(command) == 0;
 }
 
 int sendToastMessages(const char *service, const char *message) {
     // Prevents command injection attempts
-    if(strchr(message, ';') || strchr(message, '|') || strchr(message, '&')) {
+    if(strchr(message, ';') || strstr(message, "&&")) {
         return 0;
     }
     char toastTextWithArguments[1028];
     if(isPackageInstalled("bellavita.toast") == 0) {
         snprintf(toastTextWithArguments, sizeof(toastTextWithArguments), "am start -a android.intent.action.MAIN -e toasttext \"%s: %s\" -n bellavita.toast/.MainActivity", service, message);
-        executeCommands(toastTextWithArguments);
+        executeCommands(toastTextWithArguments, false);
     }
 }
 
@@ -71,17 +76,17 @@ int manageBlocks(const char *infile, const char *outfile, size_t block_size, siz
     FILE *in = fopen(infile, "rb");
     FILE *out = fopen(outfile, "wb");
     if(!in) {
-        error_print("Failed to open input file");
+        error_print("manageBlocks(): Failed to open input file");
         return 1;
     }
     if(!out) {
-        error_print("Failed to open output file");
+        error_print("manageBlocks(): Failed to open output file");
         fclose(in);
         return 1;
     }
     char *buffer = (char *)malloc(block_size);
     if (!buffer) {
-        error_print("Memory allocation failed");
+        error_print("manageBlocks(): Memory allocation failed");
         fclose(in);
         fclose(out);
         return 1;
@@ -93,18 +98,18 @@ int manageBlocks(const char *infile, const char *outfile, size_t block_size, siz
         // Stop if the EOF (end of file) is reached
         if(blocks_read == 0 && feof(in)) break;
         if(blocks_read == 0 && ferror(in)) {
-            error_print("Error reading input file");
+            error_print("manageBlocks(): Error reading input file");
             break;
         }
         total_read += blocks_read;
         blocks_written = fwrite(buffer, 1, blocks_read, out);
         if(blocks_written < blocks_read) {
-            error_print("Error writing to output file");
+            error_print("manageBlocks(): Error writing to output file");
             break;
         }
         total_written += blocks_written;
     }
-    error_print("Copied %zu bytes (%.2f KB)\n", total_written, total_written / 1024.0);
+    error_print("manageBlocks(): Copied %zu bytes (%.2f KB)\n", total_written, total_written / 1024.0);
     free(buffer);
     fclose(in);
     fclose(out);

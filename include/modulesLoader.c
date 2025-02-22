@@ -12,7 +12,7 @@ int searchBlockListedStrings(char *__filename, char *__search_str) {
         while(fgets(haystack, sizeof(haystack), file)) {
             if(strstr(haystack, __search_str)) {
                 fclose(file);
-                error_print("Malicious code execution was detected in the script file");
+                error_print("searchBlockListedStrings(): Malicious code execution was detected in the script file");
                 return 1;
             }
         }
@@ -29,10 +29,10 @@ int verifyScriptStatusUsingShell(char *__filename) {
     char explainNowBitch[1028];
     snprintf(explainNowBitch, sizeof(explainNowBitch), "file %s | grep -q 'ASCII text executable'", __filename);
     int returnState = system(explainNowBitch);
-    return (returnState == 0) ? 0 : 1;
+    return returnState;
 }
 
-int mainModuleLoader(char *__haystack) {
+int checkBlocklistedStringsNChar(char *__haystack) {
     // Thnx Pranav 🩷
     char *blocklistedStrings[] = {
         "xbl_config",
@@ -76,16 +76,20 @@ int mainModuleLoader(char *__haystack) {
         "dd"
     };
     int blocklistedStringArraySize = sizeof(blocklistedStrings) / sizeof(blocklistedStrings[0]);
+    int return_status;
+    for(int i = 0; i < blocklistedStringArraySize; i++) {
+        return_status = searchBlockListedStrings(__haystack, blocklistedStrings[i]);
+    }
+    return return_status;
+}
+
+int mainModuleLoader(char *__haystack) {
+    checkBlocklistedStringsNChar(__haystack);
     if(verifyScriptStatusUsingShell(__haystack) == 1) {
-        error_print("This file is not a ascii executable, please try again later with a ascii executable.");
+        error_print("mainModuleLoader(): This file is not a ascii executable, please try again with a ascii executable.");
         exit(1);
     }
-    for(int i = 0; i < blocklistedStringArraySize; i++) {
-        if(searchBlockListedStrings(__haystack, blocklistedStrings[i]) == 1) {
-            return 1;
-        }
-    }
     // blud is highkey good asf
-    // int executeScripts(char *__script__file, char *__args)
-    return (executeScripts(__haystack, "--mango") == 0) ? 0 : 1;
+    int __status = executeScripts(__haystack, "--mango", true);
+    return __status;
 }

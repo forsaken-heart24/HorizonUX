@@ -165,5 +165,5 @@ DISABLE_DYNAMIC_RANGE_COMPRESSION=false
 DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION=false
 
 # this shit is in hyperOS for some reason, i added just to make the experience a bit better.
-SWITCH_TO_HIGH_REFRESH_RATE_ON_LOCKSCREEN=false
+#SWITCH_TO_HIGH_REFRESH_RATE_ON_LOCKSCREEN=false
 ############################################# Misc Configs #############################################
