@@ -1,8 +1,7 @@
 #include "horizonutils.h"
 #include "horizonux.h"
 
-bool DEBUG_MESSAGES_ARE_ENABLED = false;
-bool WRITE_LOGS_INTO_A_FILE = false;
+bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
 char *LOG4HORIZONFILE = "/sdcard/Horizon/changeToPeakRefreshRateifTheDeviceisInLockscreen.log";
 
 int main() {

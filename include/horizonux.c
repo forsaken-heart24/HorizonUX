@@ -1,16 +1,11 @@
 #include "horizonux.h"
 
 bool isTheDeviceBootCompleted() {
-    char content[4];
     //FILE *getprop = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
-    FILE *getprop = popen("getprop sys.boot_completed", "r"); intended for debugging purposes.
-    if(!getprop) {
-        return false;
-    }
-    if(fgets(content, sizeof(content), getprop) == NULL) {
-        pclose(getprop);
-        return false;
-    }
+    FILE *getprop = popen("getprop sys.boot_completed", "r");
+    // allocate if only it's required
+    char content[4];
+    fgets(content, sizeof(content), getprop);
     pclose(getprop);
     content[strcspn(content, "\n")] = '\0';
     return strcmp(content, "1") == 0;
@@ -19,43 +14,35 @@ bool isTheDeviceBootCompleted() {
 bool isTheDeviceisTurnedOn() {
     //FILE *fp = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
     FILE *fp = popen("dumpsys power | grep 'Display Power' | awk '{print $3}' | cut -c 7-10", "r"); 
-    if(!fp) return false;
     char buffer[4];
-    if(fgets(buffer, sizeof(buffer), fp) == NULL) {
-        pclose(fp);
-        return false;
-    }
+    fgets(buffer, sizeof(buffer), fp);
     pclose(fp);
     if(strstr(buffer, "OFF") == 0) {
         return true;
     }
-    return false;
+    else {
+        return false;
+    }
 }
 
 int getPeakRefreshRate() {
-    char buffer[50];
-    // returns a decimal in a string format
     //FILE *fp = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
     FILE *fp = popen("dumpsys 2>/dev/null | grep --line-buffered refresh-rate | head -n 1 | awk '{print $3}' | cut -d'.' -f1", "r");
-    if(!fp) {
-        return 1;
-    }
-    if(fgets(buffer, sizeof(buffer), fp) == NULL) {
-        pclose(fp);
-        return 1;
-    }
+    char buffer[50];
+    fgets(buffer, sizeof(buffer), fp);
     pclose(fp);
-    float refreshRate = -1;
+    int refreshRate = 1;
     refreshRate = strtof(buffer, NULL);
-    return (int)refreshRate;
+    return refreshRate;
 }
 
 int isPackageInstalled(const char *packageName) {
     // Prevents command injection attempts
     if(strchr(packageName, ';') || strstr(packageName, "&&")) {
-        return 0;
+        error_print("isPackageInstalled(): Nice try diddy!");
+        exit(1);
     }
-    char command[100];
+    char command[50];
     snprintf(command, sizeof(command), "pm list packages | grep -q '^package:%s$'", packageName);
     return system(command) == 0;
 }
@@ -63,10 +50,11 @@ int isPackageInstalled(const char *packageName) {
 int sendToastMessages(const char *service, const char *message) {
     // Prevents command injection attempts
     if(strchr(message, ';') || strstr(message, "&&")) {
-        return 0;
+        error_print("sendToastMessages(): Nice try diddy!");
+        exit(1);
     }
-    char toastTextWithArguments[1028];
     if(isPackageInstalled("bellavita.toast") == 0) {
+        char toastTextWithArguments[1028];
         snprintf(toastTextWithArguments, sizeof(toastTextWithArguments), "am start -a android.intent.action.MAIN -e toasttext \"%s: %s\" -n bellavita.toast/.MainActivity", service, message);
         executeCommands(toastTextWithArguments, false);
     }

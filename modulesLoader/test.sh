@@ -3,4 +3,4 @@ gcc -I../include ../include/horizonutils.c ../include/modulesLoader.c mainModule
 ./mainModuleLoader.elf
 cat errors_log
 cat /mnt/c/Users/Luna/Desktop/modulesLoader.log || cat /sdcard/Horizon/modulesLoader.log
-rm mainModuleLoader.elf
+rm mainModuleLoader.elf errors_log

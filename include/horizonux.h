@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 // FUCKING function FUCKING declarations.
-bool isTheDeviceBootCompleted()();
+bool isTheDeviceBootCompleted();
 bool isTheDeviceisTurnedOn();
 int getPeakRefreshRate();
 int isPackageInstalled(const char *packageName);
