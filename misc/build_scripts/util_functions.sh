@@ -97,7 +97,7 @@ function build_and_sign() {
         java -jar ./dependencies/bin/signer.jar -apk ${extracted_dir_path}/dist/*.apk --ks $MY_KEYSTORE_PATH --ksAlias $MY_KEYSTORE_ALIAS --ksPass $MY_KEYSTORE_PASSWORD
     fi
     mv ${extracted_dir_path}/dist/$(ls | grep aligned-debugSigned.apk | head -n 1) $app_path/
-    rm -rf ${extracted_dir_path}/build ${extracted_dir_path}/dist/*
+    rm -rf ${extracted_dir_path}/build ${extracted_dir_path}/dist/
 }
 
 function custom_setup_finished_messsage() {
@@ -785,7 +785,7 @@ function build_program() {
     if string_format "$special_argument" | grep -q isLibrary=false; then
         $compiler $header $file &>compiler_build.log
     elif string_format "$special_argument" | grep -q isLibrary=true; then
-        $compiler $header $file -shared -o &>compiler_build.log
+        $compiler $header $file -shared &>compiler_build.log
     fi
 
     # error checks.

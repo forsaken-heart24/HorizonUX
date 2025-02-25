@@ -17,7 +17,7 @@ done
 [ ! -f "config.cfg" ] && abort "Device specific configuration file is not found"
 
 if [ "$REFRESH_RATE" -ge "70" ]; then
-    warns "you've chose to overclock your device more than 70Hz, please do this with your own risk!" "OVERCLOCK_WARNING"
+    warns "you've chose to overclock your device more than 70Hz, please do this at your own risk!" "OVERCLOCK_WARNING"
     warns "revert back to the stock or try to change refresh rate configs again if the device is unable to boot" "OVERCLOCK_WARNING"
 fi
 

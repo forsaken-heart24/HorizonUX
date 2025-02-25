@@ -1,3 +1,14 @@
+# check if mentioned files do exist or not.
+for i in "./misc/build_scripts/util_functions.sh" "./monika.conf" "./makeconfigs.prop" "./misc/build_scripts/target_configs.sh"; do
+	if [ ! -f "$i" ]; then
+		echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
+		sleep 0.5
+		exit 1
+	else
+		. "$i"
+	fi
+done
+
 # ok, fbans dropped!
 echo -e "\033[0;31m########################################################################"
 echo -e "   _  _     _   _            _                _   ___  __"
@@ -65,7 +76,7 @@ fi
 if boolReturn $TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES; then
 	console_print "adding custom setup wizard text...."
 	custom_setup_finished_messsage
-	build_and_sign ./horizon/packages/sec_setup_wizard_horizonux_overlay/ $HORIZON_FALLBACK_OVERLAY_PATH
+	build_and_sign ./horizon/overlay_packages/sec_setup_wizard_horizonux_overlay/ $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_REMOVE_NONE_SECURITY_OPTION; then
@@ -84,18 +95,18 @@ fi
 
 if boolReturn $TARGET_REMOVE_SWIPE_SECURITY_OPTION; then
 	warns_api_limitations "11"
-	build_and_sign ./horizon/packages/settings/oneui3/remove_none_option_on_security_tab/ $HORIZON_FALLBACK_OVERLAY_PATH
+	build_and_sign ./horizon/overlay_packages/settings/oneui3/remove_none_option_on_security_tab/ $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_ADD_EXTRA_ANIMATION_SCALES; then
 	console_print "cooking extra animation scales.."
-	build_and_sign ./horizon/packages/settings/oneui3/extra_animation_scales/ $HORIZON_FALLBACK_OVERLAY_PATH
+	build_and_sign ./horizon/overlay_packages/settings/oneui3/extra_animation_scales/ $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS; then
 	console_print "cooking rounded corners on pip window...."
 	warns_api_limitations "11"
-	build_and_sign ./horizon/packages/systemui/oneui3/rounded_corners_on_pip/ $HORIZON_FALLBACK_OVERLAY_PATH
+	build_and_sign ./horizon/overlay_packages/systemui/oneui3/rounded_corners_on_pip/ $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN; then
@@ -349,6 +360,11 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -l
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" || "${BUILD_TARGET_SDK_VERSION}" -le "30" ]]; then
 	cat ./diff_patches/system/etc/init/freecess.rc > "$HORIZON_SYSTEM_DIR/etc/init/freecess.rc"
+fi
+if ask "Do you want to add a stub app for missing activities?"; then
+	# build_and_sign <apktool decoded package path> <output path>
+	mkdir -p $HORIZON_SYSTEM_DIR/app/HorizonStub/
+	build_and_sign "./horizon/packages/HorizonStub" "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
 fi
 console_print "Check the /build folder for the items you have built."
 console_print "Please sign the built overlay or application packages manually with your own private keys;"
