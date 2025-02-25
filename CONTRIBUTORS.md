@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="https://github.com/selimdoyranli/selimdoyranli/blob/master/preview.gif" width="400" alt="Project HorizonUX" />
+  <img src="https://github.com/selimdoyranli/selimdoyranli/blob/master/preview.gif" width="400" alt="Project HorizonUX Contributors" />
 </p>
 
 # HorizonUX Contributors Squad 🥰
 
-Shoutout to the real MVPs who made this project pop! Without you, it would just be a vibe with no substance. Thanks for making this happen:
+Shoutout to the real MVPs who made this project pop! Without you, it would just be a vibe with no substance. Thanks for making this happen.
 
 - [Salvo](https://github.com/salvogiangri)
 - [Royna](https://github.com/Royna2544)
@@ -20,6 +20,7 @@ Shoutout to the real MVPs who made this project pop! Without you, it would just 
 - [Ishan](https://github.com/meizishandev)
 - [Ravindu Deshan](https://github.com/ravindu644)
 - [Pranav](https://github.com/Pranav-Game-Dev)
+- [Selimdoyranli](https://github.com/selimdoyranli)
 
 ### Let’s Make This Project Lit 🔥
 
