@@ -2,6 +2,15 @@
 
 # Build Configuration Variables
 
+## TODO: To be filled by the builder
+- Don't fill these if you have a super raw image file laying around your storage medium, just enter the path to it if the script
+- Asks it.
+**SYSTEM_DIR**: Put your extracted system folder path there.
+**SYSTEM_EXT_DIR**: Put your extracted system_ext folder path there.
+**VENDOR_DIR**: Put your extracted vendor folder path there.
+**PRODUCT_DIR**: Put your extracted product folder path there.
+**PRISM_DIR**: Put your extracted prism folder path there.
+
 ## Device Name & Setup
 - **CUSTOM_SETUP_WELCOME_MESSAGE**: Customizes the device name in the "About" section without affecting the real brand. Requires `TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES` set to true.
 - **TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES**: Enables custom welcome message during setup.

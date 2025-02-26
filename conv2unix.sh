@@ -10,6 +10,6 @@ fi
 # let's convert these script files.
 for i in *; do 
     for j in "$(find ${i})"; do
-        dos2unix "${j}"
+        echo "$j" | grep -q .git || dos2unix "${j}"
     done
 done

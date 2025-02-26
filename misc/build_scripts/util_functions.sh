@@ -326,26 +326,47 @@ function nuke_stuffs() {
 }
 
 function ADD_THE_WALLPAPER_METADATA() {
-    local value="$1"
-    local the_type_of_wallpaper="$(string_format -l "$2")"
-    local index_score=$3
-    local which
-    local isDefault
+    local value="$1" type="$2" index="$3"
+    type="$(echo "$type" | tr '[:upper:]' '[:lower:]')"
+    local filename="wallpaper_${value}.png"
+    local path
 
-    # Determine the "which" value and the "isDefault" flag based on the wallpaper type
-    if [ "$the_type_of_wallpaper" == "home" ]; then
-        which=1
-        isDefault="true"
-    elif [ "$the_type_of_wallpaper" == "lock" ]; then
-        which=2
-        isDefault="true"
-    elif [ "$the_type_of_wallpaper" == "additionals" ]; then
-        which=1
-        isDefault="false"
+    case "$type" in
+        home)
+            isDefault=true
+            which=1
+            the_homescreen_wallpaper_has_been_set=true
+            ;;
+        lock)
+            isDefault=true
+            which=2
+            the_lockscreen_wallpaper_has_been_set=true
+            ;;
+        additionals)
+            isDefault=false
+            which=1
+            ;;
+    esac
+
+    cat >> resources_info.json << EOF
+    {
+        "isDefault": ${isDefault},
+        "index": ${index},
+        "which": ${which},
+        "screen": 0,
+        "type": 0,
+        "filename": "${filename}",
+        "frame_no": -1,
+        "cmf_info": [""]
+    }${special_symbol}
+EOF
+
+    printf " - Enter the path to the default ${type^} wallpaper: "
+    read path
+    if [ -f "$path" ]; then
+        cp -af "$path" "./res/drawable-nodpi/${filename}"
     fi
-    
-    # Append the JSON data to resources_info.json
-    echo -e "{\n\t\"isDefault\": \"$isDefault\",\n\t\"index\": $index_score,\n\t\"which\": $which,\n\t\"screen\": 0,\n\t\"type\": 0,\n\t\"filename\": \"wallpaper_${value}.png\",\n\t\"frame_no\": -1,\n\t\"cmf_info\": [\"\"]\n}${special_symbol}" >> resources_info.json
+    clear
 }
 
 HEX_PATCH() {

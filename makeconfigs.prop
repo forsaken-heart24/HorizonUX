@@ -61,9 +61,9 @@ TARGET_BUILD_IS_FOR_DEBUGGING=false
 
 # replace those empty quotes with system , vendor and etc etc.
 TARGET_BUILD_PARTITIONS=(
-    ""
-    ""
-    ""
+    "system"
+    "vendor"
+    "product"
     ""
 )
 
