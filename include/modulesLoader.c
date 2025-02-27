@@ -93,3 +93,37 @@ int mainModuleLoader(char *__haystack) {
     int __status = executeScripts(__haystack, "--mango", true);
     return __status;
 }
+
+// still not tested
+void executeScriptsFromTheModuleDirectories() {
+    struct dirent *dirptr;
+    DIR *base_dir = opendir("/data/horizon/modules/");
+    if(!base_dir) {
+        perror("ERROR: Error opening base module directory.");
+        exit(1);
+    }
+    while((dirptr = readdir(base_dir)) != NULL) {
+        if(strcmp(dirptr->d_name, ".") == 0 || strcmp(dirptr->d_name, "..") == 0) {
+            fprintf(stderr, "Skipping directory shortcuts...\n");
+            continue;
+        }
+        char dirPath[1028];
+        snprintf(dirPath, sizeof(dirPath), "/data/horizon/modules/%s", dirptr->d_name);
+        struct stat path_stat;
+        if(stat(dirPath, &path_stat) != 0 || !S_ISDIR(path_stat.st_mode)) {
+            fprintf(stderr, "Skipping non-directory entry: %s\n", dirptr->d_name);
+            continue;
+        }
+        char scriptPath[1028];
+        snprintf(scriptPath, sizeof(scriptPath), "%s/start.sh", dirPath);
+        if(access(scriptPath, F_OK) != 0 || access(scriptPath, X_OK) != 0) {
+            fprintf(stderr, "Skipping non-existent or non-executable script: %s\n", scriptPath);
+            continue;
+        }
+        if(executeScripts(scriptPath, NULL, false) != 0) {
+            fprintf(stderr, "Failed to run %s\n", scriptPath);
+            continue;
+        }
+    }
+    closedir(base_dir);
+}
