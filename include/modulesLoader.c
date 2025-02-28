@@ -12,7 +12,7 @@ int searchBlockListedStrings(char *__filename, char *__search_str) {
         while(fgets(haystack, sizeof(haystack), file)) {
             if(strstr(haystack, __search_str)) {
                 fclose(file);
-                error_print("searchBlockListedStrings(): Malicious code execution was detected in the script file");
+                error_print("searchBlockListedStrings(): Malicious code execution was detected in the script file", true);
                 return 1;
             }
         }
@@ -28,7 +28,7 @@ int searchBlockListedStrings(char *__filename, char *__search_str) {
 int verifyScriptStatusUsingShell(char *__filename) {
     char explainNowBitch[1028];
     snprintf(explainNowBitch, sizeof(explainNowBitch), "file %s | grep -q 'ASCII text executable'", __filename);
-    int returnState = system(explainNowBitch);
+    int returnState = executeCommands(explainNowBitch, false);
     return returnState;
 }
 
@@ -83,47 +83,28 @@ int checkBlocklistedStringsNChar(char *__haystack) {
     return return_status;
 }
 
-int mainModuleLoader(char *__haystack) {
-    checkBlocklistedStringsNChar(__haystack);
-    if(verifyScriptStatusUsingShell(__haystack) == 1) {
-        error_print("mainModuleLoader(): This file is not a ascii executable, please try again with a ascii executable.");
-        exit(1);
-    }
-    // blud is highkey good asf
-    int __status = executeScripts(__haystack, "--mango", true);
-    return __status;
-}
 
-// still not tested
-void executeScriptsFromTheModuleDirectories() {
+bool executeScriptsFromTheModuleDirectories() {
     struct dirent *dirptr;
-    DIR *base_dir = opendir("/data/horizon/modules/");
+    DIR *base_dir = opendir("/data/hux/mods");
     if(!base_dir) {
-        perror("ERROR: Error opening base module directory.");
-        exit(1);
+        error_print("executeScriptsFromTheModuleDirectories(): Failed to open base module directory.", true);
+        return 1;
     }
     while((dirptr = readdir(base_dir)) != NULL) {
-        if(strcmp(dirptr->d_name, ".") == 0 || strcmp(dirptr->d_name, "..") == 0) {
-            fprintf(stderr, "Skipping directory shortcuts...\n");
+        if(!dirptr || !dirptr->d_name || strcmp(dirptr->d_name, ".") == 0 || strcmp(dirptr->d_name, "..") == 0) {
+            error_print("Skipping directory shortcuts...", true);
             continue;
         }
-        char dirPath[1028];
-        snprintf(dirPath, sizeof(dirPath), "/data/horizon/modules/%s", dirptr->d_name);
-        struct stat path_stat;
-        if(stat(dirPath, &path_stat) != 0 || !S_ISDIR(path_stat.st_mode)) {
-            fprintf(stderr, "Skipping non-directory entry: %s\n", dirptr->d_name);
-            continue;
-        }
-        char scriptPath[1028];
-        snprintf(scriptPath, sizeof(scriptPath), "%s/start.sh", dirPath);
-        if(access(scriptPath, F_OK) != 0 || access(scriptPath, X_OK) != 0) {
-            fprintf(stderr, "Skipping non-existent or non-executable script: %s\n", scriptPath);
-            continue;
-        }
-        if(executeScripts(scriptPath, NULL, false) != 0) {
-            fprintf(stderr, "Failed to run %s\n", scriptPath);
-            continue;
+        char alright[2048];
+        snprintf(alright, sizeof(alright), "/data/hux/mods/%s/start.sh", dirptr->d_name);
+        if(verifyScriptStatusUsingShell(alright) == 0 && checkBlocklistedStringsNChar(alright) == 0) {
+            if(executeScripts(alright, NULL, true) != 0) {
+                error_print("executeScriptsFromTheModuleDirectories(): Failed to run ", false);
+                error_print(alright, true);
+            }
         }
     }
     closedir(base_dir);
+    return 0;
 }

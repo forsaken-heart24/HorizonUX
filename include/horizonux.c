@@ -1,4 +1,5 @@
 #include "horizonux.h"
+#include "horizonutils.h"
 
 bool isTheDeviceBootCompleted() {
     //FILE *getprop = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
@@ -39,7 +40,7 @@ int getPeakRefreshRate() {
 int isPackageInstalled(const char *packageName) {
     // Prevents command injection attempts
     if(strchr(packageName, ';') || strstr(packageName, "&&")) {
-        error_print("isPackageInstalled(): Nice try diddy!");
+        error_print("isPackageInstalled(): Nice try diddy!", true);
         exit(1);
     }
     char command[50];
@@ -50,7 +51,7 @@ int isPackageInstalled(const char *packageName) {
 int sendToastMessages(const char *service, const char *message) {
     // Prevents command injection attempts
     if(strchr(message, ';') || strstr(message, "&&")) {
-        error_print("sendToastMessages(): Nice try diddy!");
+        error_print("sendToastMessages(): Nice try diddy!", true);
         exit(1);
     }
     if(isPackageInstalled("bellavita.toast") == 0) {
@@ -64,17 +65,17 @@ int manageBlocks(const char *infile, const char *outfile, size_t block_size, siz
     FILE *in = fopen(infile, "rb");
     FILE *out = fopen(outfile, "wb");
     if(!in) {
-        error_print("manageBlocks(): Failed to open input file");
+        error_print("manageBlocks(): Failed to open input file", true);
         return 1;
     }
     if(!out) {
-        error_print("manageBlocks(): Failed to open output file");
+        error_print("manageBlocks(): Failed to open output file", true);
         fclose(in);
         return 1;
     }
     char *buffer = (char *)malloc(block_size);
     if (!buffer) {
-        error_print("manageBlocks(): Memory allocation failed");
+        error_print("manageBlocks(): Memory allocation failed", true);
         fclose(in);
         fclose(out);
         return 1;
@@ -86,18 +87,21 @@ int manageBlocks(const char *infile, const char *outfile, size_t block_size, siz
         // Stop if the EOF (end of file) is reached
         if(blocks_read == 0 && feof(in)) break;
         if(blocks_read == 0 && ferror(in)) {
-            error_print("manageBlocks(): Error reading input file");
+            error_print("manageBlocks(): Error reading input file", true);
             break;
         }
         total_read += blocks_read;
         blocks_written = fwrite(buffer, 1, blocks_read, out);
         if(blocks_written < blocks_read) {
-            error_print("manageBlocks(): Error writing to output file");
+            error_print("manageBlocks(): Error writing to output file", true);
             break;
         }
         total_written += blocks_written;
     }
-    error_print("manageBlocks(): Copied %zu bytes (%.2f KB)\n", total_written, total_written / 1024.0);
+    //error_print("manageBlocks(): Copied %zu bytes (%.2f KB)\n", total_written, total_written / 1024.0);
+    const char *textBuffer[1028];
+    snprintf(textBuffer, sizeof(textBuffer), "manageBlocks(): Copied %zu bytes (%.2f KB)", total_written, total_written / 1024.0);
+    error_print(textBuffer, true);
     free(buffer);
     fclose(in);
     fclose(out);

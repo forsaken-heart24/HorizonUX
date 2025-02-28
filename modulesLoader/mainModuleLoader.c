@@ -2,8 +2,13 @@
 #include "horizonutils.h"
 
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
-char *LOG4HORIZONFILE = "/sdcard/horizon/modulesLoader.log";
+char *LOG4HORIZONFILE = "/sdcard/modulesLoader.log";
 
 int main() {
-    return 0;
+    if(executeScriptsFromTheModuleDirectories() == 0) {
+        error_print("The Scripts were executed successfully!", true);
+        return 0;
+    }
+    error_print("The scripts were failed to run, consider checking the logs", true);
+    return 1;
 }
