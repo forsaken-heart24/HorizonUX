@@ -2,7 +2,7 @@
 #include "horizonutils.h"
 
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
-char *LOG4HORIZONFILE = "/sdcard/modulesLoader.log";
+const char *LOG4HORIZONFILE = "/sdcard/modulesLoader.log";
 
 int main() {
     if(executeScriptsFromTheModuleDirectories() == 0) {

@@ -1,56 +1,40 @@
 #include "horizonutils.h"
 
-int error_print(const char *Message, bool addAnNewline) {
-    FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
-    if(log4horizon != NULL) {
-        if(WRITE_DEBUG_MESSAGES_TO_CONSOLE == true) {
-            if(addAnNewline) {
-                printf("\e[0;31m%s\e[0;37m\n", Message);
-            }
-            else{
-                printf("\e[0;31m%s\e[0;37m", Message);
-            }
-        }
-        else {
-            char actual_message[1028];
-            snprintf(actual_message, sizeof(actual_message), "Error: %s", Message);
-            if(addAnNewline) {
-                fprintf(log4horizon, "%s\n", actual_message);
-            }
-            else {
-                fprintf(log4horizon, "%s", actual_message);
-            }
-            return 0;
-        }
+void error_print(const char *Message) {
+    if(WRITE_DEBUG_MESSAGES_TO_CONSOLE == true) {
+        printf("\e[0;31m%s\e[0;37m\n", Message);
     }
-    return 1;
+    else {
+        FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
+        fprintf(log4horizon, "%s\n", Message);
+        fclose(log4horizon);
+    }
+}
+
+void error_print_extended(const char *message, const char *additional_args) {
+    char premigga[200];
+    snprintf(premigga, sizeof(premigga), "%s %s", message, additional_args);
+    error_print(premigga);
 }
 
 bool erase_file_content(const char *__file) {
-    FILE *fileConstant = fopen(__file, "r");
-    if(!fileConstant) {
-        error_print("erase_file_content(): Error opening file to wipe its content.", true);
-        // just for safety.
-        fclose(fileConstant);
-        return false;
-    }
-    // close it and open it again in "w" mode.
-    fclose(fileConstant);
     FILE *fileConstantAgain = fopen(__file, "w");
-    fclose(fileConstant);
-    return true;
+    if(fclose(fileConstant) == 0) {
+        return true;
+    }
+    return false;
 }
 
 int executeCommands(const char *command, bool requiresOutput) {
     if(strstr(command, ";") || strstr(command, "&&")) {
-        error_print("executeCommands(): Nice try diddy!", true);
+        error_print("executeCommands(): Nice try diddy!");
         exit(1);
     }
     FILE *fp = popen(command, "r");
     if(requiresOutput) {
         char buffer[1024];
         while(fgets(buffer, sizeof(buffer), fp) != NULL) {
-            error_print(buffer, true);
+            error_print_extended("executeCommands():", buffer);
         }
     }
     int __exit_status = pclose(fp);
@@ -68,7 +52,7 @@ int executeScripts(char *__script__file, char *__args, bool requiresOutput) {
     if(requiresOutput) {
         char fuckingBufferFuckingShit[1024];
         while(fgets(fuckingBufferFuckingShit, sizeof(fuckingBufferFuckingShit), scriptWithArguments) != NULL) {
-            error_print(fuckingBufferFuckingShit, true);
+            error_print("executeScripts():", fuckingBufferFuckingShit);
         }
     }
     int __exit_status = pclose(scriptWithArguments);

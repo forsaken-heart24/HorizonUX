@@ -10,10 +10,11 @@
 
 // FUCKING global FUCKING variables.
 extern bool WRITE_DEBUG_MESSAGES_TO_CONSOLE;
-extern char *LOG4HORIZONFILE;
+extern const char *LOG4HORIZONFILE;
  
 // FUCKING function FUCKING declarations.
-int error_print(const char *Message, bool addAnNewline);
+void error_print(const char *Message);
+void error_print_extended(const char *message, const char *additional_args);
 bool erase_file_content(const char *__file);
 int executeCommands(const char *command, bool requiresOutput);
 int executeScripts(char *__script__file, char *__args, bool requiresOutput);

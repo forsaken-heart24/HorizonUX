@@ -45,7 +45,7 @@ int isPackageInstalled(const char *packageName) {
     }
     char command[50];
     snprintf(command, sizeof(command), "pm list packages | grep -q '^package:%s$'", packageName);
-    return system(command) == 0;
+    return executeCommands(command, false) == 0;
 }
 
 int sendToastMessages(const char *service, const char *message) {
@@ -99,9 +99,7 @@ int manageBlocks(const char *infile, const char *outfile, size_t block_size, siz
         total_written += blocks_written;
     }
     //error_print("manageBlocks(): Copied %zu bytes (%.2f KB)\n", total_written, total_written / 1024.0);
-    const char *textBuffer[1028];
-    snprintf(textBuffer, sizeof(textBuffer), "manageBlocks(): Copied %zu bytes (%.2f KB)", total_written, total_written / 1024.0);
-    error_print(textBuffer, true);
+    printf("manageBlocks(): Copied %zu bytes (%.2f KB)", total_written, total_written / 1024.0);
     free(buffer);
     fclose(in);
     fclose(out);
