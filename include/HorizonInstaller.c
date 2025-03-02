@@ -63,3 +63,60 @@ bool isThisPartitionMounted(const char *baselinePartitionName) {
     }
     return false;
 }
+
+bool getRomProperties(char *requiredProperty, char *requiredPropertyValue) {
+    char content[200];
+    char combinedBullshit[200];
+    FILE *romPropertyFile = fopen("/dev/tmp/install/rom.prop", "r");
+    if(!romPropertyFile) {
+        exit(1);
+    }
+    snprintf(combinedBullshit, sizeof(content), "%s=%s", requiredProperty, requiredPropertyValue);
+    while(fgets(content, sizeof(content), romPropertyFile) != NULL) {
+        if(strcmp(combinedBullshit, content) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *ImageName) {
+    FILE *imagePath__ = fopen(imagePath, "r");
+    FILE *blockPath__ = fopen(blockPath, "r");
+    if(!imagePath__ || !blockPath__) {
+        throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", "");
+        abort("  Error code: 0x7265616c5f626c6f636b206e6f7420736574", "");
+    }
+    char *extensionList[] = {"tar", "sparse", "raw"};
+    for(int i = 0; i < 3; i++) {
+        if(getRomProperties("SHIPPED_AS_WHAT", extensionList[i])) {
+            const char *shippedAs = extensionList[i];
+        }
+    }
+    switch(shippedAs) {
+        case tar:
+            char *defoq[200];
+            snprintf(defoq, sizeof(defoq), "tar -xf %s -C /dev/tmp/install/%s.img", ImageName);
+            if(executeCommands(defoq, false) != 0) {
+                abort("- Failed to extract tarball image file", " ");
+            }
+            break;
+        case sparse:
+            char *defoq[200];
+            snprintf(defoq, sizeof(defoq), "simg2img /dev/tmp/install/%s.img %s", ImageName, imagePath);
+            if(executeCommands(defoq, false) != 0) {
+                abort("- Failed to install sparse image file", " ");
+            }
+            break;
+        case raw:
+            char *defoq[200];
+            snprintf(defoq, sizeof(defoq), "cp /dev/tmp/install/%s.img %s", ImageName, imagePath);
+            if(executeCommands(defoq, false) != 0) {
+                abort("- Failed to install raw image factor into your device's", imageName);
+            }
+            break;
+        default:
+            abort("- unsupported image, the image specifier is:", shippedAs);
+    }
+    return true;
+}

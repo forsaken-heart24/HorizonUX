@@ -18,6 +18,7 @@ void throwMessagesToConsole(char *text, char *extr_factor);
 void abort(char *text, char *extr_factor);
 void setupRecoveryCommandFile(bool hostsAreBackedUp);
 bool isThisPartitionMounted(const char *baselinePartitionName);
-
+bool getRomProperties(char *requiredProperty, char *requiredPropertyValue);
+bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *ImageName);
 
 #endif
