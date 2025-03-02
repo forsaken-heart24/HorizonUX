@@ -3,11 +3,21 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-bool returnActualLinkPaths(); // still in constuction. 
+extern bool WRITE_DEBUG_MESSAGES_TO_CONSOLE;
+extern const char *LOG4HORIZONFILE;
+extern const char *INSTALLER_PATH;
+extern char *OUTFD;
+
+bool verifyInstallationType(const char *requiredType, const char *zipPackage);
 bool checkInternalStorageStatus();
-bool check_installation_type(const char *requiredType, const char *zipPackage);
+void throwMessagesToConsole(char *text, char *extr_factor);
+void abort(char *text, char *extr_factor);
+void setupRecoveryCommandFile(bool hostsAreBackedUp);
+bool isThisPartitionMounted(const char *baselinePartitionName);
+
 
 #endif
