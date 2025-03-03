@@ -2,10 +2,11 @@
 
 # To compile:
 ```
-gcc -I../include ../include/HorizonInstaller.c ../include/horizonux.c ../include/horizonutils.c main.c -o updater-script
+cd HorizonUX
+gcc -I../include ../include/HorizonInstaller.c ../include/horizonux.c ../include/horizonutils.c ./misc/HorizonInstaller/main.c -o updater-script
 ```
 
-## Variables to edit before compiling this source (HorizonInstaller/main.c):
+## Variables to edit before compiling this source (misc/HorizonInstaller/main.c):
 - **LOG4HORIZONFILE**: This is a string value, which can be used for logging purposes in the feature but please fill it up with something.
 - **WRITE_DEBUG_MESSAGES_TO_CONSOLE**: This is a boolean and can be ignored.
 - **whatisOTAType**: This string can be: "Incremental", "Reinstall". The name suggests it all.
