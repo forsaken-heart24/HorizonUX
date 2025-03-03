@@ -4,7 +4,7 @@
 
 **What’s poppin’, fam? Welcome to the wild world of HorizonUX!**
 
-- **Just a Lil’ Reminder**: That cute Genshin Impact character "Paimon"? Not mine, just some fire fan art I found on Google Images. Mad respect to the artist! 🎨✨
+- **Just a Lil’ Reminder**: That cute Genshin Impact character "Lynette"? Not mine, just some fire fan art I found on Google Images. Mad respect to the artist! 🎨✨
 
 - **What’s the 411?**: I’m out here trying to whip up some ultra-custom Samsung One UI vibes! This is an open-source adventure, still in the oven, so keep your eyes peeled for some spicy updates! 🔥🚀
 
