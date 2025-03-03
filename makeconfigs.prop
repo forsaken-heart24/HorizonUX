@@ -3,9 +3,9 @@
 
 # change values to your needs and run the script.
 
-# true means it's enabled,=false means it's disabled.
+# true means it's enabled, false means it's disabled.
 
-# fill-up those variables with "xxx" or "xx" to prevent build errors.
+# fill-up those blank variables to prevent build errors.
 
 # Thank you for using HorizonUX, please provide your feedback in our official chat!
 
@@ -138,7 +138,7 @@ TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES=false
 # this feature includes an prop level workaround that is used to avoid smoky distortion specifically to those LDAC Bluetooth earphones and DAC's under $30 (probably), this sets special re-sampling tweaks in the system level.
 TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER=false
 
-# this feature removes a file that is necessary for drm / ott platforms, please note that the widevine level will fallback to L3
+# this feature removes a file which is necessary for drm / ott platforms, please do note that the widevine level will fallback to L3
 # which will disable HD playbacks. DRM-protected apps might work after appling this patch but im not sure....
 TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER=false
 

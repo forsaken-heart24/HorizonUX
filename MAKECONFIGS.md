@@ -17,7 +17,7 @@
 
 ## Screen & Refresh Rate
 - **BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE**: Sets the default refresh rate (recommend 60Hz).
-- **BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES**: Toggles high refresh rate modes based on the default rate.
+- **BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES**: Set this to true if you want to change default refresh rate.
 
 ## Debugging & Performance
 - **TARGET_BUILD_IS_FOR_DEBUGGING**: Enables verbose logging for debugging, which impacts performance.
@@ -35,13 +35,17 @@
 
 ## Special Features
 - **TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED**: Adds fastbootd support to stock recovery.
-- **TARGET_INCLUDE_UNLIMITED_BACKUP**: Enables unlimited pictures backup to a specific app.
+- **TARGET_INCLUDE_UNLIMITED_BACKUP**: Enables unlimited pictures backup in a specific app.
 - **TARGET_INCLUDE_SAMSUNG_THEMING_MODULES**: Installs patched Samsung Goodlock modules.
+- **TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM**: Includes Spotify into the Alarm tones
+- **TARGET_FLOATING_FEATURE_INCLUDE_EASY_MODE**: Easy mode, for huge icons and things, specifically made for people(s) who has difficulty in reading
+- **TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON**: Disable this, useless thing ever made.
 
 ## Audio & Display
 - **TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER**: Fixes LDAC audio distortion for lower-end Bluetooth audio devices.
 - **DISABLE_DISPLAY_REFRESH_RATE_OVERRIDE**: Disables refresh rate override during media playback.
 - **TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES**: Toggles Dolby audio on games. (only if supported + if the hw is capable of doing this)
+- **DISABLE_DYNAMIC_RANGE_COMPRESSION**: Dynamic range compression (DRC) is a process that reduces the difference between the loudest and quietest parts of an audio signal.
 
 ## Additional Customization
 - **TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE**: Adjusts launcher animation for different performance tiers (LowEnd, HighEnd, etc.).
@@ -53,6 +57,11 @@
 
 ## Miscellaneous 
 - **DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION**: Disables Samsung's ASKS signature verifier, it doesn't have to do anything with the built-in signature verification, only used for samsung applications.
+- **TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES**: Can be used to patch bluetooth libs for weird devices.
+- **TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS**: Adds rounded corners to the pip window.
+
+## Advanced, enable or disable these with your own concern
+- **TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER**: This feature removes a file which is necessary for drm / ott platforms, please do note that the widevine level will fallback to L3 which will disable HD playbacks. DRM-protected apps might work after appling this patch but im not sure.
 
 ## Advanced
 - **MY_KEYSTORE_ALIAS**: To be filled by the builder with their "Keystore Alias"
