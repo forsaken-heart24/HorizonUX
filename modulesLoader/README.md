@@ -1,3 +1,5 @@
+![emergency_food](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/emergency_food.png?raw=true)
+
 # To compile mainModuleLoader.c:
 - ```gcc -I../include ../include/horizonutils.c ../include/modulesLoader.c mainModuleLoader.c -o mainModuleLoader.elf```
 

@@ -1,4 +1,4 @@
-![emergency_food](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/emergency_food.jpeg?raw=true)
+![emergency_food](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/emergency_food.png?raw=true)
 
 # Building / Modifying Your Own Stock-Based MOD
 
