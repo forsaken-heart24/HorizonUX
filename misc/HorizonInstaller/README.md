@@ -17,5 +17,10 @@ gcc -I../include ../include/HorizonInstaller.c ../include/horizonux.c ../include
 - **OUTFD**: WARNING! IF YOU CHANGE THIS, THE TEXTS WON'T FUCKING PRINT.
 - **ZIPFILE**: Don't change this, this is the path string of the installation package.
 
-## Please do note that you shouldn't change any variables that are not mentioned here unless yk anything about it.
+## Variables to edit before compiling this source (include/HorizonInstaller.h):
+- **partitionFlashables**: This is a string value, which is used to tell the program on what to flash.
+- **partitionBlockPaths**: This is also a string value and it should be in a order from **partitionFlashables**
+- **filesToExtractFromTheZip**: Again, string value and all it does is just extract necessary shits
+- **supportedDevicesList**: for detecting your device model.
 
+## Please do note that you shouldn't change any variables that are not mentioned here unless yk anything about it.

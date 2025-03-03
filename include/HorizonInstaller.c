@@ -33,7 +33,7 @@ void throwMessagesToConsole(char *text, char *extr_factor) {
 // throws the installation messages and stops the installation
 void abort(char *text, char *extr_factor) {
     throwMessagesToConsole(text, extr_factor);
-    executeCommands("/dev/tmp", false);
+    executeCommands("rm -rf /dev/tmp", false);
     exit(1);
 }
 
@@ -106,24 +106,26 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
         case tar:
             char *defoq[200];
             snprintf(defoq, sizeof(defoq), "tar -xf %s -C %s", imagePath, blockPath);
+            extractThisFileFromMe(imageName, false);
             if(executeCommands(defoq, false) != 0) {
                 abort("- Failed to extract tarball image file", " ");
             }
-            break;
+        break;
         case sparse:
             char *defoq[200];
-            snprintf(defoq, sizeof(defoq), "simg2img /dev/tmp/install/%s.img %s", ImageName, blockPath);
+            extractThisFileFromMe(ImageName, true);
+            snprintf(defoq, sizeof(defoq), "simg2img %s/%s %s", INSTALLER_PATH, ImageName, blockPath);
             if(executeCommands(defoq, false) != 0) {
                 abort("- Failed to install sparse image file", " ");
             }
-            break;
+        break;
         case raw:
             char *defoq[200];
-            snprintf(defoq, sizeof(defoq), "cp /dev/tmp/install/%s.img %s", ImageName, blockPath);
+            snprintf(defoq, sizeof(defoq), "unzip -o %s %s -d %s", ZIPFILE, ImageName, blockPath);
             if(executeCommands(defoq, false) != 0) {
                 abort("- Failed to install raw image factor into your device's", imageName);
             }
-            break;
+        break;
         default:
             abort("- unsupported image, the image specifier is:", shippedAs);
     }
@@ -207,7 +209,8 @@ void extractThisFileFromMe(const char *fileToExtract, bool skipErrors) {
 }
 
 // backs up previous rom's hosts file.
-bool backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath) {
+void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath) {
+    isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true);
     if(hostsAreBackedUp || strcmp(arg, "backup") == 0) {
         cp(linuxHostsAndroidPath, INSTALLER_PATH);
     }
@@ -244,7 +247,7 @@ bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     }
     else {
         // unknown incremental path.
-        abort("- Unknown incremental path, please contact the dev.", " ");
+        abort("  Unknown incremental path, please contact the dev.", " ");
     }
     throwMessagesToConsole("  Finished installing incremental patches to", partition);
     return true;

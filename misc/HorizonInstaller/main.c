@@ -41,7 +41,7 @@ int main(int argc, const char *argv[]) {
             }
             char *systemHostsFilePath = "/system/system/etc/hosts";
         }
-        cp(systemHostsFilePath, "/dev/tmp/install/bkp_hosts");
+        backupHostsFileFromCurrentSystem(backup, systemHostsFilePath);
     }
     throwMessagesToConsole("#########################################################", " ");
     throwMessagesToConsole("   _  _     _   _            _                _   ___  __", " ");
@@ -55,6 +55,7 @@ int main(int argc, const char *argv[]) {
     throwMessagesToConsole("Version   :", version);
     throwMessagesToConsole("Codename  :", codename);
     throwMessagesToConsole("Present ROM Build ID  :", getPreviousSystemBuildID(systemBuildProp));
+    throwMessagesToConsole("This ROM Build ID  :", getPreviousSystemBuildID(systemBuildProp));
     throwMessagesToConsole("###############################################", " ");
     throwMessagesToConsole(" - Installing packages...", " ");
     throwMessagesToConsole("   Please wait, it might take longer than usual...", " ");
@@ -64,15 +65,20 @@ int main(int argc, const char *argv[]) {
 
     // later bro 💔
     if(strcmp(whatisOTAType, "Incremental") == 0) {
-        verifyHorizonSystemIntegrity();
+        //verifyHorizonSystemIntegrity();
         char *rrrrrrrrrrrr[] = {"system", "vendor", "product", "prism"};
-        char *genericPartitionPaths[] = {"/vendor", "/product", "/prism"};
+        char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product", "/prism"};
+        for(int i = 0; i < sizeof(genericPartitionPaths) / sizeof(genericPartitionPaths[0]); i++) {
+            isThisPartitionMounted(genericPartitionPaths[i], true);
+        }
         for(int i = 0; i < sizeof(rrrrrrrrrrrr) / sizeof(rrrrrrrrrrrr); i++) {
             extractThisFileFromMe(rrrrrrrrrrrr[i], true);
             extractThisFileFromMe(rrrrrrrrrrrr[i], true);
-            // bool copyIncrementalFiles(const char *partitionPath, char *partition)
             if(i = 0) {
                 copyIncrementalFiles(systemDir, rrrrrrrrrrrr[i]);
+            }
+            else if(i = 1) {
+                copyIncrementalFiles("/vendor", rrrrrrrrrrrr[i]);
             }
             else {
                 copyIncrementalFiles(genericPartitionPaths[i], rrrrrrrrrrrr[i]);
@@ -80,20 +86,15 @@ int main(int argc, const char *argv[]) {
         }
     }
     else if(strcmp(whatisOTAType, "Reinstall") == 0) {
-        verifyHorizonSystemIntegrity();
+        //verifyHorizonSystemIntegrity();
         for(int i = 0; i < sizeof(partitionFlashables) / sizeof(partitionFlashables[0]); i++) {
-            isThisPartitionMounted(partitionFlashables[i], true) || abort("Failed to mount:", partitionFlashables[i]);
+            installGivenDiskImageFile(INSTALLER_PATH, partitionBlockPaths[i], partitionFlashables[i]);
         }
     }
     else {
         throwMessagesToConsole("- Can't determine whether to flash the whole rom or just patch the necessary things, skipping the installation..", " ");
         exit(0);
     }
-
-    if(hostsAreBackedUp) {
-        isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true);
-        cp("/dev/tmp/install/bkp_hosts", systemHostsFilePath);
-    }
+    // let's restore the hosts file
+    backupHostsFileFromCurrentSystem(restore, systemHostsFilePath);
 }
-
-// bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *ImageName)
