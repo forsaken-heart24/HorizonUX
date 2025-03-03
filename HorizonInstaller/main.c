@@ -7,24 +7,25 @@ bool hostsAreBackedUp = false;
 const char *whatisOTAType = "Incremental";
 const char *LOG4HORIZONFILE = "/sdcard/modulesLoader.log";
 const char *INSTALLER_PATH = "/dev/tmp/install";
-const char *maintainer = "Luna";
-const char *version = "v1.0";
-const char *codename = "Birds";
-char *OUTFD = NULL;
+char *maintainer = "Luna";
+char *version = "v1.0";
+char *codename = "Birds";
 char *ZIPFILE = NULL;
+char OUTFD[256];
 
 int main(int argc, const char *argv[]) {
-    ZIPFILE = argv[4];
+    char *systemDir = "/system/system";
+    char *systemBuildProp = "/system/system/build.prop";
+    char *systemHostsFilePath = "/system/system/etc/hosts";
+    ZIPFILE = (char *)argv[4];
     snprintf(OUTFD, sizeof(OUTFD), "/proc/self/fd/%s", argv[3]);
     if(isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true)) {
         FILE *systemBuildProperty;
         systemBuildProperty = fopen("/system/system/build.prop", "r");
-        char *systemDir = "/system/system";
-        char *systemBuildProp = "/system/system/build.prop";
         if(!systemBuildProperty) {
             systemBuildProperty = fopen("/system_root/system/build.prop", "r");
             if(!systemBuildProperty) {
-                abort("- Failed to remount /system partition..", " ");
+                abort__("- Failed to remount /system partition..", " ");
             }
             char *systemDir = "/system_root/system";
             char *systemBuildProp = "/system_root/system/build.prop";
@@ -37,11 +38,10 @@ int main(int argc, const char *argv[]) {
             throwMessagesToConsole("- Attempting to open hosts again...", " ");
             linuxHostsFileFromEtc = fopen("/system/system/etc/hosts", "r");
             if(!linuxHostsFileFromEtc) {
-                abort("- Failed to open hosts file, please try again", " ");
+                abort__("- Failed to open hosts file, please try again", " ");
             }
-            char *systemHostsFilePath = "/system/system/etc/hosts";
         }
-        backupHostsFileFromCurrentSystem(backup, systemHostsFilePath);
+        backupHostsFileFromCurrentSystem("backup", systemHostsFilePath);
     }
     throwMessagesToConsole("#########################################################", " ");
     throwMessagesToConsole("   _  _     _   _            _                _   ___  __", " ");
@@ -96,5 +96,5 @@ int main(int argc, const char *argv[]) {
         exit(0);
     }
     // let's restore the hosts file
-    backupHostsFileFromCurrentSystem(restore, systemHostsFilePath);
+    backupHostsFileFromCurrentSystem("restore", systemHostsFilePath);
 }

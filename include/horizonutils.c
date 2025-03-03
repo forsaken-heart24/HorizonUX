@@ -19,7 +19,7 @@ void error_print_extended(const char *message, const char *additional_args) {
 
 bool erase_file_content(const char *__file) {
     FILE *fileConstantAgain = fopen(__file, "w");
-    if(fclose(fileConstant) == 0) {
+    if(fclose(fileConstantAgain) == 0) {
         return true;
     }
     return false;
@@ -43,7 +43,7 @@ int executeCommands(const char *command, bool requiresOutput) {
 
 int executeScripts(char *__script__file, char *__args, bool requiresOutput) {
     if(strstr(__args, ";") || strstr(__args, "&&")) {
-        error_print("executeScripts(): Nice try diddy!", true);
+        error_print("executeScripts(): Nice try diddy!");
         exit(1);
     }
     char fuckingFileFuckingPath[256];
@@ -52,7 +52,7 @@ int executeScripts(char *__script__file, char *__args, bool requiresOutput) {
     if(requiresOutput) {
         char fuckingBufferFuckingShit[1024];
         while(fgets(fuckingBufferFuckingShit, sizeof(fuckingBufferFuckingShit), scriptWithArguments) != NULL) {
-            error_print("executeScripts():", fuckingBufferFuckingShit);
+            error_print_extended("executeScripts():", fuckingBufferFuckingShit);
         }
     }
     int __exit_status = pclose(scriptWithArguments);

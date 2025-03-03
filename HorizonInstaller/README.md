@@ -2,8 +2,8 @@
 
 # To compile:
 ```
-cd HorizonUX
-gcc -I../include ../include/HorizonInstaller.c ../include/horizonux.c ../include/horizonutils.c ./misc/HorizonInstaller/main.c -o updater-script
+cd HorizonUX/HorizonInstaller
+gcc -I../include ../include/horizonutils.c ../include/horizonux.c ../include/HorizonInstaller.c ./main.c -o updater-script
 ```
 
 ## Variables to edit before compiling this source (misc/HorizonInstaller/main.c):
