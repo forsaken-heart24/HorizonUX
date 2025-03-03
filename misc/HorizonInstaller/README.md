@@ -18,3 +18,4 @@ gcc -I../include ../include/HorizonInstaller.c ../include/horizonux.c ../include
 - **ZIPFILE**: Don't change this, this is the path string of the installation package.
 
 ## Please do note that you shouldn't change any variables that are not mentioned here unless yk anything about it.
+
