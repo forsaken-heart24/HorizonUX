@@ -105,21 +105,21 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
     switch(shippedAs) {
         case tar:
             char *defoq[200];
-            snprintf(defoq, sizeof(defoq), "tar -xf %s -C /dev/tmp/install/%s.img", ImageName);
+            snprintf(defoq, sizeof(defoq), "tar -xf %s -C %s", imagePath, blockPath);
             if(executeCommands(defoq, false) != 0) {
                 abort("- Failed to extract tarball image file", " ");
             }
             break;
         case sparse:
             char *defoq[200];
-            snprintf(defoq, sizeof(defoq), "simg2img /dev/tmp/install/%s.img %s", ImageName, imagePath);
+            snprintf(defoq, sizeof(defoq), "simg2img /dev/tmp/install/%s.img %s", ImageName, blockPath);
             if(executeCommands(defoq, false) != 0) {
                 abort("- Failed to install sparse image file", " ");
             }
             break;
         case raw:
             char *defoq[200];
-            snprintf(defoq, sizeof(defoq), "cp /dev/tmp/install/%s.img %s", ImageName, imagePath);
+            snprintf(defoq, sizeof(defoq), "cp /dev/tmp/install/%s.img %s", ImageName, blockPath);
             if(executeCommands(defoq, false) != 0) {
                 abort("- Failed to install raw image factor into your device's", imageName);
             }
@@ -130,24 +130,26 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
     return true;
 }
 
-void string_case(const char *option, const char *input) {
+char stringCase(const char *option, const char *input) {
     if(!option || !input) {
-        return;
+        return 1;
     }
-    if (strncasecmp(option, "--lower", 7) == 0 || strncasecmp(option, "-l", 2) == 0) {
+    if(strncasecmp(option, "lower", 7) == 0) {
         while(*input) {
             putchar(tolower((unsigned char)*input));
             input++;
         }
+        return input;
     }
-    else if(strncasecmp(option, "--upper", 7) == 0 || strncasecmp(option, "-u", 2) == 0) {
+    else if(strncasecmp(option, "upper", 7) == 0) {
         while(*input) {
             putchar(toupper((unsigned char)*input));
             input++;
         }
+        return input;
     }
     else {
-        printf("%s", input);
+        return input;
     }
 }
 
@@ -196,10 +198,54 @@ const char *getPreviousSystemBuildID(const char *filepath) {
 
 // extracts sh from the zip file.
 // unzip -o "$ZIPFILE" "$file" -d "${INSTALLER}/"
-void extractThisFileFromMe(const char *fileToExtract) {    
+void extractThisFileFromMe(const char *fileToExtract, bool skipErrors) {    
     char *ykitsnotthesameasitwas[250];
     snprintf(ykitsnotthesameasitwas, sizeof(ykitsnotthesameasitwas), "unzip -o \"%s\" \"%s\" -d \"%s\" ", ZIPFILE, fileToExtract, INSTALLER_PATH);
-    if(executeCommands(ykitsnotthesameasitwas) != 0) {
+    if(skipErrors || executeCommands(ykitsnotthesameasitwas) != 0) {
         abort("- Failed to extract requested file from the zipfile, please try again...", " ");
     }
+}
+
+// backs up previous rom's hosts file.
+bool backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath) {
+    if(hostsAreBackedUp || strcmp(arg, "backup") == 0) {
+        cp(linuxHostsAndroidPath, INSTALLER_PATH);
+    }
+    else if(hostsAreBackedUp && strcmp(arg, "restore") == 0) {
+        cp(INSTALLER_PATH, linuxHostsAndroidPath);
+    }
+}
+
+void verifyHorizonSystemIntegrity() {
+    return;
+}
+
+bool copyIncrementalFiles(const char *partitionPath, char *partition) {
+    throwMessagesToConsole("- Installing incremental patches to", partition);
+    if(strcmp(partition, stringCase("lower", "system")) == 0) {
+        char *content[450];
+        snprinf(content, sizeof(content), "%s/system/system/", INSTALLER_PATH);
+        cp(content, partitionPath);
+    }
+    else if(strcmp(partition, stringCase("lower", "vendor")) == 0) {
+        char *content[450];
+        snprinf(content, sizeof(content), "%s/vendor", INSTALLER_PATH);
+        cp(content, partitionPath);
+    }
+    else if(strcmp(partition, stringCase("lower", "product")) == 0) {
+        char *content[450];
+        snprinf(content, sizeof(content), "%s/product", INSTALLER_PATH);
+        cp(content, partitionPath);
+    }
+    else if(strcmp(partition, stringCase("lower", "prism")) == 0) {
+        char *content[450];
+        snprinf(content, sizeof(content), "%s/product", INSTALLER_PATH);
+        cp(content, partitionPath);
+    }
+    else {
+        // unknown incremental path.
+        abort("- Unknown incremental path, please contact the dev.", " ");
+    }
+    throwMessagesToConsole("  Finished installing incremental patches to", partition);
+    return true;
 }

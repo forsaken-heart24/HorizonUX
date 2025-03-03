@@ -13,11 +13,11 @@ extern bool WRITE_DEBUG_MESSAGES_TO_CONSOLE;
 extern bool hostsAreBackedUp;
 extern const char *LOG4HORIZONFILE;
 extern const char *INSTALLER_PATH;
-extern char *OUTFD;
-extern const char *author;
+extern const char *maintainer;
 extern const char *version;
 extern const char *codename;
-
+extern const char *whatisOTAType;
+extern char *OUTFD;
 
 // functions
 bool verifyInstallationType(const char *requiredType, const char *zipPackage);
@@ -28,18 +28,16 @@ void setupRecoveryCommandFile();
 bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMountit);
 bool getRomProperties(char *requiredProperty, char *requiredPropertyValue);
 bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *ImageName);
-void string_case(const char *option, const char *input);
+char stringCase(const char *option, const char *input);
 int cp(const char *source, const char *destination);
 const char *getPreviousSystemBuildID(const char *filepath);
+void extractThisFileFromMe(const char *fileToExtract, bool skipErrors);
+bool backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath);
+void verifyHorizonSystemIntegrity();
+bool copyIncrementalFiles(const char *partitionPath, char *partition);
 
-// dawn - To be filled by the fucking maintainer before compiling.
-const char *DynamicPartitionFlashables[] = {
-    "",
-    "",
-    ""
-};
-
-const char *NonDynamicPartitionFlashables[] = {
+// dawn - To be filled by the maintainer before compiling.
+const char *partitionFlashables[] = {
     "",
     "",
     ""
@@ -49,6 +47,11 @@ const char *filesToExtractFromTheZip[] = {
     "",
     "",
     ""
-}
+};
+
+const char *supportedDevicesList[] = {
+    "",
+    ""
+};
 
 #endif
