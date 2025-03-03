@@ -12,7 +12,7 @@
 
 * **Thanks for dropping by, You’re a true legend! 💖✨**
 
-* <a href="https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/HOWTOGUIDE.md">**If you want to build or add any assert from this repo, please click this blue text**</a>
+* **If you want to build or add any assert from this repo, please check this out :- <a href="https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/HOWTOGUIDE.md">How to modify your stock rom**</a>
 
 * **Here's our contributors list, please check these guys out! - <a href="https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/CONTRIBUTORS.md">Lovely contributors**</a>
 
