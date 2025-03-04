@@ -5,36 +5,42 @@
 // prevents bastards from running any malicious commands
 // this searches some sensitive strings to ensure that the script is safe
 // please verify your scripts before running it PLEASE 🙏
-int searchBlockListedStrings(char *__filename, char *__search_str) {
+int searchBlockListedStrings(const char *__filename, const char *__search_str) {
     char haystack[1028];
     FILE *file = fopen(__filename, "r");
-    if(file != NULL) {
-        while(fgets(haystack, sizeof(haystack), file)) {
-            if(strstr(haystack, __search_str)) {
-                fclose(file);
-                error_print("searchBlockListedStrings(): Malicious code execution was detected in the script file", true);
-                return 1;
-            }
-        }
-        fclose(file);
-        return 0;
+    if(!file) {
+        error_print("searchBlockListedStrings(): Failed to open file.");
+        return 1;
     }
-    return 1;
+    while(fgets(haystack, sizeof(haystack), file) != NULL) {
+        haystack[strcspn(haystack, "\n")] = '\0';
+        if(strstr(haystack, __search_str) != NULL) {
+            fclose(file);
+            error_print("searchBlockListedStrings(): Malicious code execution detected in the script file.");
+            return 1;
+        }
+    }
+    fclose(file);
+    return 0;
 }
 
 // yet another thing to protect good peoples from getting fucked
 // this ensures that the chosen is a bash script and if it's not one
 // it'll return 1 to make the program to stop executing that bastard
-int verifyScriptStatusUsingShell(char *__filename) {
-    char explainNowBitch[1028];
-    snprintf(explainNowBitch, sizeof(explainNowBitch), "file %s | grep -q 'ASCII text executable'", __filename);
-    int returnState = executeCommands(explainNowBitch, false);
-    return returnState;
+int verifyScriptStatusUsingShell(const char *__filename) {
+    char command[150];
+    int written = snprintf(command, sizeof(command), "file \"%s\" | grep -q 'ASCII text executable'", __filename);
+    if(written < 0 || written >= sizeof(command)) {
+        error_print("verifyScriptStatusUsingShell(): Command truncation detected.");
+        return 1;
+    }
+    return executeCommands(command, false);
 }
 
-int checkBlocklistedStringsNChar(char *__haystack) {
+// Checks if a given string contains blacklisted substrings
+int checkBlocklistedStringsNChar(const char *__haystack) {
     // Thnx Pranav 🩷
-    char *blocklistedStrings[] = {
+    static const char *blocklistedStrings[] = {
         "xbl_config",
         "xbl_config_a",
         "xbl_config_b",
@@ -75,36 +81,40 @@ int checkBlocklistedStringsNChar(char *__haystack) {
         "/vendor/bin/dd",
         "dd"
     };
-    int blocklistedStringArraySize = sizeof(blocklistedStrings) / sizeof(blocklistedStrings[0]);
-    int return_status;
-    for(int i = 0; i < blocklistedStringArraySize; i++) {
-        return_status = searchBlockListedStrings(__haystack, blocklistedStrings[i]);
+    size_t blocklistedStringArraySize = sizeof(blocklistedStrings) / sizeof(blocklistedStrings[0]);
+    for(size_t i = 0; i < blocklistedStringArraySize; i++) {
+        if(searchBlockListedStrings(__haystack, blocklistedStrings[i]) == 1) {
+            return 1;
+        }
     }
-    return return_status;
+    return 0;
 }
 
-
+// Executes scripts from the module directory
 bool executeScriptsFromTheModuleDirectories() {
     struct dirent *dirptr;
     DIR *base_dir = opendir("/data/hux/mods");
     if(!base_dir) {
-        error_print("executeScriptsFromTheModuleDirectories(): Failed to open base module directory.", true);
-        return 1;
+        error_print("executeScriptsFromTheModuleDirectories(): Failed to open base module directory.");
+        return false;
     }
     while((dirptr = readdir(base_dir)) != NULL) {
-        if(!dirptr || !dirptr->d_name || strcmp(dirptr->d_name, ".") == 0 || strcmp(dirptr->d_name, "..") == 0) {
-            error_print("Skipping directory shortcuts...", true);
+        if(!dirptr) {
+            error_print("executeScriptsFromTheModuleDirectories(): Failed to read directory entry.");
             continue;
         }
-        char alright[2048];
-        snprintf(alright, sizeof(alright), "/data/hux/mods/%s/start.sh", dirptr->d_name);
-        if(verifyScriptStatusUsingShell(alright) == 0 && checkBlocklistedStringsNChar(alright) == 0) {
-            if(executeScripts(alright, NULL, true) != 0) {
-                error_print("executeScriptsFromTheModuleDirectories(): Failed to run ", false);
-                error_print(alright, true);
+        if(strcmp(dirptr->d_name, ".") == 0 || strcmp(dirptr->d_name, "..") == 0) {
+            error_print("Skipping directory shortcuts...");
+            continue;
+        }
+        char scriptPath[500];
+        snprintf(scriptPath, sizeof(scriptPath), "/data/hux/mods/%s/start.sh", dirptr->d_name);
+        if(verifyScriptStatusUsingShell(scriptPath) == 0 && checkBlocklistedStringsNChar(scriptPath) == 0) {
+            if(executeScripts(scriptPath, NULL, true) != 0) {
+                error_print_extended("executeScriptsFromTheModuleDirectories(): Failed to run", scriptPath);
             }
         }
     }
     closedir(base_dir);
-    return 0;
+    return true;
 }

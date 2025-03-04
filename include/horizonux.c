@@ -2,39 +2,31 @@
 #include "horizonutils.h"
 
 bool isTheDeviceBootCompleted() {
-    //FILE *getprop = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
     FILE *getprop = popen("getprop sys.boot_completed", "r");
-    // allocate if only it's required
-    char content[4];
-    fgets(content, sizeof(content), getprop);
+    if(!getprop) {
+        error_print("isTheDeviceBootCompleted(): Failed to execute command.");
+        return false;
+    }
+    char content[4] = {0};
+    if(fgets(content, sizeof(content), getprop) == NULL) {
+        pclose(getprop);
+        return false;
+    }
     pclose(getprop);
     content[strcspn(content, "\n")] = '\0';
     return strcmp(content, "1") == 0;
 }
 
 bool isTheDeviceisTurnedOn() {
-    //FILE *fp = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
     FILE *fp = popen("dumpsys power | grep 'Display Power' | awk '{print $3}' | cut -c 7-10", "r"); 
-    char buffer[4];
-    fgets(buffer, sizeof(buffer), fp);
-    pclose(fp);
-    if(strstr(buffer, "OFF") == 0) {
-        return true;
-    }
-    else {
+    if (!fp) {
+        error_print("isTheDeviceisTurnedOn(): Failed to execute command.");
         return false;
     }
-}
-
-int getPeakRefreshRate() {
-    //FILE *fp = popen("/mnt/c/Users/Luna/Desktop/dumpsys.sh", "r"); intended for debugging purposes.
-    FILE *fp = popen("dumpsys 2>/dev/null | grep --line-buffered refresh-rate | head -n 1 | awk '{print $3}' | cut -d'.' -f1", "r");
-    char buffer[50];
+    char buffer[4] = {0};
     fgets(buffer, sizeof(buffer), fp);
     pclose(fp);
-    int refreshRate = 1;
-    refreshRate = strtof(buffer, NULL);
-    return refreshRate;
+    return (strstr(buffer, "OFF") == NULL);
 }
 
 int isPackageInstalled(const char *packageName) {

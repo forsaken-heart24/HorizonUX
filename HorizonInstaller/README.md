@@ -16,8 +16,6 @@ gcc -I../include ../include/horizonutils.c ../include/horizonux.c ../include/Hor
 - **codename**: same as the version.
 - **OUTFD**: WARNING! IF YOU CHANGE THIS, THE TEXTS WON'T DISPLAY
 - **ZIPFILE**: Don't change this, this is the path string to the installation package.
-
-## Variables to edit before compiling this source (include/HorizonInstaller.h):
 - **partitionFlashables**: This is a string value, which is used to tell the program on what to flash.
 - **partitionBlockPaths**: This is also a string value and it should be in a order from **partitionFlashables**
 - **filesToExtractFromTheZip**: Again, string value and all it does is just extract necessary things

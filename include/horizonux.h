@@ -10,8 +10,8 @@
 // FUCKING function FUCKING declarations.
 bool isTheDeviceBootCompleted();
 bool isTheDeviceisTurnedOn();
-int getPeakRefreshRate();
 int isPackageInstalled(const char *packageName);
 int sendToastMessages(const char *service, const char *message);
+int manageBlocks(const char *infile, const char *outfile, size_t block_size, size_t count);
 
 #endif

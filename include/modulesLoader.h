@@ -1,17 +1,15 @@
 #ifndef MODULESLOADER_H
 #define MODULESLOADER_H
 
-#include <string.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <dirent.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
+#include <stdbool.h>
 
-int searchBlockListedStrings(char *__filename, char *__search_str);
-int verifyScriptStatusUsingShell(char *__filename);
-int checkBlocklistedStringsNChar(char *__haystack);
+int searchBlockListedStrings(const char *__filename, const char *__search_str);
+int verifyScriptStatusUsingShell(const char *__filename);
+int checkBlocklistedStringsNChar(const char *__haystack);
 bool executeScriptsFromTheModuleDirectories();
 
 #endif

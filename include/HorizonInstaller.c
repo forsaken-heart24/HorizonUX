@@ -2,19 +2,18 @@
 
 // returns bool acc. to the requested type.
 bool verifyInstallationType(const char *requiredType, const char *zipPackage) {
-    if(strstr(requiredType, zipPackage) == 0) {
-        return true;
-    }
-    return false;
+    return (strstr(requiredType, zipPackage) != NULL);
 }
 
-// returns true if thr shit is not encrypted/
+// returns true if the storage is not encrypted.
 bool checkInternalStorageStatus() {
     DIR *iPlayedTheseGamesBefore = opendir("/data/media");
     if(!iPlayedTheseGamesBefore) {
+        consoleLog("checkInternalStorageStatus(): Unable to open /data/media/, userdata is likely encrypted.", " ");
         return false;
     }
     closedir(iPlayedTheseGamesBefore);
+    consoleLog("checkInternalStorageStatus(): yayyyyyy, the userdata is not encrypted!", " ");
     return true;
 }
 
@@ -22,40 +21,38 @@ bool checkInternalStorageStatus() {
 void throwMessagesToConsole(char *text, char *extr_factor) {
     char combine[1028];
     snprintf(combine, sizeof(combine), "%s %s\n", text, extr_factor);
+    
     FILE *OUTFD__ = fopen(OUTFD, "w");
     if(!OUTFD__) {
+        consoleLog("throwMessagesToConsole(): Unable to open OUTFD, closing the console!", " ");
         exit(1);
     }
     fprintf(OUTFD__, "%s", combine);
     fclose(OUTFD__);
 }
 
-// throws the installation messages and stops the installation
+// throws installation messages and stops installation
 void abort__(char *text, char *extr_factor) {
     throwMessagesToConsole(text, extr_factor);
     executeCommands("rm -rf /dev/tmp", false);
     exit(1);
 }
 
-// for setting up recovery command file (i'm exploiting it)
+// sets up recovery command file
 void setupRecoveryCommandFile() {
     FILE *rcmFile = fopen("/cache/recovery/command", "w");
-    if(!hostsAreBackedUp) {
-        fputs("--data_resizing", rcmFile);
+    if(!rcmFile) {
+        error_print("setupRecoveryCommandFile(): Failed to open recovery command file.");
+        return;
     }
-    else {
-        fputs("--delete_apn_changes", rcmFile);
-    }
-    executeCommands("chown 1000 /cache/recovery/command", false);
-    executeCommands("chgrp 1000 /cache/recovery/command", false);
-    executeCommands("chmod 644 /cache/recovery/command", false);
+    fputs(hostsAreBackedUp ? "--delete_apn_changes" : "--data_resizing", rcmFile);
     fclose(rcmFile);
 }
 
-// usage: isThisPartitionMounted("/system"); if it's mounted it'll return true; otherwise false (failed or it's not mounted)
+// checks if partition is mounted
 bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMountit) {
     FILE *mounts = fopen("/proc/mounts", "r");
-    if(!mounts) {  // Check if fopen() failed
+    if(!mounts) {
         abort__("Failed to open /proc/mounts", " ");
         return false;
     }
@@ -67,7 +64,7 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
                 char dupContent[128];
                 snprintf(dupContent, sizeof(dupContent), "mount -o rw,remount %s", baselinePartitionName);
                 if(executeCommands(dupContent) != 0) {
-                    abort__("- Failed to re-mount the given partition", " ");
+                    abort__("- Failed to re-mount partition", " ");
                     return false;
                 }
             }
@@ -78,13 +75,14 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
     return false;
 }
 
-// you get it
+// checks ROM properties
 bool getRomProperties(char *requiredProperty, char *requiredPropertyValue) {
     char content[200];
     char combinedBullshit[200];
     FILE *romPropertyFile = fopen("/dev/tmp/install/rom.prop", "r");
     if(!romPropertyFile) {
-        exit(1);
+        consoleLog("getRomProperties(): Failed to open ROM config file", "(/dev/tmp/install/rom.prop)");
+        return false;
     }
     snprintf(combinedBullshit, sizeof(combinedBullshit), "%s=%s", requiredProperty, requiredPropertyValue);
     while(fgets(content, sizeof(content), romPropertyFile) != NULL) {
@@ -142,25 +140,28 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
     return true;
 }
 
+// changes string case
 char *stringCase(const char *option, const char *input) {
     if(!option || !input) {
+        consoleLog("stringCase(): Missing argument", " ");
         return NULL;
     }
     size_t len = strlen(input);
     char *output = malloc(len + 1);
     if(!output) {
+        consoleLog("stringCase(): Memory allocation failed", " ");
         return NULL;
     }
-    if(strncasecmp(option, "lower", 6) == 0) {
+    if(strcasecmp(option, "lower") == 0) {
         for(size_t i = 0; i < len; i++) {
             output[i] = tolower((unsigned char)input[i]);
         }
-    } 
-    else if(strncasecmp(option, "upper", 6) == 0) {
+    }
+    else if(strcasecmp(option, "upper") == 0) {
         for(size_t i = 0; i < len; i++) {
             output[i] = toupper((unsigned char)input[i]);
         }
-    } 
+    }
     else {
         strncpy(output, input, len);
     }
@@ -172,12 +173,12 @@ char *stringCase(const char *option, const char *input) {
 int cp(const char *source, const char *destination) {
     FILE *src = fopen(source, "rb");
     if(!src) {
-        perror("Error opening source file");
+        consoleLog("cp(): Error opening source file", " ");
         return 1;
     }
     FILE *dest = fopen(destination, "wb");
     if(!dest) {
-        perror("Error opening destination file");
+        consoleLog("cp(): Error opening destination file", " ");
         fclose(src);
         return 1;
     }
@@ -226,50 +227,53 @@ void extractThisFileFromMe(const char *fileToExtract, bool skipErrors) {
 void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath) {
     isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true);
     if(hostsAreBackedUp || strcmp(arg, "backup") == 0) {
-        cp(linuxHostsAndroidPath, INSTALLER_PATH);
+        consoleLog("backupHostsFileFromCurrentSystem(): Backing up the host file from", (char *)linuxHostsAndroidPath);
+        if(cp(linuxHostsAndroidPath, INSTALLER_PATH) == 1) {
+            throwMessagesToConsole("backupHostsFileFromCurrentSystem(): Failed to backup the host file, if you have any issues on connecting to the internet, please do a wipe data", " ");
+        }
+
     }
     else if(hostsAreBackedUp && strcmp(arg, "restore") == 0) {
-        cp(INSTALLER_PATH, linuxHostsAndroidPath);
+        consoleLog("backupHostsFileFromCurrentSystem(): Restoring the previously backed up host file to", (char *)linuxHostsAndroidPath);
+        char hostsPath[256];
+        snprintf(hostsPath, sizeof(hostsPath), "%s/hosts", INSTALLER_PATH);
+        if(cp(hostsPath, linuxHostsAndroidPath) == 1) {
+            throwMessagesToConsole("backupHostsFileFromCurrentSystem(): Failed to restore the host file, if you have any issues on connecting to the internet, please do a wipe data", " ");
+        }
     }
 }
 
 bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     throwMessagesToConsole("- Installing incremental patches to", partition);
+    char content[450];
     if(strcmp(partition, "system") == 0) {
-        char content[450];
         snprintf(content, sizeof(content), "%s/system/system/", INSTALLER_PATH);
-        cp(content, partitionPath);
     }
     else if(strcmp(partition, "vendor") == 0) {
-        char content[450];
         snprintf(content, sizeof(content), "%s/vendor", INSTALLER_PATH);
-        cp(content, partitionPath);
     }
     else if(strcmp(partition, "product") == 0) {
-        char content[450];
         snprintf(content, sizeof(content), "%s/product", INSTALLER_PATH);
-        cp(content, partitionPath);
     }
     else if(strcmp(partition, "prism") == 0) {
-        char content[450];
         snprintf(content, sizeof(content), "%s/product", INSTALLER_PATH);
-        cp(content, partitionPath);
     }
     else {
         // unknown incremental path.
         abort__("  Unknown incremental path, please contact the dev.", " ");
     }
+    if(cp(content, partitionPath) == 1) {
+        abort__("Failed to apply Incremental patches, please try again or report this to the maintainer of this device", " ");
+    }
     throwMessagesToConsole("  Finished installing incremental patches to", partition);
     return true;
 }
 
+// logs to console
 int consoleLog(char *text, char *extr_factor) {
-    if(WRITE_DEBUG_MESSAGES_TO_CONSOLE == true) {
-        throwMessagesToConsole(text, extr_factor);
-    }
-    else {        
-        FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
-        fprintf(log4horizon, "consoleLog(): %s\n", Message);
-        fclose(log4horizon);
-    }
+    FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
+    if(!log4horizon) return 1;
+    fprintf(log4horizon, "%s %s\n", text, extr_factor);
+    fclose(log4horizon);
+    return 0;
 }
