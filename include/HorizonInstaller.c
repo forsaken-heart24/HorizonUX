@@ -14,6 +14,7 @@ bool checkInternalStorageStatus() {
     if(!iPlayedTheseGamesBefore) {
         return false;
     }
+    closedir(iPlayedTheseGamesBefore);
     return true;
 }
 
@@ -232,10 +233,6 @@ void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPa
     }
 }
 
-void verifyHorizonSystemIntegrity() {
-    return;
-}
-
 bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     throwMessagesToConsole("- Installing incremental patches to", partition);
     if(strcmp(partition, "system") == 0) {
@@ -264,4 +261,15 @@ bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     }
     throwMessagesToConsole("  Finished installing incremental patches to", partition);
     return true;
+}
+
+int consoleLog(char *text, char *extr_factor) {
+    if(WRITE_DEBUG_MESSAGES_TO_CONSOLE == true) {
+        throwMessagesToConsole(text, extr_factor);
+    }
+    else {        
+        FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
+        fprintf(log4horizon, "consoleLog(): %s\n", Message);
+        fclose(log4horizon);
+    }
 }

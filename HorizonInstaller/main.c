@@ -5,7 +5,7 @@
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
 bool hostsAreBackedUp = false;
 const char *whatisOTAType = "Incremental";
-const char *LOG4HORIZONFILE = "/sdcard/modulesLoader.log";
+const char *LOG4HORIZONFILE = "/sdcard/HorizonInstaller.log";
 const char *INSTALLER_PATH = "/dev/tmp/install";
 char *maintainer = "Luna";
 char *version = "v1.0";

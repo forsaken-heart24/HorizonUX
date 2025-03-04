@@ -31,12 +31,12 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
 bool getRomProperties(char *requiredProperty, char *requiredPropertyValue);
 void extractThisFileFromMe(const char *fileToExtract, bool skipErrors);
 void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath);
-void verifyHorizonSystemIntegrity();
 bool copyIncrementalFiles(const char *partitionPath, char *partition);
 bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *ImageName);
 void throwMessagesToConsole(char *text, char *extr_factor);
 void abort__(char *text, char *extr_factor);
 void setupRecoveryCommandFile();
+int consoleLog(char *text, char *extr_factor);
 
 // dawn - To be filled by the maintainer before compiling.
 const char *partitionFlashables[] = {
