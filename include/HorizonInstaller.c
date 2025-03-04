@@ -85,12 +85,15 @@ bool getRomProperties(char *requiredProperty, char *requiredPropertyValue) {
     if(!romPropertyFile) {
         exit(1);
     }
-    snprintf(combinedBullshit, sizeof(content), "%s=%s", requiredProperty, requiredPropertyValue);
+    snprintf(combinedBullshit, sizeof(combinedBullshit), "%s=%s", requiredProperty, requiredPropertyValue);
     while(fgets(content, sizeof(content), romPropertyFile) != NULL) {
+        content[strcspn(content, "\n")] = '\0';
         if(strcmp(combinedBullshit, content) == 0) {
+            fclose(romPropertyFile);
             return true;
         }
     }
+    fclose(romPropertyFile);
     return false;
 }
 
