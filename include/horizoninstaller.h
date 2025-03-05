@@ -8,11 +8,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+// #include <openssl/md5.h> - still learning md5
 
 // extern values - To be filled by the maintainer before compiling.
 extern bool WRITE_DEBUG_MESSAGES_TO_CONSOLE;
-extern const char *LOG4HORIZONFILE;
 extern bool hostsAreBackedUp;
+extern bool isHotFixAndShouldBeSkipped;
+extern const char *LOG4HORIZONFILE;
 extern char *INSTALLER_PATH;
 extern char *whatisOTAType;
 extern char OUTFD[256];
@@ -21,7 +23,7 @@ extern char *ZIPFILE;
 // functions
 bool verifyInstallationType(const char *requiredType, const char *zipPackage);
 bool checkInternalStorageStatus();
-void throwMessagesToConsole(char *text, char *extr_factor);
+void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog);
 void abort__(char *text, char *extr_factor);
 void setupRecoveryCommandFile();
 bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMountit);

@@ -6,7 +6,10 @@
 
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
 bool hostsAreBackedUp = false;
-const char *LOG4HORIZONFILE = "/sdcard/Installer__teto.log";
+bool isHotFixAndShouldBeSkipped = false;
+//const char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto___horizonROMInstaller.log";
+const char *LOG4HORIZONFILE = "/sdcard/teto___horizonROMInstaller.log";
+const char *thisPatchBuildID = "mylittledarkage";
 char *whatisOTAType = "Incremental";
 char *INSTALLER_PATH = "/dev/tmp/install";
 char *maintainer = "Luna";
@@ -42,7 +45,7 @@ int main(int argc, const char *argv[]) {
         fclose(systemBuildProperty);
         FILE *linuxHostsFileFromEtc = fopen("/system_root/system/etc/hosts", "r");
         if(!linuxHostsFileFromEtc) {
-            throwMessagesToConsole("- Attempting to open hosts again...", " ");
+            throwMessagesToConsole("- Attempting to open hosts again...", " ", false);
             linuxHostsFileFromEtc = fopen("/system/system/etc/hosts", "r");
             if(!linuxHostsFileFromEtc) {
                 abort__("- Failed to open hosts file, please try again", " ");
@@ -50,25 +53,25 @@ int main(int argc, const char *argv[]) {
         }
         backupHostsFileFromCurrentSystem("backup", systemHostsFilePath);
     }
-    throwMessagesToConsole("#########################################################", " ");
-    throwMessagesToConsole("   _  _     _   _            _                _   ___  __", " ");
-    throwMessagesToConsole(" _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \\/ /", " ");
-    throwMessagesToConsole("|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / ", " ");
-    throwMessagesToConsole("|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ ", " ");
-    throwMessagesToConsole("  |_||_|   |_| |_|\\___/|_|  |_/___\\___/|_| |_|\\___//_/\\_\\", " ");
-    throwMessagesToConsole("                                                         ", " ");
-    throwMessagesToConsole("#########################################################", " ");
-    throwMessagesToConsole("Developer :", maintainer);
-    throwMessagesToConsole("Version   :", version);
-    throwMessagesToConsole("Codename  :", codename);
-    throwMessagesToConsole("Present ROM Build ID  :", getPreviousSystemBuildID(systemBuildProp));
-    throwMessagesToConsole("This ROM Build ID  :", getPreviousSystemBuildID(systemBuildProp));
-    throwMessagesToConsole("###############################################", " ");
-    throwMessagesToConsole(" - Installing packages...", " ");
+    throwMessagesToConsole("#########################################################", " ", false);
+    throwMessagesToConsole("   _  _     _   _            _                _   ___  __", " ", false);
+    throwMessagesToConsole(" _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \\/ /", " ", false);
+    throwMessagesToConsole("|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / ", " ", false);
+    throwMessagesToConsole("|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ ", " ", false);
+    throwMessagesToConsole("  |_||_|   |_| |_|\\___/|_|  |_/___\\___/|_| |_|\\___//_/\\_\\", " ", false);
+    throwMessagesToConsole("                                                         ", " ", false);
+    throwMessagesToConsole("#########################################################", " ", false);
+    throwMessagesToConsole("Developer :", maintainer, false);
+    throwMessagesToConsole("Version   :", version, false);
+    throwMessagesToConsole("Codename  :", codename, false);
+    throwMessagesToConsole("Present ROM Build ID  :", getPreviousSystemBuildID(systemBuildProp), false);
+    throwMessagesToConsole("This ROM Build ID  :", (char *)thisPatchBuildID, false);
+    throwMessagesToConsole("###############################################", " ", false);
+    throwMessagesToConsole(" - Installing packages...", " ", false);
     for(int i = 0; i < FILES_TO_EXTRACT_COUNT; i++) {
         extractThisFileFromMe(filesToExtractFromTheZip[i], false);
     }
-    if(strcmp(whatisOTAType, "Incremental") == 0) {
+    if(strcmp(whatisOTAType, "Incremental") == 0 && isHotFixAndShouldBeSkipped || strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
         char *rrrrrrrrrrrr[] = {"system", "vendor", "product", "prism"};
         char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product", "/prism"};
         for(int i = 0; i < ARRAY_SIZE(genericPartitionPaths); i++) {
@@ -87,14 +90,15 @@ int main(int argc, const char *argv[]) {
             }
         }
     }
-    else if(strcmp(whatisOTAType, "Reinstall") == 0) {
+    else if(strcmp(whatisOTAType, "Reinstall") == 0 && isHotFixAndShouldBeSkipped || strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
         for(int i = 0; i < ARRAY_SIZE(partitionFlashables); i++) {
             installGivenDiskImageFile(INSTALLER_PATH, partitionBlockPaths[i], partitionFlashables[i]);
         }
     } 
     else {
-        throwMessagesToConsole("- Can't determine whether to flash the whole ROM or just patch necessary things, skipping installation.", " ");
+        throwMessagesToConsole("- Can't determine whether to flash the whole ROM or just patch necessary things, skipping installation.", " ", false);
         exit(0);
     }
     backupHostsFileFromCurrentSystem("restore", systemHostsFilePath);
+    free(ZIPFILE);
 }

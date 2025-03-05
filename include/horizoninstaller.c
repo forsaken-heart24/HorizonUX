@@ -18,7 +18,7 @@ bool checkInternalStorageStatus() {
 }
 
 // throws the installation messages.
-void throwMessagesToConsole(char *text, char *extr_factor) {
+void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog) {
     char combine[1028];
     snprintf(combine, sizeof(combine), "%s %s\n", text, extr_factor);
     
@@ -28,13 +28,15 @@ void throwMessagesToConsole(char *text, char *extr_factor) {
         exit(1);
     }
     fprintf(OUTFD__, "%s", combine);
+    putThisinLog && consoleLog(combine, " ");
     fclose(OUTFD__);
 }
 
 // throws installation messages and stops installation
 void abort__(char *text, char *extr_factor) {
-    throwMessagesToConsole(text, extr_factor);
+    throwMessagesToConsole(text, extr_factor, true);
     executeCommands("rm -rf /dev/tmp", false);
+    free(ZIPFILE);
     exit(1);
 }
 
@@ -102,7 +104,7 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
     FILE *blockPath__ = fopen(blockPath, "r");
     char *shippedAs;
     if(!imagePath__ || !blockPath__) {
-        throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", "");
+        throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", "", true);
         abort__("  Error code: 0x7265616c5f626c6f636b206e6f7420736574", "");
     }
     char *extensionList[] = {"tar", "sparse", "raw"};
@@ -229,7 +231,7 @@ void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPa
     if(hostsAreBackedUp || strcmp(arg, "backup") == 0) {
         consoleLog("backupHostsFileFromCurrentSystem(): Backing up the host file from", (char *)linuxHostsAndroidPath);
         if(cp(linuxHostsAndroidPath, INSTALLER_PATH) == 1) {
-            throwMessagesToConsole("backupHostsFileFromCurrentSystem(): Failed to backup the host file, if you have any issues on connecting to the internet, please do a wipe data", " ");
+            throwMessagesToConsole("backupHostsFileFromCurrentSystem(): Failed to backup the host file, if you have any issues on connecting to the internet, please do a wipe data", " ", true);
         }
 
     }
@@ -238,13 +240,13 @@ void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPa
         char hostsPath[256];
         snprintf(hostsPath, sizeof(hostsPath), "%s/hosts", INSTALLER_PATH);
         if(cp(hostsPath, linuxHostsAndroidPath) == 1) {
-            throwMessagesToConsole("backupHostsFileFromCurrentSystem(): Failed to restore the host file, if you have any issues on connecting to the internet, please do a wipe data", " ");
+            throwMessagesToConsole("backupHostsFileFromCurrentSystem(): Failed to restore the host file, if you have any issues on connecting to the internet, please do a wipe data", " ", true);
         }
     }
 }
 
 bool copyIncrementalFiles(const char *partitionPath, char *partition) {
-    throwMessagesToConsole("- Installing incremental patches to", partition);
+    throwMessagesToConsole("- Installing incremental patches to", partition, false);
     char content[450];
     if(strcmp(partition, "system") == 0) {
         snprintf(content, sizeof(content), "%s/system/system/", INSTALLER_PATH);
@@ -265,7 +267,7 @@ bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     if(cp(content, partitionPath) == 1) {
         abort__("Failed to apply Incremental patches, please try again or report this to the maintainer of this device", " ");
     }
-    throwMessagesToConsole("  Finished installing incremental patches to", partition);
+    throwMessagesToConsole("  Finished installing incremental patches to", partition, false);
     return true;
 }
 
@@ -276,4 +278,24 @@ int consoleLog(char *text, char *extr_factor) {
     fprintf(log4horizon, "%s %s\n", text, extr_factor);
     fclose(log4horizon);
     return 0;
+}
+
+bool verifyMD5Hashes(const char *file__, const char *expected_hash__) {
+    char combine[128];
+    char md5sum[80];
+    snprintf(combine, sizeof(combine), "md5sum \"%s\" | awk '{print $1}'", file__);
+    FILE *commandOutputPointer = popen(combine, "r");
+    if(!commandOutputPointer) {
+        abort__("- Failed to get file md5 hash to verify the file in the zip...", " ");
+    }
+    if(fgets(md5sum, sizeof(md5sum), commandOutputPointer) != NULL) {
+        // Remove newline
+        md5sum[strcspn(md5sum, "\n")] = 0;
+        if(strcmp(expected_hash__, md5sum) == 0) {
+            pclose(commandOutputPointer);
+            return true;
+        }
+    }
+    pclose(commandOutputPointer);
+    return false;
 }
