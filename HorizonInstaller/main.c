@@ -27,6 +27,8 @@ int main(int argc, const char *argv[]) {
         abort__("- Not enough arguments provided!", " ");
     }
     ZIPFILE = strdup(argv[4]);
+    // forgor to extract the rom properties file
+    extractThisFileFromMe("rom.prop", false);
     char *systemDir = "/system/system";
     char *systemBuildProp = "/system/system/build.prop";
     char *systemHostsFilePath = "/system/system/etc/hosts";
@@ -71,7 +73,8 @@ int main(int argc, const char *argv[]) {
     for(int i = 0; i < FILES_TO_EXTRACT_COUNT; i++) {
         extractThisFileFromMe(filesToExtractFromTheZip[i], false);
     }
-    if(strcmp(whatisOTAType, "Incremental") == 0 && isHotFixAndShouldBeSkipped || strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
+    if(verifyInstallationType("Incremental", ZIPFILE) && strcmp(whatisOTAType, "Incremental") == 0 && isHotFixAndShouldBeSkipped || \
+    strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
         char *rrrrrrrrrrrr[] = {"system", "vendor", "product", "prism"};
         char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product", "/prism"};
         for(int i = 0; i < ARRAY_SIZE(genericPartitionPaths); i++) {
@@ -90,7 +93,8 @@ int main(int argc, const char *argv[]) {
             }
         }
     }
-    else if(strcmp(whatisOTAType, "Reinstall") == 0 && isHotFixAndShouldBeSkipped || strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
+    else if(verifyInstallationType("Reinstall", ZIPFILE) && strcmp(whatisOTAType, "Reinstall") == 0 && isHotFixAndShouldBeSkipped || \
+    strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
         for(int i = 0; i < ARRAY_SIZE(partitionFlashables); i++) {
             installGivenDiskImageFile(INSTALLER_PATH, partitionBlockPaths[i], partitionFlashables[i]);
         }
