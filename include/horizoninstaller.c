@@ -99,46 +99,47 @@ bool getRomProperties(char *requiredProperty, char *requiredPropertyValue) {
 }
 
 // bruhh
-bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *imageName) {
+bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___) {
     FILE *imagePath__ = fopen(imagePath, "r");
-    FILE *blockPath__ = fopen(blockPath, "r");
-    char *shippedAs;
+    FILE *blockPath__ = fopen(blockPath, "w");
     if(!imagePath__ || !blockPath__) {
         throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", "", true);
         abort__("  Error code: 0x7265616c5f626c6f636b206e6f7420736574", "");
     }
+    char *shippedAs = NULL;
     char *extensionList[] = {"tar", "sparse", "raw"};
     for(int i = 0; i < 3; i++) {
         if(getRomProperties("SHIPPED_AS_WHAT", extensionList[i])) {
             shippedAs = extensionList[i];
+            break;
         }
     }
+    if(!shippedAs) {
+        abort__("- Unsupported image format. Could not determine SHIPPED_AS_WHAT", "");
+    }
+    if(!iDontWantChecksumChecks) {
+        !verifyMD5Hashes(imagePath, expected_image_hash___);
+    }
+    char defoq[200];
     if(strcmp(shippedAs, "tar") == 0) {
-        char defoq[200];
         snprintf(defoq, sizeof(defoq), "tar -xf %s -C %s", imagePath, blockPath);
         extractThisFileFromMe(imageName, false);
-        if(executeCommands(defoq, false) != 0) {
-            abort__("- Failed to extract tarball image file", " ");
-        }
-    }
+    } 
     else if(strcmp(shippedAs, "sparse") == 0) {
-        char defoq[200];
-        extractThisFileFromMe(imageName, true);
         snprintf(defoq, sizeof(defoq), "simg2img %s/%s %s", INSTALLER_PATH, imageName, blockPath);
-        if(executeCommands(defoq, false) != 0) {
-            abort__("- Failed to install sparse image file", " ");
-        }
-    }
+        extractThisFileFromMe(imageName, false);
+    } 
     else if(strcmp(shippedAs, "raw") == 0) {
-        char defoq[200];
         snprintf(defoq, sizeof(defoq), "unzip -o %s %s -d %s", ZIPFILE, imageName, blockPath);
-        if(executeCommands(defoq, false) != 0) {
-            abort__("- Failed to install raw image factor into your device", " ");
-        }
-    }
+    } 
     else {
-        abort__("- unsupported image, the image specifier is:", shippedAs);
+        abort__("- Unsupported image type detected:", shippedAs);
     }
+    if(executeCommands(defoq, false) != 0) {
+        abort__("- Failed to install the image file", "");
+    }
+    fclose(imagePath__);
+    fclose(blockPath__);
     return true;
 }
 
@@ -297,5 +298,51 @@ bool verifyMD5Hashes(const char *file__, const char *expected_hash__) {
         }
     }
     pclose(commandOutputPointer);
+    consoleLog("verifyMD5Hashes(): Affected file:", (char *)file__);
+    abort__("  The hashes don't match the expected values from the installer. Please re-download the package or report this to the developer.", " ");
     return false;
+}
+
+bool installLowLevelImages(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___) {
+    if(!imagePath || !blockPath) {
+        throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", " ", true);
+        abort__("  Error code: 0x7265616c5f626c6f636b206e6f7420736574", " ");
+    }
+    char defoq[256];
+    snprintf(defoq, sizeof(defoq), "cat \"%s\" > \"%s/%s\"", blockPath, INSTALLER_PATH, blockPath);
+    if(executeCommands(defoq, false) != 0) {
+        abort__("- Failed to take a backup of some low-level partitions, contact the dev if the ROM didn't boot.", " ");
+    }
+    verifyMD5Hashes(imagePath, expected_image_hash___);
+    snprintf(defoq, sizeof(defoq), "unzip -o \"%s\" \"%s\" -d \"%s\"", ZIPFILE, imageName, blockPath);
+    if(executeCommands(defoq, false) != 0) {
+        abort__("- Sorry to tell you this, your phone might end up bricked. Please wait while I restore old partitions..", " ");
+        snprintf(defoq, sizeof(defoq), "cat \"%s/%s\" > \"%s\"", INSTALLER_PATH, blockPath, blockPath);
+        if(executeCommands(defoq, false) != 0) {
+            consoleLog("installLowLevelImages(): Affected partition: ", (char *)blockPath);
+            abort__("- Failed to restore backup of a low-level partition. Boot the device at your own risk!", " ");
+        }
+    }
+    return true;
+}
+
+char *getSystemProperty(const char *filepath, const char *propertyVariableName) {
+    static char buildProperty[256];  
+    FILE *file = fopen(filepath, "r");
+    if(!file) {
+        return "KILL.796f7572.73656c660a";
+    }
+    char line[256];
+    size_t propertyLen = strlen(propertyVariableName);
+    while(fgets(line, sizeof(line), file)) {
+        if(strncmp(line, propertyVariableName, propertyLen) == 0 && line[propertyLen] == '=') {
+            strncpy(buildProperty, line + propertyLen + 1, sizeof(buildProperty) - 1);
+            buildProperty[sizeof(buildProperty) - 1] = '\0';
+            buildProperty[strcspn(buildProperty, "\r\n")] = 0;
+            fclose(file);
+            return buildProperty;
+        }
+    }
+    fclose(file);
+    return "KILL.796f7572.73656c660a";
 }

@@ -31,8 +31,8 @@ bool erase_file_content(const char *__file) {
 }
 
 int executeCommands(const char *command, bool requiresOutput) {
-    if(strstr(command, ";") || strstr(command, "&&")) {
-        error_print("executeCommands(): Nice try diddy!");
+    if(command && (strstr(command, ";") || strstr(command, "&&") || strstr(command, "|") || strstr(command, "`") || strstr(command, "$("))) {
+        error_print("executeScripts(): Nice try diddy!");
         exit(1);
     }
     FILE *fp = popen(command, "r");
@@ -55,32 +55,28 @@ int executeCommands(const char *command, bool requiresOutput) {
     return (WIFEXITED(__exit_status)) ? WEXITSTATUS(__exit_status) : 1;
 }
 
-int executeScripts(char *__script__file, char *__args, bool requiresOutput) {
-    if(__args && (strstr(__args, ";") || strstr(__args, "&&"))) {
-        error_print("executeScripts(): Nice try diddy!");
+int executeScripts(const char *__script__file, const char *__args, bool requiresOutput) {
+    if(__args && (strstr(__args, ";") || strstr(__args, "&&") || strstr(__args, "|") || strstr(__args, "`") || strstr(__args, "$("))) {
+        error_print("executeScripts(): Nice try diddy.");
         exit(1);
     }
-    char fuckingFileFuckingPath[256];
-    int written = snprintf(fuckingFileFuckingPath, sizeof(fuckingFileFuckingPath), "%s %s", __script__file, __args ? __args : "");
-    if(written < 0 || written >= (int)sizeof(fuckingFileFuckingPath) - 1) {
-        error_print("executeScripts(): Command truncation detected.");
-        return 1;
-    }
-    FILE *scriptWithArguments = popen(fuckingFileFuckingPath, "r");
+    char command[512];
+    snprintf(command, sizeof(command), "'%s' %s", __script__file, __args ? __args : "");
+    FILE *scriptWithArguments  = popen(command, "r");
     if(!scriptWithArguments) {
         error_print("executeScripts(): Failed to execute script.");
         return 1;
     }
     if(requiresOutput) {
-        char fuckingBufferFuckingShit[1024];
+        char fuckingBufferFuckingShit[2048];
         while(fgets(fuckingBufferFuckingShit, sizeof(fuckingBufferFuckingShit), scriptWithArguments) != NULL) {
-            fuckingBufferFuckingShit[strcspn(fuckingBufferFuckingShit, "\n")] = '\0';  // Remove newline
+            fuckingBufferFuckingShit[strcspn(fuckingBufferFuckingShit, "\n")] = '\0';
             error_print_extended("executeScripts():", fuckingBufferFuckingShit);
         }
     }
     int __exit_status = pclose(scriptWithArguments);
     if(__exit_status == -1) {
-        error_print("executeScripts(): Failed to close process.");
+        error_print_extended("executeScripts(): Failed to close process. Error:", strerror(errno));
         return 1;
     }
     return (WIFEXITED(__exit_status)) ? WEXITSTATUS(__exit_status) : 1;
