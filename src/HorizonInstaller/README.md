@@ -2,7 +2,7 @@
 
 # Cross-Compiling (arm64) | To compile:
 ```
-cd HorizonUX/
+cd HorizonUX/src
 make updater
 ```
 

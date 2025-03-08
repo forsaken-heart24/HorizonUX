@@ -2,12 +2,12 @@
 
 # Cross-Compiling (arm64) | To compile:
 ```
-cd HorizonUX/
+cd HorizonUX/src
 make loader
 ```
 
 # Build Errors:
-    - ignore the non-critical ones and drop a comment if it's critical
+- ignore the non-critical ones and drop a comment if it's critical
 
 # Tinkering stuffs:
-    - look into the code and mod it in your way, if you find any bugs please do a pull-request. Thanks :D
+- look into the code and mod it in your way, if you find any bugs please do a pull-request. Thanks :D

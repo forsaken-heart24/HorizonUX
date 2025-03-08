@@ -8,7 +8,7 @@
 
 ## 2️⃣ Convert Line Endings (Windows Users Only)
 - Run this command in **Git Bash** or **WSL** to ensure compatibility:  
-```curl https://raw.githubusercontent.com/forsaken-heart24/HorizonXOneUI-HorizonUX/refs/heads/main/conv2unix.sh | bash```
+```curl https://raw.githubusercontent.com/forsaken-heart24/HorizonXOneUI-HorizonUX/refs/heads/main/src/conv2unix.sh | bash```
 
 ## 3️⃣ Build the ROM
 - After editing **`makeconfigs.prop`**, simply run:  

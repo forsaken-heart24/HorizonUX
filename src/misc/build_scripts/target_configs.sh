@@ -65,7 +65,7 @@ stack_build_properties
 if command -v mktemp; then
 	TMPFILE=$(mktemp)
 else
-	TMPFILE=$(touch $TMPDIR/bomboclattt; echo "$TMPDIR/bomboclattt")
+	TMPFILE="../local_build/logs/bomboclattt"
 fi
 
 # make a variable to route to the build.prop files directly

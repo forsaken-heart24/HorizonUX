@@ -2,7 +2,8 @@
 #include "horizonutils.h"
 
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
-const char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto.log";
+// const char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto.log";
+const char *LOG4HORIZONFILE = "/sdcard/HorizonUX/moduleLoader.log";
 
 int main(int argc, const char *argv[]) {
     // for testing this bin

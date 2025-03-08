@@ -6,25 +6,19 @@ else
 	source ./dependencies/util_functions.sh
 fi
 
-if [[ ! -f "./dependencies/makeconfigs.prop" ]]; then
-	abort "Can't find makeconfigs file, please try again later..."
-else 
-	source ./dependencies/makeconfigs.prop
-fi
-
 n=0
 if strings ${SYSTEM_DIR}/framework/framework.jar | grep "onEngineGetCertificateChain"; then
-	warns "onEngineGetCertificateChain detected!!!!"
+	warns "onEngineGetCertificateChain detected!!!!" "BASIC_ROM_CHECK"
 	n="$((n + 1))"
 fi
 
 if strings ${SYSTEM_DIR}/framework/framework.jar | grep "PixelPropsUtils"; then
-	warns "PixelPropsUtils detected!!!!"
+	warns "PixelPropsUtils detected!!!!" "BASIC_ROM_CHECK"
 	n="$((n + 1))"
 fi
 
 if find ${SYSTEM_DIR}/ -iname "*lineage*" 2>/dev/null; then
-	warns "LineageOS detected!!!!"
+	warns "LineageOS detected!!!!" "BASIC_ROM_CHECK"
 	n="$((n + 1))"
 fi
 
@@ -34,4 +28,4 @@ else
 	console_print "System image haven't been modified."
 fi
 
-console_print "Special Thanks to gawas vedraj from telegram!!!!!!!"
+console_print "Special Thanks to Gawas Vedraj for the base script!"
