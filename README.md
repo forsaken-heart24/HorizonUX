@@ -12,8 +12,14 @@
 
 * **Thanks for dropping by, You’re a true legend! 💖✨**
 
-* **If you want to build or add any assert from this repo, please check this out :- <a href="https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/HOWTOGUIDE.md">How to modify your stock rom**</a>
+🚀 **Want to tweak or build something from this repo?**  
+Check out our step-by-step guide:  
+🔗 [**How to modify your stock ROM**](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/HOWTOGUIDE.md)  
 
-* **Here's our contributors list, please check these guys out! - <a href="https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/CONTRIBUTORS.md">Lovely contributors**</a>
+💖 **Meet the legends behind this project!**  
+Give these awesome contributors some love:  
+🔗 [**Lovely Contributors**](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/CONTRIBUTORS.md)  
 
-* **Please report any bugs or any feature request messages at :- <a href="https://t.me/luna_project_bugreporter_bot">Luna's Project Bugreporter Bot**</a>
+🐞 **Found a bug or have a feature request?**  
+Let us know through our bot:  
+📢 [**Luna's Project Bugreporter Bot**](https://t.me/luna_project_bugreporter_bot)  
