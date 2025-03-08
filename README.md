@@ -2,15 +2,15 @@
 
 # ⭐ HorizonUX
 
-**What’s poppin’, fam? Welcome to the wild world of HorizonUX!**
+🔥 **Yo, what’s poppin’, fam? Welcome to the wild world of HorizonUX!** 🔥  
 
-- **Just a Lil’ Reminder**: That cute Genshin Impact character "Lynette"? Not mine, just some fire fan art I found on Google Images. Mad respect to the artist! 🎨✨
+- 🎨 **Just a Lil’ Reminder**: That cute Genshin Impact character *Lynette*? Nah, not mine—just some straight-up fire fan art I found on Google. Big ups to the artist for that masterpiece! ✨🙌  
 
-- **What’s the 411?**: I’m out here trying to whip up some ultra-custom Samsung One UI vibes! This is an open-source adventure, still in the oven, so keep your eyes peeled for some spicy updates! 🔥🚀
+- 🚀 **What’s the 411?**: I’m out here cookin’ up some ultra-custom **Samsung One UI magic!** This project is still in the oven, but trust me, it’s gonna be **straight heat.** Stay tuned for those spicy updates! 🌶️🔥  
 
-- **Keep It Real**: If you snag any of my goodies, just make sure to keep it open source and hit me up with some credit! Sharing is caring, y’all! 🤗💯
+- 💯 **Keep It Real**: If you’re vibing with my work and wanna use it, **keep it open-source and show some love with proper credit.** Sharing is caring, y’all! 🤝✨  
 
-* **Thanks for dropping by, You’re a true legend! 💖✨**
+✨ **Thanks for sliding through—you're a real one! Much love, stay legendary!** 💖🙌  
 
 🚀 **Want to tweak or build something from this repo?**  
 Check out our step-by-step guide:  
