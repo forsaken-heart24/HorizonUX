@@ -12,7 +12,7 @@
 
 ## 3️⃣ Build the ROM
 - After editing **`makeconfigs.prop`**, simply run:  
-  ```./build.sh```
+  ```./src/build.sh```
   inside the cloned directory.
 
 ---
