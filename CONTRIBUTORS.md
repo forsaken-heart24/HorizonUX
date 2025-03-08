@@ -2,9 +2,11 @@
   <img src="https://github.com/selimdoyranli/selimdoyranli/blob/master/preview.gif" width="400" alt="Project HorizonUX Contributors" />
 </p>
 
-# HorizonUX Contributors Squad 🥰
+# 🚀 HorizonUX Contributors Squad 💖  
 
-Shoutout to the real MVPs who made this project pop! Without you, it would just be a vibe with no substance. Thanks for making this happen.
+Shoutout to the **real MVPs** who made this project pop! Without you, this would just be a vibe with no substance. **Y’all are the backbone of HorizonUX!** 💯🙌  
+
+### 🌟 **Hall of Fame**  
 
 - [Salvo](https://github.com/salvogiangri)
 - [Royna](https://github.com/Royna2544)
@@ -22,14 +24,24 @@ Shoutout to the real MVPs who made this project pop! Without you, it would just 
 - [Pranav](https://github.com/Pranav-Game-Dev)
 - [Selimdoyranli](https://github.com/selimdoyranli)
 
-### Let’s Make This Project Lit 🔥
+---
 
-- **Description**: This project is all about personallizing oneui. It’s designed to improve the ux.
-  
-- **Contributing**: Want to join the fun? Hit me up! Here’s how you can contribute to this project:
-  
-  1. Fork the repo
-  2. Make your changes
-  3. Submit a pull request!
+## 🔥 Let’s Make This Project Lit  
 
-- **License**: This project is licensed under the GNU GENERAL PUBLIC LICENSE (v3), so you can vibe freely!
+### **💡 What’s This About?**  
+HorizonUX is all about **personalizing Samsung One UI** and making the UX **smoother, better, and truly yours.**  
+
+### **🚀 Wanna Contribute? Join the Fun!**  
+Pull up and help make this project even doper! Here’s how:  
+1️⃣ **Fork the repo**  
+2️⃣ **Make your changes** (add, tweak, remix!)  
+3️⃣ **Submit a pull request**  
+
+**Your contributions keep this project alive!** 💪✨  
+
+### **📜 License**  
+This project is licensed under the **GNU GENERAL PUBLIC LICENSE (v3)**, so you can **vibe freely and remix responsibly!** 🔓🎶  
+
+---
+
+**Thanks for being part of this journey! Y’all are absolute legends.** 💖🚀  
