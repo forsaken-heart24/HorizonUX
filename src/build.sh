@@ -1,6 +1,11 @@
 # nuke the old log file.
-rm -rf ./error_ring.log
+rm -rf ..local_build/logs/*
 TMPDIR=$(mktemp --tmpdir=.)
+
+# mako mako mako mako Those who know💀
+for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/; do
+    mkdir -p ../local_build/$i
+done
 
 # check if mentioned files do exist or not.
 for i in "./misc/build_scripts/util_functions.sh" "./monika.conf" "./makeconfigs.prop" "./misc/build_scripts/target_configs.sh"; do
@@ -268,10 +273,9 @@ fi
 # removes useless samsung stuffs from the vendor partition.
 if boolReturn $TARGET_REMOVE_USELESS_VENDOR_STUFFS; then
 	console_print "Nuking useless vendor stuffs..."
-	mkdir -p ./build/vendor/etc/init/
     nuke_stuffs
-	console_print "Finished removing stuffs from wifi.rc file, checkout patched_resources/vendor/etc/init/ folder"
-	console_print " and yeah besure to copy that into your actual vendor/etc/init folder and try if it works or not!"
+	console_print "Finished removing useless vendor file(s), "
+	console_print "Don't worry, if you have bootloops, then dm my bot with logs"
 fi
 
 # nukes display refresh rate overrides on some video platforms.
@@ -370,10 +374,10 @@ if ask "Do you want to add a stub app for missing activities?"; then
 	mkdir -p $HORIZON_SYSTEM_DIR/app/HorizonStub/
 	build_and_sign "./horizon/packages/HorizonStub" "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
 fi
-console_print "Check the /build folder for the items you have built."
+console_print "Check the ../local_build/ folder for the items you have built."
 console_print "Please sign the built overlay or application packages manually with your own private keys;"
 console_print "Do not use any public keys provided by any application building software. "
-console_print "script errors are moved to the ./error_ring.log file, please consider checking it out! "
+console_print "script errors are moved to the ../local_build/logs/error_ring.log file, please consider checking it out! "
 if boolReturn "${BATTLEMAGE_BUILD}"; then
 	console_print "Please review the image for the changes, if the changes aren't applied you can always extract and mod them"
     umount $HASH_KEY_FOR_SUPER_BLOCK_PATH
@@ -383,7 +387,7 @@ fi
 	echo "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - This console will get killed because this script didn't run properly, share the logs with the developer's handle." >> $thisConsoleTempLogFile;
 	kill $pid &>/dev/null;
 }
-cp $thisConsoleTempLogFile ./$thisConsoleTempLogFile.log
+cp $thisConsoleTempLogFile ../local_build/logs/$thisConsoleTempLogFile.log
 
 # fuck this fucking directory before it fucking fucks up the fucking use cases man, fuck this fucking bullshit that i have to fuck with
 # hope this fucking shit ends fucking soon.

@@ -1,10 +1,5 @@
 #!/usr/bin/bash
 
-# mako mako mako mako Those who know💀
-for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/; do
-    mkdir -p ./build/$i
-done
-
 function setprop() {
     local propFile
     local propVariableName="$2"
@@ -444,6 +439,7 @@ function generate_random_hash() {
     timeout 0.1 cat /dev/urandom | xxd -p | head -n 1 | cut -c 1-${how_much}
 }
 
+# for compatibility vro
 function execute_scripts() {
     local script="$1"
     $BATTLEMAGE_BUILD && { . $script --battlemage 2>> $thisConsoleTempLogFile; } || { . $script --non-battlemage 2>> $thisConsoleTempLogFile; }
@@ -472,7 +468,7 @@ function absolute_path() {
                 fi
             ;;
             system_ext)
-                # ive chose to find the etc because after android 11 i guess, the build.prop in system_ext was moved to /system_ext/etc/build.prop on newer versions
+                # i've chose to find the etc because after android 11 i guess, the build.prop in system_ext was moved to /system_ext/etc/build.prop on newer versions
                 # the etc wont get changed that's why lol.
                 if [ -f "$HORIZON_SYSTEM_DIR/system_ext/etc" ]; then
                     echo "$HORIZON_SYSTEM_DIR/system_ext"
@@ -672,66 +668,66 @@ function download_glmodules() {
             case "${BUILD_TARGET_SDK_VERSION}" in
                 28)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}?"; then
-                        mkdir -p ./build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/28/${GOODLOOK_MODULES_FOR_28[$i]} ./build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
+                        mkdir -p ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
+                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/28/${GOODLOOK_MODULES_FOR_28[$i]} ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
                     else 
-                        rmdir ./build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
+                        rmdir ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
                     fi
                 ;;
                 29)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}?"; then
-                        mkdir -p ./build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/29/${GOODLOOK_MODULES_FOR_29[$i]} ./build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
+                        mkdir -p ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
+                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/29/${GOODLOOK_MODULES_FOR_29[$i]} ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
                     else 
-                        rmdir ./build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
+                        rmdir ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
                     fi
                 ;;
                 30)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}?"; then
-                        mkdir -p ./build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/30/${GOODLOOK_MODULES_FOR_30[$i]} ./build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
+                        mkdir -p ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
+                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/30/${GOODLOOK_MODULES_FOR_30[$i]} ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
                     else 
-                        rmdir ./build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
+                        rmdir ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
                     fi
                 ;;
                 31)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}?"; then
-                        mkdir -p ./build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/31/${GOODLOOK_MODULES_FOR_31[$i]} ./build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
+                        mkdir -p ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
+                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/31/${GOODLOOK_MODULES_FOR_31[$i]} ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
                     else 
-                        rmdir ./build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
+                        rmdir ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
                     fi
                 ;;
                 32)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}?"; then
-                        mkdir -p ./build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/32/${GOODLOOK_MODULES_FOR_32[$i]} ./build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
+                        mkdir -p ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
+                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/32/${GOODLOOK_MODULES_FOR_32[$i]} ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
                     else 
-                        rmdir ./build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
+                        rmdir ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
                     fi
                 ;;
                 33)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}?"; then
-                        mkdir -p ./build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/33/${GOODLOOK_MODULES_FOR_33[$i]} ./build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
+                        mkdir -p ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
+                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/33/${GOODLOOK_MODULES_FOR_33[$i]} ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
                     else 
-                        rmdir ./build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
+                        rmdir ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
                     fi
                 ;;
                 34)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}?"; then
-                        mkdir -p ./build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/34/${GOODLOOK_MODULES_FOR_34[$i]} ./build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/
+                        mkdir -p ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/
+                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/34/${GOODLOOK_MODULES_FOR_34[$i]} ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/
                     else 
-                        rmdir ./build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/ 
+                        rmdir ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/ 
                     fi
                 ;;
                 35)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}?"; then
-                        mkdir -p ./build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/35/${GOODLOOK_MODULES_FOR_35[$i]} ./build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
+                        mkdir -p ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
+                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/35/${GOODLOOK_MODULES_FOR_35[$i]} ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
                     else 
-                        rmdir ./build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
+                        rmdir ../local_build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
                     fi
                 ;;
             esac

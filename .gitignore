@@ -1,4 +1,4 @@
-test
-outskirts
-misc/rom_modifier_scripts/knox_patch.sh
+src/test
+src/outskirts
+src/misc/rom_modifier_scripts/knox_patch.sh
 .vscode/
