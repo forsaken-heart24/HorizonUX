@@ -70,10 +70,12 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
                     return false;
                 }
             }
+            consoleLog("Successfully mounted:", (char *)baselinePartitionName);
             return true;
         }
     }
     fclose(mounts);
+    consoleLog("Failed to mount:", (char *)baselinePartitionName);
     return false;
 }
 

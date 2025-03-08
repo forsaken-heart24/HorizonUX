@@ -2,9 +2,8 @@
 
 # Cross-Compiling (arm64) | To compile:
 ```
-cd HorizonUX/modulesLoader
-command -v aarch64-linux-gnu-gcc || { echo " - Install aarch64-linux-gnu-gcc please"; exit 1; }
-aarch64-linux-gnu-gcc -I../include ../include/horizonutils.c ../include/modulesLoader.c mainModuleLoader.c -o mainModuleLoader.elf -march=armv8-a
+cd HorizonUX/
+make loader
 ```
 
 # Build Errors:

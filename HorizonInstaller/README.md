@@ -2,9 +2,8 @@
 
 # Cross-Compiling (arm64) | To compile:
 ```
-cd HorizonUX/HorizonInstaller
-command -v aarch64-linux-gnu-gcc || { echo " - Install aarch64-linux-gnu-gcc please"; exit 1; }
-aarch64-linux-gnu-gcc -I../include ../include/horizonutils.c ../include/horizonux.c ../include/horizoninstaller.c main.c -o updater-script -march=armv8-a
+cd HorizonUX/
+make updater
 ```
 
 ## Variables to edit before compiling this source (misc/HorizonInstaller/main.c):

@@ -22,7 +22,7 @@ bool installationHasLowLevelDiskImages = false;
 const char *LOG4HORIZONFILE = "/sdcard/teto___horizonROMInstaller.log";
 const char *thisPatchBuildID = "mylittledarkage";
 
-// refer README.md
+// wanana BANG!
 char *whatisOTAType = "Incremental"; // This string can be: "Incremental" or "Reinstall". The name suggests it all.
 char *INSTALLER_PATH = "/dev/tmp/install"; // WARNING! you might have to edit some lines in header file if you change the path, because 1-2 stuffs are hardcoded.
 
@@ -48,7 +48,18 @@ char *partitionFlashablesMD5SUM[] = {"64e282071257bec90215eccf413dfc8e", "64e7bb
 // device codename here:
 char supportedDevicesList[] = "beyond0 | beyond0lte";
 
+// mountables, ig
+char *rrrrrrrrrrrr[] = {"system", "vendor", "product", "prism"};
+
+// generic partition mount paths
+char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product", "/prism"};
+
 int main(int argc, const char *argv[]) {
+    // for testing this bin
+    if(strcmp((char *)argv[1], "--test") == 0) {
+        printf("main(): HorizonInstaller works!\n");
+        return 0;
+    }
     // for closing terminal after testing stdin aka OUTFD
     throwMessagesToConsole(NULL, NULL, false);
     if(argc < 5) {
@@ -82,11 +93,6 @@ int main(int argc, const char *argv[]) {
             }
         }
     }
-    // check device codename and proceed
-    if(strstr(getSystemProperty(systemBuildProp, "ro.product.model"), supportedDevicesList) != 0) {
-        consoleLog("This aint", supportedDevicesList);
-        abort__("- This device's codename doesn't match up with the one from the installer allowlist, please install this rom in the appropriate device!", " ");
-    }
     throwMessagesToConsole("#########################################################", " ", false);
     throwMessagesToConsole("   _  _     _   _            _                _   ___  __", " ", false);
     throwMessagesToConsole(" _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \\/ /", " ", false);
@@ -95,6 +101,11 @@ int main(int argc, const char *argv[]) {
     throwMessagesToConsole("  |_||_|   |_| |_|\\___/|_|  |_/___\\___/|_| |_|\\___//_/\\_\\", " ", false);
     throwMessagesToConsole("                                                         ", " ", false);
     throwMessagesToConsole("#########################################################", " ", false);
+    // check device codename and proceed
+    if(strstr(getSystemProperty(systemBuildProp, "ro.product.model"), supportedDevicesList) != 0) {
+        consoleLog("This aint", supportedDevicesList);
+        abort__("- This device's codename doesn't match up with the one from the installer allowlist, please install this rom in the appropriate device!", " ");
+    }
     throwMessagesToConsole("Developer :", maintainer, false);
     throwMessagesToConsole("Version   :", version, false);
     throwMessagesToConsole("Codename  :", codename, false);
@@ -105,8 +116,6 @@ int main(int argc, const char *argv[]) {
     throwMessagesToConsole("- Installing packages...", " ", false);
     throwMessagesToConsole("  please wait, it might take longer than usual..", " ", false);
     if(strcmp(whatisOTAType, "Incremental") == 0 && isHotFixAndShouldBeSkipped || strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
-        char *rrrrrrrrrrrr[] = {"system", "vendor", "product", "prism"};
-        char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product", "/prism"};
         for(int i = 0; i < ARRAY_SIZE(genericPartitionPaths); i++) {
             isThisPartitionMounted(genericPartitionPaths[i], true);
         }
