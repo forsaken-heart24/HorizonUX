@@ -52,6 +52,10 @@ loader:
 # Test updater-script
 test-updater: updater
 	@echo "Testing updater-script..."
+	@if [ ! -f "$(UPDATER_OUTPUT)" ]; then \
+	    echo "Rebuilding $(UPDATER_OUTPUT)..."; \
+	    $(MAKE) updater; \
+	fi
 	@if ./$(UPDATER_OUTPUT) --test >/dev/null 2>&1; then \
 	    echo "✅ Test passed: $(UPDATER_OUTPUT) works as expected!"; \
 	else \
@@ -60,10 +64,15 @@ test-updater: updater
 	    echo "                     - Running on a non-ARM machine"; \
 	    echo "                     - Syntax Errors in the code"; \
 	fi
+	@rm -rf $(UPDATER_OUTPUT)
 
 # Test mainModuleLoader
 test-loader: loader
 	@echo "Testing moduleLoader..."
+	@if [ ! -f "$(LOADER_OUTPUT)" ]; then \
+	    echo "Rebuilding $(LOADER_OUTPUT)..."; \
+	    $(MAKE) loader; \
+	fi
 	@if ./$(LOADER_OUTPUT) --test >/dev/null 2>&1; then \
 	    echo "✅ Test passed: $(LOADER_OUTPUT) works as expected!"; \
 	else \
@@ -72,6 +81,7 @@ test-loader: loader
 	    echo "                     - Running on a non-ARM machine"; \
 	    echo "                     - Syntax Errors in the code"; \
 	fi
+	@rm -rf $(LOADER_OUTPUT)
 
 # Build and test everything
 test: test-updater test-loader
