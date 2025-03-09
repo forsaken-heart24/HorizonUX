@@ -1,0 +1,25 @@
+--- logd_29.rc	2025-03-09 20:39:28.693827400 +0530
++++ logd_29_edited.rc	2025-03-09 20:40:11.395515400 +0530
+@@ -1,12 +1,12 @@
+ # Debugging for SystemAnalysis
+ on early-init && property:ro.boot.debug_level=0x494d
+-    setprop debug.enable true
++    setprop debug.enable false
+ on early-init && property:ro.boot.debug_level=0x4948
+-    setprop debug.enable true
++    setprop debug.enable false
+ on early-init && property:ro.product_ship=false
+-    setprop debug.enable true
++    setprop debug.enable false
+ on early-init && property:ro.boot.force_upload=0x5
+-    setprop debug.enable true
++    setprop debug.enable false
+ 
+ service logd /system/bin/logd
+     socket logd stream 0666 logd logd
+@@ -42,3 +42,4 @@
+ 
+ on property:sys.boot_completed=1
+     start logd-auditctl
++    stop logd
+\ No newline at end of file

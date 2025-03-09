@@ -323,6 +323,11 @@ if boolReturn "$BUILD_TARGET_REMOVE_SYSTEM_LOGGING"; then
 	setprop "log.tag.IptablesRestoreController" "S"
 	setprop "log.tag.ClatdController" "S"
 fi
+#   apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[5]}"
+#	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[8]}"
+#	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[9]}"
+#	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[11]}"
+#	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[10]}"
 
 if boolReturn "$BUILD_TARGET_BRING_NEWGEN_ASSISTANT"; then
 	console_print "Enabling New Gen Google Assistant..."
@@ -365,7 +370,6 @@ if existance "./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARG
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
 	if [[ "$BUILD_TARGET_SDK_VERSION" -eq "28" ]]; then
-		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[8]}"
 		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[13]}"
 	fi
     # let's patch restart_radio_process for my own will. PLEASE LET THIS SLIDE OUTT!!!!
@@ -374,7 +378,6 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -l
     fi
     if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "29" ]]; then
         apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[1]}"
-		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[9]}"
     elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "30" || "${BUILD_TARGET_SDK_VERSION}" -eq "31" ]]; then
         apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[2]}"
     elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "32" || "${BUILD_TARGET_SDK_VERSION}" -eq "33" ]]; then
@@ -382,12 +385,9 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -l
     fi
     if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "30" ]]; then
         apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[4]}"
-		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[10]}"
 		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[12]}"
     elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "31" ]]; then
-    	apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[5]}"
     	apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[6]}"
-		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[11]}"
     fi
     if [[ "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
         apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[7]}"

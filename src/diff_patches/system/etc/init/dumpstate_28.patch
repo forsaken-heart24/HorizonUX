@@ -1,0 +1,12 @@
+--- dumpstate.rc	2025-03-09 20:27:09.029613500 +0530
++++ dumpstate_28.rc	2025-03-09 20:28:30.591647700 +0530
+@@ -49,3 +49,8 @@
+     class main
+     disabled
+     oneshot
++
++on property:sys.boot_completed=1
++    stop dumpstate
++    stop dumpstatez
++    stop bugreport
+\ No newline at end of file

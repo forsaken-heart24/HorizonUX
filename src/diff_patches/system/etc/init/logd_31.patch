@@ -1,0 +1,9 @@
+--- logd_31.rc	2025-03-09 20:43:45.445015600 +0530
++++ logd_31_edited.rc	2025-03-09 20:44:14.764266100 +0530
+@@ -33,3 +33,5 @@
+ 
+ on property:sys.boot_completed=1
+     start logd-auditctl
++    stop ewlogd
++    stop logd
+\ No newline at end of file
