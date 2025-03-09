@@ -9,8 +9,8 @@ ifeq ($(COMPILER),gcc)
 endif
 
 # Output binaries
-UPDATER_OUTPUT = updater-script
-LOADER_OUTPUT = mainModuleLoader.elf
+UPDATER_OUTPUT = ../local_build/binaries/updater-script
+LOADER_OUTPUT = ../local_build/binaries/mainModuleLoader.elf
 
 # Source files for each target
 UPDATER_SRCS = ./include/horizonutils.c ./include/horizonux.c ./include/horizoninstaller.c ./HorizonInstaller/main.c
@@ -50,13 +50,13 @@ loader:
 	fi
 
 # Test updater-script
-test-updater: updater
+test_updater:
 	@echo "Testing updater-script..."
 	@if [ ! -f "$(UPDATER_OUTPUT)" ]; then \
 	    echo "Rebuilding $(UPDATER_OUTPUT)..."; \
 	    $(MAKE) updater; \
 	fi
-	@if ./$(UPDATER_OUTPUT) --test >/dev/null 2>&1; then \
+	@if $(UPDATER_OUTPUT) --test >/dev/null 2>&1; then \
 	    echo "✅ Test passed: $(UPDATER_OUTPUT) works as expected!"; \
 	else \
 	    echo "❌ Test failed: $(UPDATER_OUTPUT) may not be compatible with this system."; \
@@ -67,13 +67,13 @@ test-updater: updater
 	@rm -rf $(UPDATER_OUTPUT)
 
 # Test mainModuleLoader
-test-loader: loader
+test_loader:
 	@echo "Testing moduleLoader..."
 	@if [ ! -f "$(LOADER_OUTPUT)" ]; then \
 	    echo "Rebuilding $(LOADER_OUTPUT)..."; \
 	    $(MAKE) loader; \
 	fi
-	@if ./$(LOADER_OUTPUT) --test >/dev/null 2>&1; then \
+	@if $(LOADER_OUTPUT) --test >/dev/null 2>&1; then \
 	    echo "✅ Test passed: $(LOADER_OUTPUT) works as expected!"; \
 	else \
 	    echo "❌ Test failed: $(LOADER_OUTPUT) may not be compatible with this system."; \
@@ -84,10 +84,10 @@ test-loader: loader
 	@rm -rf $(LOADER_OUTPUT)
 
 # Build and test everything
-test: test-updater test-loader
+test: test_updater test_loader
 
 # Clean up
 clean:
-	rm -f $(UPDATER_OUTPUT) $(LOADER_OUTPUT) $(ERR_LOG)
+	@rm -f $(UPDATER_OUTPUT) $(LOADER_OUTPUT) $(ERR_LOG)
 
-.PHONY: all check_compiler updater loader test-updater test-loader test clean
+.PHONY: all check_compiler updater loader test_updater test_loader test clean
