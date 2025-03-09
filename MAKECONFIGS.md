@@ -67,7 +67,12 @@
 - **MY_KEYSTORE_ALIAS**: To be filled by the builder with their "Keystore Alias"
 - **MY_KEYSTORE_PASSWORD**: To be filled by the builder with their "Keystore Alias Password"
 - **MY_KEYSTORE_PATH**: To be filled by the builder with their "Keystore path"
-- **TARGET_REMOVE_SMARTSWITCH_DAEMON**: removes the smart switch listener port.
+- **TARGET_REMOVE_SMARTSWITCH_DAEMON**: Removes the smart switch listener port.
+- **BUILD_TARGET_REMOVE_SYSTEM_LOGGING**: Removes unnecessary logging stuffs
+- **BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET**: Brings back network speed-o-meter in the systemUI qs 
+- **BUILD_TARGET_BRING_NEWGEN_ASSISTANT**: For android <= 11, brings assistant 2.0
+- **BUILD_TARGET_DISABLE_KNOX_PROPERTIES**: For android <= 11, try this at own risk because it disables knox via properties which are untested.
+
 ---
 
 This script allows deep customization of your customized OneUI ROM, from performance tweaks to aesthetic changes. Make sure to enable only the features you need! Enjoy building your custom ROM! 😊

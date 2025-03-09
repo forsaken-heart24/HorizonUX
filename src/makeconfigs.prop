@@ -55,6 +55,18 @@ CUSTOM_SETUP_WELCOME_MESSAGE="helno, please put your own typa rizzy drizzy shiii
 BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE=60
 BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES=false
 
+# removes unnecessary logging stuffs
+BUILD_TARGET_REMOVE_SYSTEM_LOGGING=false
+
+# brings back network speed in some regions
+BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET=false
+
+# for android <= 11, brings assistant 2.0
+# BUILD_TARGET_BRING_NEWGEN_ASSISTANT=false
+
+# for android <= 11, try this at own risk
+BUILD_TARGET_DISABLE_KNOX_PROPERTIES=true
+
 # Target properties.
 # this variable will enable some debugging features and this thing will make your phone overheat and hang alot, do with pre-caution!s
 TARGET_BUILD_IS_FOR_DEBUGGING=false

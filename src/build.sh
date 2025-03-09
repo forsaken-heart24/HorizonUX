@@ -306,6 +306,35 @@ if boolReturn $FORCE_HARDWARE_ACCELERATION; then
 	done
 fi
 
+if boolReturn "$BUILD_TARGET_REMOVE_SYSTEM_LOGGING"; then
+	console_print "Disabling unnecessary logging stuffs in android..."
+	add_float_xml_values "SEC_FLOATING_FEATURE_SYSTEM_CONFIG_SYSINT_DQA_LOGLEVEL" "3"
+	setprop "logcat.live" "disable"
+	setprop "sys.dropdump.on" "Off"
+	setprop "persist.debug.atrace.boottrace" "0"
+	setprop "persist.log.ewlogd" "0"
+	setprop "sys.lpdumpd" "0"
+	setprop "persist.device_config.global_settings.sys_traced" "0"
+	setprop "persist.traced.enable" "0"
+	setprop "persist.sys.lmk.reportkills" "false"
+	setprop "log.tag.ConnectivityManager" "S"
+	setprop "log.tag.ConnectivityService" "S"
+	setprop "log.tag.NetworkLogger" "S"
+	setprop "log.tag.IptablesRestoreController" "S"
+	setprop "log.tag.ClatdController" "S"
+fi
+
+if boolReturn "$BUILD_TARGET_BRING_NEWGEN_ASSISTANT"; then
+	console_print "Enabling New Gen Google Assistant..."
+	setprop "ro.opa.eligible_device" "true"
+fi
+
+if boolReturn "$BUILD_TARGET_DISABLE_KNOX_PROPERTIES"; then
+	console_print "Disabling Knox and applying rmm fix.."
+	setprop "ro.securestorage.knox" "false"
+	setprop "ro.security.vaultkeeper.native" "0"
+fi
+
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 console_print "Running misc jobs..."
 default_language_configuration ${NEW_DEFAULT_LANGUAGE_ON_PRODUCT} ${NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT}
