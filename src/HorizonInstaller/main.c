@@ -18,6 +18,10 @@ bool iDontWantChecksumChecks = false;
 // Set to true if you want to install low level partitions.
 bool installationHasLowLevelDiskImages = false;
 
+// set it to true if you have password in your tar file.
+// scroll down to put password in a variable.
+bool tarballHasPasswordProtection = false;
+
 char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto___horizonROMInstaller.log";
 const char *thisPatchBuildID = "mylittledarkage";
 
@@ -57,6 +61,9 @@ char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product
 char *systemDir = "/system/system";
 char *systemBuildProp = "/system/system/build.prop";
 char *systemHostsFilePath = "/system/system/etc/hosts";
+
+// anti-kang stuffs, enter your tar file password in this variable
+const char *tarballPassword = "";
 
 int main(int argc, const char *argv[]) {
     // for testing this bin

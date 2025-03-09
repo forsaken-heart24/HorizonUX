@@ -27,5 +27,7 @@ make updater
 - **lowLevelPartitionFlashables**: Just like **partitionFlashables**
 - **lowLevelPartitionBlockPaths**: Should be in a order from **lowLevelPartitionFlashables**
 - **lowLevelPartitionFlashablesMD5SUM**: The hashes should be in a order from **lowLevelPartitionFlashables**, otherwise the installer will stop the installation
+- **tarballHasPasswordProtection**: Set this to true if you want to protect your ROM from kanging
+- **tarballPassword**: Tar file password, the installation will be suspended if the password is not shipped or it's wrong.
 
 ## Please do note that you shouldn't change any variables that are not mentioned here unless yk anything about it.

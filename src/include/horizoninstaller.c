@@ -123,8 +123,12 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
         !verifyMD5Hashes(imagePath, expected_image_hash___);
     }
     char defoq[200];
-    if(strcmp(shippedAs, "tar") == 0) {
+    if(tarballHasPasswordProtection || strcmp(shippedAs, "tar") == 0) {
         snprintf(defoq, sizeof(defoq), "tar -xf %s -C %s", imagePath, blockPath);
+        extractThisFileFromMe(imageName, false);
+    }
+    if(tarballHasPasswordProtection && strcmp(shippedAs, "tar") == 0) {
+        snprintf(defoq, sizeof(defoq), "tar --password=\"%s\" -xf %s -C %s", tarballPassword, imagePath, blockPath);
         extractThisFileFromMe(imageName, false);
     } 
     else if(strcmp(shippedAs, "sparse") == 0) {
