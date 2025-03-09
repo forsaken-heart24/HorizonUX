@@ -313,15 +313,9 @@ change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGE
 setprop --vendor "vendor.audio.offload.buffer.size.kb" "256"
 rm -rf $HORIZON_SYSTEM_DIR/hidden $HORIZON_SYSTEM_DIR/preload $HORIZON_SYSTEM_DIR/recovery-from-boot.p $HORIZON_SYSTEM_DIR/bin/install-recovery.sh
 cp -af ./misc/etc/ringtones_and_etc/media/audio/* $HORIZON_SYSTEM_DIR/media/audio/
-cp -af ./horizon/rom_tweaker_script/init.ishimiiiiiiiiiiiiiii.rc $HORIZON_SYSTEM_DIR/etc/init/
-cp -af ./horizon/rom_tweaker_script/ishimiiiiiiiiii.sh $HORIZON_SYSTEM_DIR/bin/
-boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX && echo -e "\nservice brotherboard_touch_fix /system/bin/sh -c /system/bin/brotherboard_touch_fix.sh\n\tuser root\n\tgroup root\n\toneshot" >> $HORIZON_SYSTEM_DIR/etc/init/init.ishimiiiiiiiiiiiiiii.rc
-# boolReturn "$SWITCH_TO_HIGH_REFRESH_RATE_ON_LOCKSCREEN" && {
-#	gcc -I../../include/ ../../include/horizonutils.c ../../include/horizonux.c ./changeToPeakRefreshRateifTheDeviceisInLockscreen.c -o changeToPeakRefreshRateifTheDeviceisInLockscreen.elf
-#	cp changeToPeakRefreshRateifTheDeviceisInLockscreen.elf $HORIZON_SYSTEM_DIR/bin/changeToPeakRefreshRateifTheDeviceisInLockscreen
-#	rm -rf changeToPeakRefreshRateifTheDeviceisInLockscreen.elf
-#	echo -e "\nservice changeToPeakRefreshRateifTheDeviceisInLockscreen /system/bin/changeToPeakRefreshRateifTheDeviceisInLockscreen \n\tuser system\n\tgroup system\n\n#make this junk run after the boot\non property:sys.boot_completed=1\n\tstart changeToPeakRefreshRateifTheDeviceisInLockscreen\n" >> $HORIZON_SYSTEM_DIR/etc/init/init.ishimiiiiiiiiiiiiiii.rc
-#}
+cp -af ./horizon/rom_tweaker_script/init.ellen.rc $HORIZON_SYSTEM_DIR/etc/init/
+cp -af ./horizon/rom_tweaker_script/ellenJoe.sh $HORIZON_SYSTEM_DIR/bin/
+boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX && echo -e "\nservice brotherboard_touch_fix /system/bin/sh -c /system/bin/brotherboard_touch_fix.sh\n\tuser root\n\tgroup root\n\toneshot" >> $HORIZON_SYSTEM_DIR/etc/init/init.ellen.rc
 change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE"
 boolReturn $TARGET_INCLUDE_CUSTOM_BRAND_NAME && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}"
 existance "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" && touch $HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so
@@ -370,7 +364,6 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" || "${BUILD_TARGET_SDK_VERSION}" -l
 	cat ./diff_patches/system/etc/init/freecess.rc > "$HORIZON_SYSTEM_DIR/etc/init/freecess.rc"
 fi
 if ask "Do you want to add a stub app for missing activities?"; then
-	# build_and_sign <apktool decoded package path> <output path>
 	mkdir -p $HORIZON_SYSTEM_DIR/app/HorizonStub/
 	build_and_sign "./horizon/packages/HorizonStub" "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
 fi
@@ -384,10 +377,10 @@ if boolReturn "${BATTLEMAGE_BUILD}"; then
     rmdir $HASH_KEY_FOR_SUPER_BLOCK_PATH
 fi
 [ "$(string_format -l $openSeperateConsoleForDebugging)" == "true" ] || { \
-	echo "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - This console will get killed because this script didn't run properly, share the logs with the developer's handle." >> $thisConsoleTempLogFile;
+	echo "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - This console will get killed soon, share the logs to the developer's handle if you are concerned about anything!" >> $thisConsoleTempLogFile;
 	kill $pid &>/dev/null;
 }
-cp $thisConsoleTempLogFile ../local_build/logs/$thisConsoleTempLogFile.log
+mv $thisConsoleTempLogFile ../local_build/logs/$thisConsoleTempLogFile.log
 
 # fuck this fucking directory before it fucking fucks up the fucking use cases man, fuck this fucking bullshit that i have to fuck with
 # hope this fucking shit ends fucking soon.

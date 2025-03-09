@@ -23,7 +23,7 @@ bool installationHasLowLevelDiskImages = false;
 bool tarballHasPasswordProtection = false;
 
 char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto___horizonROMInstaller.log";
-const char *thisPatchBuildID = "mylittledarkage";
+const char *thisPatchBuildID = "";
 
 // wanana BANG!
 char *whatisOTAType = "Incremental"; // This string can be: "Incremental" or "Reinstall". The name suggests it all.
@@ -85,12 +85,15 @@ int main(int argc, const char *argv[]) {
     snprintf(OUTFD, sizeof(OUTFD), "/proc/self/fd/%s", argv[3]);
     // mkdir syntax: mkdir("/some/directory", 0700);
     if(checkInternalStorageStatus()) {
-        mkdir("/sdcard/HorizonInstaller/logs", 0777);
-        LOG4HORIZONFILE = "/sdcard/HorizonInstaller/logs/teto___horizonROMInstaller.log";
+        mkdir("/sdcard/Horizon", 0777);
+        mkdir("/sdcard/Horizon/logs", 0777);
+        LOG4HORIZONFILE = "/sdcard/Horizon/logs/teto___horizonROMInstaller.log";
     }
     else {
-        mkdir("/dev/tmp/HorizonInstaller/logs", 0777);
-        LOG4HORIZONFILE = "/dev/tmp/HorizonInstaller/logs/teto___horizonROMInstaller.log";
+        mkdir("/dev/tmp/", 0777);
+        mkdir("/dev/tmp/Horizon", 0777);
+        mkdir("/dev/tmp/Horizon/logs", 0777);
+        LOG4HORIZONFILE = "/dev/tmp/Horizon/logs/teto___horizonROMInstaller.log";
     }
     bool systemMounted = isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true);
     if(systemMounted) {

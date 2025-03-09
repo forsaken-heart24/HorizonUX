@@ -1,15 +1,15 @@
 on boot
-	start ishimi
+	start ellen
 
 on property:sys.boot_completed=1
-	start ishimi
+	start ellen
 	
 # let's spoof the device.
 on property:service.bootanim.exit=1
-	start ishimi
+	start ellen
 	
 # shell script that does the job and kills itself after it.
-service ishimi /system/bin/sh -c /system/bin/ishimiiiiiiiiii.sh
+service ellen /system/bin/sh -c /system/bin/ellenJoe.sh
 	user root
 	group root
 	oneshot

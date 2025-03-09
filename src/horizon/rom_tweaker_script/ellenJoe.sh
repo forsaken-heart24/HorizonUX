@@ -111,15 +111,6 @@ function dawn() {
     return 1
 }
 
-function horizon_features() {
-    local feature_name="$1"
-    local kamg_it="$(grep_prop "$feature_name" "/system/build.prop")"
-    if [[ "$kamg_it" == "available" || "$kamg_it" == "true" ]]; then
-        return 0
-    fi
-    return 1
-}
-
 function maybe_nuke_prop() {
     local variable="$@"
     if [[ ! -z "$(command -v resetprop)" && ! -z "$(resetprop $variable)" ]]; then
@@ -136,26 +127,28 @@ function check_reset_prop() {
     [ -z $VALUE ] || [ $VALUE = $EXPECTED ] || resetprop $NAME $EXPECTED
 }
 
+# let's cook an tmp file to save our logs because we have to save things on it
+# and after that we have to move it to the /data/media/0/Horizon/logs/ because we
+# still have no idea whether the device is freaking encrypted or not. You might say that
+# we can plug things but idc, im just gonna f'round with the temp file and fuckin' move
+# it to the directory.
+if ! is_boot_completed; then
+    the_logfile=$(mktemp)
+    horizon_log "ellenJoe" "using the $the_logfile file to store logs because the storage haven't decryped yet!"
+fi
+
 ########################################### main() #############################################
 # let's change the default theme to dark, Thanks to nobletaro for the idea!
 if [ "$(settings get secure device_provisioned)" == "0" ]; then
     settings put secure ui_night_mode 2
     cmd uimode night yes
 fi
-if is_boot_completed; then
-    # idgaf i just want to get the maximum rr of the device.
-    {
-        max_device_refresh_rate=$(timeout 3 dumpsys 2>/dev/null | grep --line-buffered refresh-rate | head -n 1 | awk '{print $3}' | cut -d'.' -f1)
-        if [[ "${max_device_refresh_rate}" == "60" || "${max_device_refresh_rate}" == "90" || "${max_device_refresh_rate}" == "120" ]]; then
-            resetprop persist.horizonux.device_max_refresh_rate "${max_device_refresh_rate}"
-            settings put global horizon_device_max_refresh_rate__ "${max_device_refresh_rate}"
-        fi
-    }
 
+if is_boot_completed; then
     # we are gonna remove everything inside the dir if uhhh... it takes up an megabyte(s) of space
-    dawn "/data/horizonux/logs/" && rm -rf /data/horizonux/logs/*
-    the_logfile="/data/horizonux/logs/horizon_ishimi_tweaker_logs.log"
-    horizon_log "ishimi" "The ROM decryped the storage, using the $the_logfile file to store logs..."
+    dawn "/data/media/0/Horizon/logs/" && rm -rf /data/media/0/Horizon/logs/*
+    the_logfile="/data/media/0/Horizon/logs/horizon_ellenJoe_tweaker_logs.log"
+    horizon_log "ellenJoe" "The ROM decryped the storage, using the $the_logfile file to store logs..."
     # spoof the device to green state, making it seem like an locked device.
     check_reset_prop "ro.boot.vbmeta.device_state" "locked"
     check_reset_prop "ro.boot.verifiedbootstate" "green"
@@ -185,7 +178,7 @@ if is_boot_completed; then
     [ "$(grep_prop persist.horizonux.brotherboard.touch_fix)" == "$(string_case --lower "available")" ] && start brotherboard_touch_fix
     # let's try to disable user apps log visibitlity...
     for idkmanwtfdowhateveridcyouarebomblikemefrfr in $(pm list packages | cut -d':' -f2); do
-        cmd package log-visibility --disable $idkmanwtfdowhateveridcyouarebomblikemefrfr || horizon_log "ishimi" "Can't disable logs for this application: ${idkmanwtfdowhateveridcyouarebomblikemefrfr}..."
+        cmd package log-visibility --disable $idkmanwtfdowhateveridcyouarebomblikemefrfr || horizon_log "ellenJoe" "Can't disable logs for this application: ${idkmanwtfdowhateveridcyouarebomblikemefrfr}..."
     done
     # gms doze crap 
     horizon_log "GMSDoze" "Tweaking gms..."
@@ -219,7 +212,7 @@ if is_boot_completed; then
             # Add GMS to battery optimization
             dumpsys deviceidle whitelist com.google.android.gms
     } >> ${the_logfile}
-    if horizon_features "persist.horizonux.audio.resampler"; then
+    if grep_prop "persist.horizonux.audio.resampler"; then
         horizon_log "horizonux_features_verifier" "The audio resampler is enabled in this build...."
         horizon_log "late_start_service" "Starting HorizonUX resampler..."
         resetprop ro.audio.resampler.psd.enable_at_samplerate 44100
@@ -233,14 +226,6 @@ if is_boot_completed; then
             horizon_log "late_start_service" "failed to reboot audioserver, the resampler stuffs aren't saved.. sorryyy"
         fi
     fi
-else
-    # let's cook an tmp file to save our logs because we have to save things on it
-    # and after that we have to move it to the /data/horizonux/logs because we
-    # still have no idea whether the device is freaking encrypted or not. You might say that
-    # we can plug things but idc, im just gonna f'round with the temp file and fuckin' move
-    # it to the directory.
-    the_logfile=$(mktemp)
-    horizon_log "ishimi" "using the $the_logfile file to store logs because the storage haven't decryped yet!"
 fi
 ########################################### main() #############################################
 
