@@ -18,8 +18,7 @@ bool iDontWantChecksumChecks = false;
 // Set to true if you want to install low level partitions.
 bool installationHasLowLevelDiskImages = false;
 
-//const char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto___horizonROMInstaller.log";
-const char *LOG4HORIZONFILE = "/sdcard/teto___horizonROMInstaller.log";
+char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto___horizonROMInstaller.log";
 const char *thisPatchBuildID = "mylittledarkage";
 
 // wanana BANG!
@@ -36,16 +35,16 @@ char *ZIPFILE = NULL;
 char OUTFD[256] = {0};
 
 // low level partition flashing, ex boot, recovery xbl_config and etc
-char *lowLevelPartitionFlashables[] = {"becon", "nata"};
-char *lowLevelPartitionBlockPaths[] = {"becon", "nata"};
+char *lowLevelPartitionFlashables[] = {"mizuki", "hideo"};
+char *lowLevelPartitionBlockPaths[] = {"mizuki", "hideo"};
 char *lowLevelPartitionFlashablesMD5SUM[] = {"64e282071257bec90215eccf413dfc8e", "64e7bbe8e51a6c2698c1e542e5c4b9e1"};
 
 // high level partition flashing, ex system / super...
-char *partitionFlashables[] = {"becon", "nata"};
-char *partitionBlockPaths[] = {"becon", "nata"};
+char *partitionFlashables[] = {"mizuki", "hideo"};
+char *partitionBlockPaths[] = {"mizuki", "hideo"};
 char *partitionFlashablesMD5SUM[] = {"64e282071257bec90215eccf413dfc8e", "64e7bbe8e51a6c2698c1e542e5c4b9e1"};
 
-// device codename here:
+// device codename here, ex: ellen (first device) | joe (second device)
 char supportedDevicesList[] = "beyond0 | beyond0lte";
 
 // mountables, ig
@@ -53,6 +52,11 @@ char *rrrrrrrrrrrr[] = {"system", "vendor", "product", "prism"};
 
 // generic partition mount paths
 char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product", "/prism"};
+
+// rom (files) path identifier, don't change anything!
+char *systemDir = "/system/system";
+char *systemBuildProp = "/system/system/build.prop";
+char *systemHostsFilePath = "/system/system/etc/hosts";
 
 int main(int argc, const char *argv[]) {
     // for testing this bin
@@ -65,13 +69,19 @@ int main(int argc, const char *argv[]) {
     if(argc < 5) {
         abort__("- Not enough arguments provided!", " ");
     }
-    ZIPFILE = strdup(argv[4]);
-    // forgor to extract the rom properties file
+    // forgor to extract rom.prop from the archive.
     extractThisFileFromMe("rom.prop", false);
-    char *systemDir = "/system/system";
-    char *systemBuildProp = "/system/system/build.prop";
-    char *systemHostsFilePath = "/system/system/etc/hosts";
+    ZIPFILE = strdup(argv[4]);
     snprintf(OUTFD, sizeof(OUTFD), "/proc/self/fd/%s", argv[3]);
+    // mkdir syntax: mkdir("/some/directory", 0700);
+    if(checkInternalStorageStatus) {
+        mkdir("/sdcard/HorizonInstaller/logs", 0777);
+        LOG4HORIZONFILE = "/sdcard/HorizonInstaller/logs/teto___horizonROMInstaller.log";
+    }
+    else {
+        mkdir("/dev/tmp/HorizonInstaller/logs", 0777);
+        LOG4HORIZONFILE = "/dev/tmp/HorizonInstaller/logs/teto___horizonROMInstaller.log";
+    }
     if(isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true)) {
         FILE *systemBuildProperty = fopen("/system/system/build.prop", "r");
         if(!systemBuildProperty) {
@@ -127,16 +137,17 @@ int main(int argc, const char *argv[]) {
             else if(i == 1) {
                 copyIncrementalFiles("/vendor", rrrrrrrrrrrr[i]);
             }
-            else if(i < ARRAY_SIZE(genericPartitionPaths)) {
-                copyIncrementalFiles(genericPartitionPaths[i], rrrrrrrrrrrr[i]);
+            else {
+                int index = i % ARRAY_SIZE(genericPartitionPaths);
+                copyIncrementalFiles(genericPartitionPaths[index], rrrrrrrrrrrr[i]);
             }
-        }
+        }        
     }
     else if(strcmp(whatisOTAType, "Reinstall") == 0 && isHotFixAndShouldBeSkipped || strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
         for(int i = 0; i < ARRAY_SIZE(partitionFlashables); i++) {
             installGivenDiskImageFile(INSTALLER_PATH, partitionBlockPaths[i], partitionFlashables[i], partitionFlashablesMD5SUM[i]);
         }
-    } 
+    }
     else {
         throwMessagesToConsole("- Can't determine whether to flash the whole ROM or just patch necessary things, skipping installation.", " ", false);
         exit(0);

@@ -18,7 +18,7 @@ make updater
 - **ZIPFILE**: Don't change this, this is the path string to the installation package.
 - **partitionFlashables**: Used to tell the program what to flash.
 - **partitionBlockPaths**: Should be in a order from **partitionFlashables**
-- **supportedDevicesList**: For detecting your device model.
+- **supportedDevicesList**: For detecting your device model. Syntax example can be seen in the main.c
 - **thisPatchBuildID**: Used for determing the new build id.
 - **isHotFixAndShouldBeSkipped**: boolean value, skips the checks if it's a hotfix on the same build id. (false = checks the build id)
 - **partitionFlashablesMD5SUM**: The hashes should be in a order from **partitionFlashables**, otherwise the installer will stop the installation

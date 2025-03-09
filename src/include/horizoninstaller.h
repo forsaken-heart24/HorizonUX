@@ -16,7 +16,7 @@ extern bool hostsAreBackedUp;
 extern bool isHotFixAndShouldBeSkipped;
 extern bool iDontWantChecksumChecks;
 extern bool installationHasLowLevelDiskImages;
-extern const char *LOG4HORIZONFILE;
+extern char *LOG4HORIZONFILE;
 extern char *INSTALLER_PATH;
 extern char *whatisOTAType;
 extern char OUTFD[256];

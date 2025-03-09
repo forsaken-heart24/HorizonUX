@@ -8,10 +8,12 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 // FUCKING global FUCKING variables.
 extern bool WRITE_DEBUG_MESSAGES_TO_CONSOLE;
-extern const char *LOG4HORIZONFILE;
+extern char *LOG4HORIZONFILE;
  
 // FUCKING function FUCKING declarations.
 void error_print(const char *Message);
