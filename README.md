@@ -24,6 +24,6 @@ Give these awesome contributors some love:
 Let us know through our bot:  
 📢 [**Luna's Project Bugreporter Bot**](https://t.me/luna_project_bugreporter_bot)
 
-✅ **Can i use this for Commercial use cases?**
-Open source your project to take anything from this project, this is a request it can be 
-counted as illegal as per GNU General Public License 3
+✅ **Can I use this for commercial use cases?**  
+You are requested to open-source your project if you use anything from this project.  
+Failure to do so may violate the **GNU General Public License v3 (GPL-3.0)**.
