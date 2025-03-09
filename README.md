@@ -22,4 +22,8 @@ Give these awesome contributors some love:
 
 🐞 **Found a bug or have a feature request?**  
 Let us know through our bot:  
-📢 [**Luna's Project Bugreporter Bot**](https://t.me/luna_project_bugreporter_bot)  
+📢 [**Luna's Project Bugreporter Bot**](https://t.me/luna_project_bugreporter_bot)
+
+✅ **Can i use this for Commercial use cases?**
+Open source your project to take anything from this project, this is a request it can be 
+counted as illegal as per GNU General Public License 3
