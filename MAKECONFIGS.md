@@ -72,6 +72,8 @@
 - **BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET**: Brings back network speed-o-meter in the systemUI qs 
 - **BUILD_TARGET_BRING_NEWGEN_ASSISTANT**: For android <= 11, brings assistant 2.0
 - **BUILD_TARGET_DISABLE_KNOX_PROPERTIES**: For android <= 11, try this at own risk because it disables knox via properties which are untested.
+- **BUILD_TARGET_BOOT_ANIMATION_FPS**: Add any integer value lesser than or equal to 60 if you have a bootanimation that has video/gif like transistions
+- **BUILD_TARGET_SHUTDOWN_ANIMATION_FPS**: Same applies for this variable
 
 ---
 

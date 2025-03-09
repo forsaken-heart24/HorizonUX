@@ -337,6 +337,10 @@ fi
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 console_print "Running misc jobs..."
+if [[ -n "${BUILD_TARGET_BOOT_ANIMATION_FPS}" && "${BUILD_TARGET_BOOT_ANIMATION_FPS}" -le "60" && -n "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" && "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" -le "60" ]]; then
+	setprop "boot.fps" "${BUILD_TARGET_BOOT_ANIMATION_FPS}"
+	setprop "shutdown.fps" "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}"
+fi
 default_language_configuration ${NEW_DEFAULT_LANGUAGE_ON_PRODUCT} ${NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT}
 change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE}"
 setprop --vendor "vendor.audio.offload.buffer.size.kb" "256"
