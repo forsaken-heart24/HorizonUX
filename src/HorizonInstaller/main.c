@@ -65,6 +65,9 @@ char *systemHostsFilePath = "/system/system/etc/hosts";
 // anti-kang stuffs, enter your tar file password in this variable
 const char *tarballPassword = "";
 
+// this variable can be: tarProtected (password protected tar), sparse and raw (which is the raw image factor)
+const char *shippedAs = "";
+
 int main(int argc, const char *argv[]) {
     // for testing this bin
     if(strcmp((char *)argv[1], "--test") == 0) {
@@ -72,7 +75,7 @@ int main(int argc, const char *argv[]) {
         return 0;
     }
     // for closing terminal after testing stdin aka OUTFD
-    throwMessagesToConsole(NULL, NULL, false);
+    throwMessagesToConsole(" ", " ", false);
     if(argc < 5) {
         abort__("- Not enough arguments provided!", " ");
     }
@@ -81,7 +84,7 @@ int main(int argc, const char *argv[]) {
     ZIPFILE = strdup(argv[4]);
     snprintf(OUTFD, sizeof(OUTFD), "/proc/self/fd/%s", argv[3]);
     // mkdir syntax: mkdir("/some/directory", 0700);
-    if(checkInternalStorageStatus) {
+    if(checkInternalStorageStatus()) {
         mkdir("/sdcard/HorizonInstaller/logs", 0777);
         LOG4HORIZONFILE = "/sdcard/HorizonInstaller/logs/teto___horizonROMInstaller.log";
     }
@@ -89,7 +92,8 @@ int main(int argc, const char *argv[]) {
         mkdir("/dev/tmp/HorizonInstaller/logs", 0777);
         LOG4HORIZONFILE = "/dev/tmp/HorizonInstaller/logs/teto___horizonROMInstaller.log";
     }
-    if(isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true)) {
+    bool systemMounted = isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true);
+    if(systemMounted) {
         FILE *systemBuildProperty = fopen("/system/system/build.prop", "r");
         if(!systemBuildProperty) {
             systemBuildProperty = fopen("/system_root/system/build.prop", "r");
@@ -132,7 +136,7 @@ int main(int argc, const char *argv[]) {
     backupHostsFileFromCurrentSystem("backup", systemHostsFilePath);
     throwMessagesToConsole("- Installing packages...", " ", false);
     throwMessagesToConsole("  please wait, it might take longer than usual..", " ", false);
-    if(strcmp(whatisOTAType, "Incremental") == 0 && isHotFixAndShouldBeSkipped || strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
+    if((strcmp(whatisOTAType, "Incremental") == 0 && isHotFixAndShouldBeSkipped) || (strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0)) {
         for(int i = 0; i < ARRAY_SIZE(genericPartitionPaths); i++) {
             isThisPartitionMounted(genericPartitionPaths[i], true);
         }
@@ -145,7 +149,7 @@ int main(int argc, const char *argv[]) {
                 copyIncrementalFiles("/vendor", rrrrrrrrrrrr[i]);
             }
             else {
-                int index = i % ARRAY_SIZE(genericPartitionPaths);
+                int index = (i < ARRAY_SIZE(genericPartitionPaths)) ? i : (i % ARRAY_SIZE(genericPartitionPaths));
                 copyIncrementalFiles(genericPartitionPaths[index], rrrrrrrrrrrr[i]);
             }
         }        
@@ -161,10 +165,13 @@ int main(int argc, const char *argv[]) {
     }
     if(installationHasLowLevelDiskImages) {
         for(int i = 0; i < ARRAY_SIZE(lowLevelPartitionFlashables); i++) {
-            installGivenDiskImageFile(INSTALLER_PATH, lowLevelPartitionBlockPaths[i], lowLevelPartitionFlashables[i], lowLevelPartitionFlashablesMD5SUM[i]);
+            installLowLevelImages(INSTALLER_PATH, lowLevelPartitionBlockPaths[i], lowLevelPartitionFlashables[i], lowLevelPartitionFlashablesMD5SUM[i]);
         }
     }
     backupHostsFileFromCurrentSystem("restore", systemHostsFilePath);
-    free(ZIPFILE);
+    if(ZIPFILE) {
+        free(ZIPFILE);
+        ZIPFILE = NULL;
+    }    
     throwMessagesToConsole("- Successfully installed Horizon on your device, reboot to use the device now!", " ", true);
 }

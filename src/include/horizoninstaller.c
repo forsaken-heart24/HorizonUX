@@ -2,14 +2,14 @@
 
 // returns bool acc. to the requested type.
 bool verifyInstallationType(const char *requiredType, const char *zipPackage) {
-    return (strstr(requiredType, zipPackage) != NULL);
+    return (requiredType && zipPackage && strstr(requiredType, zipPackage) != NULL);
 }
 
 // returns true if the storage is not encrypted.
 bool checkInternalStorageStatus() {
     DIR *iPlayedTheseGamesBefore = opendir("/data/media");
     if(!iPlayedTheseGamesBefore) {
-        consoleLog("checkInternalStorageStatus(): Unable to open /data/media/, userdata is likely encrypted.", " ");
+        consoleLog("checkInternalStorageStatus(): Userdata is likely encrypted.", " ");
         return false;
     }
     closedir(iPlayedTheseGamesBefore);
@@ -19,24 +19,26 @@ bool checkInternalStorageStatus() {
 
 // throws the installation messages.
 void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog) {
+    if (!text || !extr_factor) return;
     char combine[1028];
     snprintf(combine, sizeof(combine), "%s %s\n", text, extr_factor);
-    
     FILE *OUTFD__ = fopen(OUTFD, "w");
     if(!OUTFD__) {
         consoleLog("throwMessagesToConsole(): Unable to open OUTFD, closing the console!", " ");
         exit(1);
     }
     fprintf(OUTFD__, "%s", combine);
-    putThisinLog && consoleLog(combine, " ");
-    fclose(OUTFD__);
+    fclose(OUTFD__);   
+    if(putThisinLog) consoleLog(combine, " ");
 }
 
 // throws installation messages and stops installation
 void abort__(char *text, char *extr_factor) {
     throwMessagesToConsole(text, extr_factor, true);
     executeCommands("rm -rf /dev/tmp", false);
-    free(ZIPFILE);
+    if(ZIPFILE) {
+        free(ZIPFILE);
+    }    
     exit(1);
 }
 
@@ -53,30 +55,36 @@ void setupRecoveryCommandFile() {
 
 // checks if partition is mounted
 bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMountit) {
+    if(!baselinePartitionName) return false;
     FILE *mounts = fopen("/proc/mounts", "r");
     if(!mounts) {
         abort__("Failed to open /proc/mounts", " ");
         return false;
     }
     char content[1028];
-    while(fgets(content, sizeof(content), mounts) != NULL) {
-        if(strstr(content, baselinePartitionName) != NULL) {
-            fclose(mounts);
-            if(DoiNeedToMountit) {
-                char dupContent[128];
-                snprintf(dupContent, sizeof(dupContent), "mount -o rw,remount %s", baselinePartitionName);
-                if(executeCommands(dupContent) != 0) {
-                    abort__("- Failed to re-mount partition", " ");
-                    return false;
-                }
-            }
-            consoleLog("Successfully mounted:", (char *)baselinePartitionName);
-            return true;
+    bool partitionIsMounted = false;
+    while(fgets(content, sizeof(content), mounts)) {
+        if(strstr(content, baselinePartitionName)) {
+            partitionIsMounted = true;
+            break;
         }
     }
     fclose(mounts);
-    consoleLog("Failed to mount:", (char *)baselinePartitionName);
-    return false;
+    if(!partitionIsMounted) {
+        consoleLog("Partition is not mounted:", (char *)baselinePartitionName);
+        return false;
+    }
+    if(DoiNeedToMountit) {
+        char mountCommand[128];
+        snprintf(mountCommand, sizeof(mountCommand), "mount -o rw,remount %s", baselinePartitionName);
+        if(executeCommands(mountCommand, false) != 0) {
+            abort__("- Failed to re-mount partition", " ");
+            return false;
+        }
+        return isThisPartitionMounted(baselinePartitionName, false);
+    }   
+    consoleLog("Partition is already mounted:", (char *)baselinePartitionName);
+    return true;
 }
 
 // checks ROM properties
@@ -102,77 +110,51 @@ bool getRomProperties(char *requiredProperty, char *requiredPropertyValue) {
 
 // bruhh
 bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___) {
-    FILE *imagePath__ = fopen(imagePath, "r");
-    FILE *blockPath__ = fopen(blockPath, "w");
-    if(!imagePath__ || !blockPath__) {
+    if(!imagePath || !blockPath || !imageName || !expected_image_hash___) {
         throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", "", true);
         abort__("  Error code: 0x7265616c5f626c6f636b206e6f7420736574", "");
     }
-    char *shippedAs = NULL;
-    char *extensionList[] = {"tar", "sparse", "raw"};
-    for(int i = 0; i < 3; i++) {
-        if(getRomProperties("SHIPPED_AS_WHAT", extensionList[i])) {
-            shippedAs = extensionList[i];
-            break;
-        }
-    }
     if(!shippedAs) {
-        abort__("- Unsupported image format. Could not determine SHIPPED_AS_WHAT", "");
+        abort__("- Unsupported image format. Could not determine which format factor is shipped with.", "");
     }
     if(!iDontWantChecksumChecks) {
-        !verifyMD5Hashes(imagePath, expected_image_hash___);
+        if(!verifyMD5Hashes(imagePath, expected_image_hash___)) {
+            abort__("- Checksum verification failed", "");
+        }
     }
-    char defoq[200];
-    if(tarballHasPasswordProtection || strcmp(shippedAs, "tar") == 0) {
-        snprintf(defoq, sizeof(defoq), "tar -xf %s -C %s", imagePath, blockPath);
-        extractThisFileFromMe(imageName, false);
-    }
-    if(tarballHasPasswordProtection && strcmp(shippedAs, "tar") == 0) {
+    char defoq[256];
+    if(tarballHasPasswordProtection && strcmp(shippedAs, "tarProtected") == 0) {
         snprintf(defoq, sizeof(defoq), "tar --password=\"%s\" -xf %s -C %s", tarballPassword, imagePath, blockPath);
-        extractThisFileFromMe(imageName, false);
+    } 
+    else if(strcmp(shippedAs, "tar") == 0) {
+        snprintf(defoq, sizeof(defoq), "tar -xf %s -C %s", imagePath, blockPath);
     } 
     else if(strcmp(shippedAs, "sparse") == 0) {
         snprintf(defoq, sizeof(defoq), "simg2img %s/%s %s", INSTALLER_PATH, imageName, blockPath);
-        extractThisFileFromMe(imageName, false);
     } 
     else if(strcmp(shippedAs, "raw") == 0) {
         snprintf(defoq, sizeof(defoq), "unzip -o %s %s -d %s", ZIPFILE, imageName, blockPath);
     } 
     else {
-        abort__("- Unsupported image type detected:", shippedAs);
+        abort__("- Unsupported image type detected:", (char *)shippedAs);
     }
     if(executeCommands(defoq, false) != 0) {
         abort__("- Failed to install the image file", "");
     }
-    fclose(imagePath__);
-    fclose(blockPath__);
     return true;
 }
 
 // changes string case
 char *stringCase(const char *option, const char *input) {
-    if(!option || !input) {
-        consoleLog("stringCase(): Missing argument", " ");
-        return NULL;
-    }
+    if (!option || !input) return NULL;
     size_t len = strlen(input);
-    char *output = malloc(len + 1);
+    char *output = (char *)malloc(len + 1);
     if(!output) {
         consoleLog("stringCase(): Memory allocation failed", " ");
         return NULL;
     }
-    if(strcasecmp(option, "lower") == 0) {
-        for(size_t i = 0; i < len; i++) {
-            output[i] = tolower((unsigned char)input[i]);
-        }
-    }
-    else if(strcasecmp(option, "upper") == 0) {
-        for(size_t i = 0; i < len; i++) {
-            output[i] = toupper((unsigned char)input[i]);
-        }
-    }
-    else {
-        strncpy(output, input, len);
+    for(size_t i = 0; i < len; i++) {
+        output[i] = (strcasecmp(option, "lower") == 0) ? tolower((unsigned char)input[i]) : toupper((unsigned char)input[i]);
     }
     output[len] = '\0';
     return output;
@@ -180,22 +162,19 @@ char *stringCase(const char *option, const char *input) {
 
 // works like cp command in terminal
 int cp(const char *source, const char *destination) {
+    if (!source || !destination) return 1;
     FILE *src = fopen(source, "rb");
-    if(!src) {
-        consoleLog("cp(): Error opening source file", " ");
-        return 1;
-    }
+    if (!src) return 1;
     FILE *dest = fopen(destination, "wb");
     if(!dest) {
-        consoleLog("cp(): Error opening destination file", " ");
         fclose(src);
         return 1;
     }
     char buffer[8192];
     size_t bytesRead;
-    while((bytesRead = fread(buffer, 1, 8192, src)) > 0) {
+    while((bytesRead = fread(buffer, 1, sizeof(buffer), src)) > 0) {
         fwrite(buffer, 1, bytesRead, dest);
-    }
+    }   
     fclose(src);
     fclose(dest);
     return 0;
@@ -225,9 +204,10 @@ char *getPreviousSystemBuildID(const char *filepath) {
 // extracts sh from the zip file.
 // unzip -o "$ZIPFILE" "$file" -d "${INSTALLER}/"
 void extractThisFileFromMe(const char *fileToExtract, bool skipErrors) {    
+    if(!fileToExtract) return;
     char ykitsnotthesameasitwas[250];
-    snprintf(ykitsnotthesameasitwas, sizeof(ykitsnotthesameasitwas), "unzip -o \"%s\" \"%s\" -d \"%s\" ", ZIPFILE, fileToExtract, INSTALLER_PATH);
-    if(skipErrors || executeCommands(ykitsnotthesameasitwas) != 0) {
+    snprintf(ykitsnotthesameasitwas, sizeof(ykitsnotthesameasitwas), "unzip -o \"%s\" \"%s\" -d \"%s\"", ZIPFILE, fileToExtract, INSTALLER_PATH);    
+    if(!skipErrors && executeCommands(ykitsnotthesameasitwas) != 0) {
         abort__("- Failed to extract requested file from the zipfile, please try again...", " ");
     }
 }
@@ -315,7 +295,7 @@ bool installLowLevelImages(const char *imagePath, const char *blockPath, const c
         abort__("  Error code: 0x7265616c5f626c6f636b206e6f7420736574", " ");
     }
     char defoq[256];
-    snprintf(defoq, sizeof(defoq), "cat \"%s\" > \"%s/%s\"", blockPath, INSTALLER_PATH, blockPath);
+    snprintf(defoq, sizeof(defoq), " dd if=\"%s\" of=\"%s/%s\" ", blockPath, INSTALLER_PATH, blockPath);
     if(executeCommands(defoq, false) != 0) {
         abort__("- Failed to take a backup of some low-level partitions, contact the dev if the ROM didn't boot.", " ");
     }
@@ -331,6 +311,7 @@ bool installLowLevelImages(const char *imagePath, const char *blockPath, const c
     }
     return true;
 }
+
 
 char *getSystemProperty(const char *filepath, const char *propertyVariableName) {
     static char buildProperty[256];  

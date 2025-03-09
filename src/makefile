@@ -1,4 +1,5 @@
 # Compiler and flags
+# COMPILER ?= gcc
 COMPILER ?= aarch64-linux-gnu-gcc
 EXTRA_FLAGS = -march=armv8-a
 
