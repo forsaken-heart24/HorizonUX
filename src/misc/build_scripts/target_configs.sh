@@ -112,6 +112,12 @@ for i in $HORIZON_SYSTEM_DIR/etc/floating_feature.xml $HORIZON_VENDOR_DIR/etc/fl
         break
     fi
 done
+TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+if [ ! -f "$TARGET_BUILD_CSC_FEATURE_PATH" ]; then
+    abort " Product CSC File is not found, please change the \"PRODUCT_CSC_NAME\" (in makeconfigs.prop) according to the one in your product image"
+else
+    file $TARGET_BUILD_CSC_FEATURE_PATH | grep -q "cscfeature.xml: data" && tinkerWithCSCFeaturesFile --decode
+fi
 
 # idk bruv
 BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut -c 2-200)"

@@ -13,5 +13,6 @@ bool isTheDeviceisTurnedOn();
 int isPackageInstalled(const char *packageName);
 int sendToastMessages(const char *service, const char *message);
 int manageBlocks(const char *infile, const char *outfile, size_t block_size, size_t count);
+void sendNotification(const char *message);
 
 #endif

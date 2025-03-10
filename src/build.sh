@@ -348,14 +348,86 @@ if boolReturn "$BUILD_TARGET_BRING_NEWGEN_ASSISTANT"; then
 	setprop "ro.opa.eligible_device" "true"
 fi
 
+if boolReturn "$BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU"; then
+	console_print "Enabling Mobile data toggle in the power menu.."
+	add_csc_xml_values "CscFeature_Framework_SupportDataModeSwitchGlobalAction" "TRUE"
+fi
+
+if boolReturn "$BUILD_TARGET_FORCE_FIVE_BAR_NETICON"; then
+	console_print "Enabling 5 network bars..."
+	add_csc_xml_values "CscFeature_SystemUI_ConfigMaxRssiLevel" "5"
+fi
+
+if boolReturn "$BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING"; then
+	console_print "Forcing the system to not close music apps while recording a video..."
+	add_csc_xml_values "CscFeature_Camera_CamcorderDoNotPauseMusic" "TRUE"
+fi
+
+if boolReturn "$BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET"; then
+	console_print "Enabling network speed bar in qs.."
+	add_csc_xml_values "CscFeature_Setting_SupportRealTimeNetworkSpeed" "TRUE"
+	[ "$BUILD_TARGET_SDK_VERSION" -ge "34" ] && add_csc_xml_values "CscFeature_Common_SupportZProjectFunctionInGlobal" "TRUE"
+fi
+
+if boolReturn "$BUILD_TARGET_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING"; then
+	console_print "Forcing system to not close the camera app while calling..."
+	add_csc_xml_values "CscFeature_Camera_EnableCameraDuringCall" "TRUE"
+fi
+
+if boolReturn "$BUILD_TARGET_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER"; then
+	console_print "Adding call recording feature in samsung dialler, please note that im not responsible for legal actions against you!"
+	add_csc_xml_values "CscFeature_VoiceCall_ConfigRecording" "RecordingAllowedByMenu"
+fi
+
 if boolReturn "$BUILD_TARGET_DISABLE_KNOX_PROPERTIES"; then
 	console_print "Disabling Knox and applying rmm fix.."
 	setprop "ro.securestorage.knox" "false"
 	setprop "ro.security.vaultkeeper.native" "0"
+	add_csc_xml_values "CscFeature_Knox_SupportKnoxGuard" "FALSE"
+fi
+
+if boolReturn "$BUILD_TARGET_DISABLE_WIFI_CALLING"; then
+	console_print "Disabling Wifi calling.."
+	add_csc_xml_values "CscFeature_Setting_SupportWifiCall" "FALSE"
+	add_csc_xml_values "CscFeature_Setting_SupportWiFiCallingMenu" "FALSE"
+else 
+	console_print "Enabling Wifi calling.."
+	add_csc_xml_values "CscFeature_Setting_SupportWifiCall" "TRUE"
+	add_csc_xml_values "CscFeature_Setting_SupportWiFiCallingMenu" "TRUE"
+fi
+
+if boolReturn "$BUILD_TARGET_SKIP_SETUP_JUNKS"; then
+	console_print "Disabling junks on setup...."
+	add_csc_xml_values "CscFeature_Setting_SkipWifiActvDuringSetupWizard" "FALSE"
+	add_csc_xml_values "CscFeature_Setting_SkipStepsDuringSamsungSetupWizard" "TRUE"
+fi
+
+if boolReturn "$BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK"; then
+	console_print "Blocking notification sounds on playbacks.."
+	add_csc_xml_values "CscFeature_Video_BlockNotiSoundDuringStreaming" "TRUE"
+fi
+
+if boolReturn "$BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL"
+	add_csc_xml_values "CscFeature_Video_SupportPlayDuringCall" "TRUE"
+	console_print "Forced the system to play media while call..."
+fi
+
+if boolReturn "$FORCE_ENABLE_POP_UP_PLAYER_ON_SVP"; then
+	add_csc_xml_values "CscFeature_Video_EnablePopupPlayer" "TRUE"
+	console_print "Forced samsung video player to work on pop-up window..."
+fi
+
+if boolReturn "$BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD"; then
+	console_print "Disabling Setup Wizard...."
+	add_csc_xml_values "CscFeature_SetupWizard_DisablePrivacyPolicyAgreement" "TRUE"
 fi
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 console_print "Running misc jobs..."
+add_csc_xml_values "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"
+add_csc_xml_values "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"
+add_csc_xml_values "CscFeature_Settings_GOTA" "TRUE"
+add_csc_xml_values "CscFeature_Settings_FOTA" "FALSE"
 if [[ -n "${BUILD_TARGET_BOOT_ANIMATION_FPS}" && "${BUILD_TARGET_BOOT_ANIMATION_FPS}" -le "60" && -n "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" && "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" -le "60" ]]; then
 	setprop "boot.fps" "${BUILD_TARGET_BOOT_ANIMATION_FPS}"
 	setprop "shutdown.fps" "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}"
@@ -423,12 +495,14 @@ if boolReturn "${BATTLEMAGE_BUILD}"; then
     umount $HASH_KEY_FOR_SUPER_BLOCK_PATH
     rmdir $HASH_KEY_FOR_SUPER_BLOCK_PATH
 fi
-[ "$(string_format -l $openSeperateConsoleForDebugging)" == "true" ] || { \
-	echo "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - This console will get killed soon, share the logs to the developer's handle if you are concerned about anything!" >> $thisConsoleTempLogFile;
-	kill $pid &>/dev/null;
-}
+tinkerWithCSCFeaturesFile --encode
 mv $thisConsoleTempLogFile ../local_build/logs/$thisConsoleTempLogFile.log
 
 # fuck this fucking directory before it fucking fucks up the fucking use cases man, fuck this fucking bullshit that i have to fuck with
 # hope this fucking shit ends fucking soon.
 rm -rf $TMPDIR
+
+[ "$(string_format -l $openSeperateConsoleForDebugging)" == "true" ] || { \
+	echo "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - This console will get killed soon, share the logs to the developer's handle if you are concerned about anything!" >> $thisConsoleTempLogFile;
+	kill $pid &>/dev/null;
+}

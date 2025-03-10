@@ -97,3 +97,10 @@ int manageBlocks(const char *infile, const char *outfile, size_t block_size, siz
     fclose(out);
     return 0;
 }
+
+void sendNotification(const char *message) {
+    if (!message) return;
+    char buffer[512];
+    snprintf(buffer, sizeof(buffer), "cmd notification post -S bigtext -t 'HorizonUX' 'Tag' \"%s\"", message);
+    executeCommands(buffer, "");
+}

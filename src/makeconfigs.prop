@@ -37,11 +37,11 @@ CODENAME="Birds"
 CODENAME_VERSION_REFERENCE_ID=0.0
 
 # Build Target properties..
-BUILD_TARGET_ANDROID_VERSION "$(grep "ro.build.version.release" "$(absolute_path --system)/build.prop" | head -n 1 | cut -c 26-28)"
-BUILD_TARGET_SDK_VERSION "$(grep "ro.build.version.sdk" "$(absolute_path --system)/build.prop" | cut -c 22-23)"
+BUILD_TARGET_ANDROID_VERSION="$(grep "ro.build.version.release" "$(absolute_path --system)/build.prop" | head -n 1 | cut -c 26-28)"
+BUILD_TARGET_SDK_VERSION="$(grep "ro.build.version.sdk" "$(absolute_path --system)/build.prop" | cut -c 22-23)"
 BUILD_TARGET_MODEL=$(grep "ro.product.system.model" "$(absolute_path --system)/build.prop" | cut -c 25-33)
-BUILD_TARGET_SCREEN_WIDTH 
-BUILD_TARGET_SCREEN_HEIGHT 
+BUILD_TARGET_SCREEN_WIDTH=
+BUILD_TARGET_SCREEN_HEIGHT= 
 
 # dang
 TARGET_INCLUDE_CUSTOM_BRAND_NAME=false
@@ -65,9 +65,42 @@ BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET=false
 # BUILD_TARGET_BRING_NEWGEN_ASSISTANT=false
 
 # for android <= 11, try this at own risk
-BUILD_TARGET_DISABLE_KNOX_PROPERTIES=true
+BUILD_TARGET_DISABLE_KNOX_PROPERTIES=false
 
-# force shutdown and bootanimation fps.
+# Brings mobile data toggle on the power menu context.
+BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU=true
+
+# Forces the network icon to show 5 bars
+BUILD_TARGET_FORCE_FIVE_BAR_NETICON=true
+
+# Forces the system to play song(s) / music(s) while recording a video
+BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING=true
+
+# force enable Call Recording in the Samsung Dialer App
+BUILD_TARGET_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER=false
+
+# disables wifi calling if it set to true, otherwise (true), it enables it if disabled.
+BUILD_TARGET_DISABLE_WIFI_CALLING=false
+
+# Disables annoying sounds while calls.
+BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK=true
+
+# force skips junks like wifi setup and etc in the setup wizard
+BUILD_TARGET_SKIP_SETUP_JUNKS=false
+
+# forces the system to not close the camera app while calling
+BUILD_TARGET_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING=true
+
+# forces the Media Player to play a video during an call.
+BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL=false
+
+# Force enables Popup player on Samsung Video Player
+FORCE_ENABLE_POP_UP_PLAYER_ON_SVP=true
+
+# Disables Setup Wizard, i'm not responsible for legal actions against you!
+BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD=false
+
+# forces shutdown and bootanimation fps, use this if you have a video/gif like moving stuffs in your bootanimation
 BUILD_TARGET_BOOT_ANIMATION_FPS=
 BUILD_TARGET_SHUTDOWN_ANIMATION_FPS=
 

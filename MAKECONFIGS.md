@@ -51,6 +51,18 @@
 - **TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE**: Adjusts launcher animation for different performance tiers (LowEnd, HighEnd, etc.).
 - **CUSTOM_WALLPAPER_RES_JSON_GENERATOR**: Adds multiple wallpapers with ease.
 - **TARGET_FLOATING_FEATURE_SUPPORTS_WIRELESS_POWER_SHARING**: Enables wireless power sharing if supported by hardware.
+- **BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU**: Brings mobile data toggle on the power menu context.
+- **BUILD_TARGET_FORCE_FIVE_BAR_NETICON**: Force the network icon to show 5 bars
+- **BUILD_TARGET_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER**: Force enables Call Recording in the Samsung Dialer App | Please note that i'm not responsible for legal actions against you
+- **BUILD_TARGET_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING**: Forces the system to not close the camera app while calling
+- **BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING**: Forces the system to play song(s) / music(s) while recording a video
+- **BUILD_TARGET_DISABLE_WIFI_CALLING**: Disables wifi calling if it set to true, otherwise (true), it enables it if disabled.
+- **BUILD_TARGET_SKIP_SETUP_JUNKS**: Skips setup junks.
+- **BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK** Disables annoying sounds while consuming video(s) or audio(s) file(s).
+- **BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL**: Forces the Media Player to play a video(s) / song(s) during an call.
+- **FORCE_ENABLE_POP_UP_PLAYER_ON_SVP**: Force enables Popup player on Samsung Video Player
+- **BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD**: Force enables Popup player on Samsung Video Player
+- **BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD**: Disables Setup Wizard - for enterprise or trusted use case only, i'm not responsible for legal actions against you!
 
 ## Language & Locale
 - **SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD**: Sets default language and region for the first boot, fill these variables to switch to your language **NEW_DEFAULT_LANGUAGE_ON_PRODUCT** **NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT**
@@ -74,6 +86,9 @@
 - **BUILD_TARGET_DISABLE_KNOX_PROPERTIES**: For android <= 11, try this at own risk because it disables knox via properties which are untested.
 - **BUILD_TARGET_BOOT_ANIMATION_FPS**: Add any integer value lesser than or equal to 60 if you have a bootanimation that has video/gif like transistions
 - **BUILD_TARGET_SHUTDOWN_ANIMATION_FPS**: Same applies for this variable
+
+## Fill these to prevent build errors.
+- **PRODUCT_CSC_NAME**: The csc code of your product image, don't put random string there.
 
 ---
 

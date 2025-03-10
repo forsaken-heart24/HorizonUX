@@ -150,26 +150,36 @@ function add_csc_xml_values() {
     local feature_code="$1"
     local feature_code_value="$2"
     # Convert feature_code to uppercase
-    feature_code="$(string_format --lower "${feature_code}")"
+    feature_code="$(string_format -u "${feature_code}")"
     # check if we have duplicates or not, uf we have anything extra, call the catch_duplicates_in_xml to do the job lol.
-    if [ "$(catch_duplicates_in_xml "${feature_code}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}")" == "0" ]; then
+    if [ "$(catch_duplicates_in_xml "${feature_code}" "${TARGET_BUILD_CSC_FEATURE_PATH}")" == "0" ]; then
         # Create a temporary file to hold the modified content
-        local tmp_file="./tmp_feature"
+        local tmp_file="./tmp_csc"
         # Read the original file and write to the temporary file
         {
         while IFS= read -r line; do
             echo "${line}"
-            if [[ "${line}" == "<SecFloatingFeatureSet>" ]]; then
+            if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
             echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
             fi
         done
-        } < "${TARGET_BUILD_FLOATING_FEATURE_PATH}" > "${tmp_file}"
+        } < "${TARGET_BUILD_CSC_FEATURE_PATH}" > "${tmp_file}"
         # write the ending thing cuz this mf is not writing that for some reason.
-        echo "</SecFloatingFeatureSet>" >> "${tmp_file}"
+        echo "</SamsungMobileFeature>" >> "${tmp_file}"
         # Replace the original file with the modified one
-        mv "${tmp_file}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+        mv "${tmp_file}" "${TARGET_BUILD_CSC_FEATURE_PATH}"
     else
-        change_xml_values "${feature_code}" "${feature_code_value}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+        change_xml_values "${feature_code}" "${feature_code_value}" "${TARGET_BUILD_CSC_FEATURE_PATH}"
+    fi
+}
+
+function tinkerWithCSCFeaturesFile() {
+    if [ "$(string_format -l "$1")" == "--decode" ]; then
+        java -jar ../dependencies/bin/omc-decoder.jar -i ${TARGET_BUILD_CSC_FEATURE_PATH} -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
+        TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
+        rm -rf "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+    elif [ "$(string_format -l "$1")" == "--encode" ]; then
+        java -jar ../dependencies/bin/omc-decoder.jar -e -i $TARGET_BUILD_CSC_FEATURE_PATH -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
     fi
 }
 
