@@ -322,12 +322,26 @@ if boolReturn "$BUILD_TARGET_REMOVE_SYSTEM_LOGGING"; then
 	setprop "log.tag.NetworkLogger" "S"
 	setprop "log.tag.IptablesRestoreController" "S"
 	setprop "log.tag.ClatdController" "S"
+if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 28 && "${BUILD_TARGET_SDK_VERSION}" -le 31 ]]; then
+    apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
+    if [[ "${BUILD_TARGET_SDK_VERSION}" -eq 28 ]]; then
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[0]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[6]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[9]}"
+    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 29 ]]; then
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[7]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[1]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[10]}"
+    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 30 ]]; then
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[8]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[2]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[11]}"
+    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 31 ]]; then
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[9]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[3]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[12]}"
+    fi
 fi
-#   apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[5]}"
-#	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[8]}"
-#	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[9]}"
-#	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[11]}"
-#	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[10]}"
 
 if boolReturn "$BUILD_TARGET_BRING_NEWGEN_ASSISTANT"; then
 	console_print "Enabling New Gen Google Assistant..."
@@ -369,32 +383,32 @@ if existance "./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARG
 	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsung.qmg $HORIZON_SYSTEM_DIR/media/
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-	if [[ "$BUILD_TARGET_SDK_VERSION" -eq "28" ]]; then
-		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[13]}"
-	fi
-    # let's patch restart_radio_process for my own will. PLEASE LET THIS SLIDE OUTT!!!!
-    if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "29" || "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[0]}"
+    if [[ "$BUILD_TARGET_SDK_VERSION" -eq "28" ]]; then
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[4]}"
+    fi
+    # Let's patch restart_radio_process for my own will. PLEASE LET THIS SLIDE OUTT!!!!
+    if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "29" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
+        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
     fi
     if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "29" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[1]}"
-    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "30" || "${BUILD_TARGET_SDK_VERSION}" -eq "31" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[2]}"
-    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "32" || "${BUILD_TARGET_SDK_VERSION}" -eq "33" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[3]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[5]}"
+    elif [[ "${BUILD_TARGET_SDK_VERSION}" -ge "30" && "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
+    elif [[ "${BUILD_TARGET_SDK_VERSION}" -ge "32" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[18]}"
     fi
     if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "30" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[4]}"
-		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[12]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[20]}"
+        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[22]}"
     elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "31" ]]; then
-    	apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[6]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
     fi
     if [[ "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[7]}"
+        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[21]}"
     fi
 fi
-if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" || "${BUILD_TARGET_SDK_VERSION}" -le "30" ]]; then
-	cat ./diff_patches/system/etc/init/freecess.rc > "$HORIZON_SYSTEM_DIR/etc/init/freecess.rc"
+if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "30" ]]; then
+    cat ./diff_patches/system/etc/init/freecess.rc > "$HORIZON_SYSTEM_DIR/etc/init/freecess.rc"
 fi
 if ask "Do you want to add a stub app for missing activities?"; then
 	mkdir -p $HORIZON_SYSTEM_DIR/app/HorizonStub/
