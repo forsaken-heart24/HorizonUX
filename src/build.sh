@@ -457,6 +457,67 @@ if boolReturn "$BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD"; then
 	add_csc_xml_values "CscFeature_SetupWizard_DisablePrivacyPolicyAgreement" "TRUE"
 fi
 
+if [ "${BUILD_TARGET_SDK_VERSION}" -ge "34" ] && boolReturn "$BRINGUP_CN_SMARTMANAGER_DEVICE"; then
+	console_print "Replacing stock smartmanager and device care with the chinese version..."
+	# mkdir at the temp dir
+	mkdir -p ../local_build/etc/permissions/ ../local_build/etc/app/SmartManager_v6_DeviceSecurity \
+	../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN ../local_build/etc/priv-app/SmartManager_v5 ../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity \
+	../local_build/etc/priv-app/SmartManagerCN ../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN ../local_build/etc/priv-app/SAppLock ../local_build/etc/priv-app/Firewall;
+	# now move these for a quick revert if anything goes wrong.
+	# xmls
+	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
+	mv "$HORIZON_SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
+	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "../local_build/etc/permissions/"
+	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
+	mv "$HORIZON_SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
+	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml" "../local_build/etc/permissions/"
+	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "../local_build/etc/permissions/"
+	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "../local_build/etc/permissions/"
+	# actual thing
+	mv "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity"
+	mv "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN"
+	mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v5/*" "../local_build/etc/priv-app/SmartManager_v5"
+	mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity"
+	mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManagerCN/*" "../local_build/etc/priv-app/SmartManagerCN"
+	mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN"
+	mv "$HORIZON_SYSTEM_DIR/priv-app/SAppLock/*" "../local_build/etc/priv-app/SAppLock"
+	mv "$HORIZON_SYSTEM_DIR/priv-app/Firewall/*" "../local_build/etc/priv-app/Firewall"
+	# change float values, as per updater-script from @saadelasfur/SmartManager/Installers/SmartManagerCN/updater-script
+	# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L87
+	#                                                          -                                                                           #
+	# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L99
+	change_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
+	change_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
+	add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" "TRUE"
+	for i in ${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS[@]}; do
+		for j in ${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS_SAVE_PATHS[@]}; do
+			download_stuffs "${i}" "${j}" || {
+				{
+					# actual thing
+					mv "../local_build/etc/priv-app/Firewall/*" "$HORIZON_SYSTEM_DIR/priv-app/Firewall/"
+					mv "../local_build/etc/priv-app/SAppLock/*" "$HORIZON_SYSTEM_DIR/priv-app/SAppLock/"
+					mv "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/"
+					mv "../local_build/etc/priv-app/SmartManagerCN/*" "$HORIZON_SYSTEM_DIR/priv-app/SmartManagerCN/"
+					mv "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity/*" "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/"
+					mv "../local_build/etc/priv-app/SmartManager_v5/*" "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v5/"
+					mv "../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN/*" "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/"
+					mv "../local_build/etc/app/SmartManager_v6_DeviceSecurity/*" "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/"
+					# xmls
+					mv "../local_build/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+				} &>$thisConsoleTempLogFile
+				warns "Failed to download stuffs from @saadelasfur github repo, moved everything to their places!" "FAILED_TO_DOWNLOAD_SMARTMANAGER"
+			}
+		done
+	done
+fi
+
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 console_print "Running misc jobs..."
 add_csc_xml_values "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"

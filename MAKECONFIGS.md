@@ -68,6 +68,7 @@
 - **BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD**: Disables Setup Wizard - for enterprise or trusted use case only, i'm not responsible for legal actions against you!
 - **TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN**: Brings Game Launcher into the homescreen.
 - **TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS**: The battery health level thing, like the one from iPhone. Thnx to UN1CA!
+- **BRINGUP_CN_SMARTMANAGER_DEVICE**: Brings Chinese version of Smartmanager and Device Care, thnx @saadelasfur [Only works on OneUI 6.1, OneUI 6.1.1 & OneUI 7.*]
 
 ## Language & Locale
 - **SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD**: Sets default language and region for the first boot, fill these variables to switch to your language **NEW_DEFAULT_LANGUAGE_ON_PRODUCT** **NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT**

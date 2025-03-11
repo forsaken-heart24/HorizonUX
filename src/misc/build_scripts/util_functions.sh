@@ -429,16 +429,19 @@ function existance() {
 function download_stuffs() {
     local link="$1"
     local save_path="$2"
-    # let's end the op if the args werent enough.
-    if [ "$#" -le "1" ]; then
+    if [ "$#" -lt 2 ]; then
         warns "Arguments are not enough.." "DOWNLOADER"
         return 1
     fi
-    
-    # let's start the shits...
-    wget "${link}" "${save_path}"
-    if [ "$?" -ge "1" ]; then
-        abort "The download was failed..."
+    # Check if the URL is a raw GitHub content
+    if [[ "$link" == *"raw.githubusercontent.com"* ]]; then
+        wget -O "$save_path" "$link"
+    else
+        curl -L -o "$save_path" "$link"
+    fi
+    # Check if the download failed
+    if [ "$?" -ne '0' ]; then
+        abort "The download failed..."
     fi
 }
 

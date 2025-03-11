@@ -121,6 +121,9 @@ BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD=false
 BUILD_TARGET_BOOT_ANIMATION_FPS=
 BUILD_TARGET_SHUTDOWN_ANIMATION_FPS=
 
+# Brings Chinese version of Smartmanager and Device Care, thnx @saadelasfur
+BRINGUP_CN_SMARTMANAGER_DEVICE=false
+
 # Target properties.
 # this variable will enable some debugging features and this thing will make your phone overheat and hang alot, do with pre-caution!s
 TARGET_BUILD_IS_FOR_DEBUGGING=false
