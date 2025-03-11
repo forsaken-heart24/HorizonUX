@@ -102,3 +102,5 @@
 This script allows deep customization of your customized OneUI ROM, from performance tweaks to aesthetic changes. Make sure to enable only the features you need! Enjoy building your custom ROM! 😊
 
 **Be sure to give the credits lah!**
+
+
