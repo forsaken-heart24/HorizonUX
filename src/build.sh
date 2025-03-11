@@ -495,7 +495,8 @@ if boolReturn "${BATTLEMAGE_BUILD}"; then
     umount $HASH_KEY_FOR_SUPER_BLOCK_PATH
     rmdir $HASH_KEY_FOR_SUPER_BLOCK_PATH
 fi
-tinkerWithCSCFeaturesFile --encode
+
+[ "${isXmlDecoded}" == "true" ] && tinkerWithCSCFeaturesFile --encode
 mv $thisConsoleTempLogFile ../local_build/logs/$thisConsoleTempLogFile.log
 
 # fuck this fucking directory before it fucking fucks up the fucking use cases man, fuck this fucking bullshit that i have to fuck with

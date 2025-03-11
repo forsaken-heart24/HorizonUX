@@ -6,11 +6,11 @@ if ask "Type \"yes\" to mount the super image..."; then
         abort "Invalid image path: $super_image_path. Ensure the correct path is provided."
     fi
     mount_super_image "$super_image_path"
-    bool BATTLEMAGE_BUILD true
-    execute_scripts "./misc/build_scripts/setup.sh"
+    BATTLEMAGE_BUILD=true
+    execute_scripts "./build.sh"
 else
-    bool BATTLEMAGE_BUILD false
-    execute_scripts "./misc/build_scripts/setup.sh"
+    BATTLEMAGE_BUILD=false
+    execute_scripts "./build.sh"
 fi
 
 # Cache these headaches
@@ -25,14 +25,13 @@ if ! $BATTLEMAGE_BUILD; then
         abort "The product partition is not found."
     fi
 else
-    for partition in system vendor product prism; do
-        if echo "$katarenai" | grep -q "$partition" && echo "${TARGET_BUILD_PARTITIONS[@]}" | grep -q "$partition"; then
+    for partition in system vendor product; do
+        if echo "$katarenai" | grep -q "$partition"; then
             if check_build_prop "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$partition"; then
                 set_partition_flag "$partition"
             fi
         fi
     done
-    HORIZON_PRISM_DIR=$(kang_dir "prism")
     HORIZON_PRODUCT_DIR=$(kang_dir "product")
     HORIZON_SYSTEM_DIR=$(kang_dir "system")
     HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")

@@ -32,6 +32,8 @@
 - **TARGET_REMOVE_SAMSUNG_APPLICATIONS_STUFFS**: Removes unnecessary Samsung apps (note: Android 9 is not fully supported).
 - **TARGET_ADD_EXTRA_ANIMATION_SCALES**: Adds extra animation scales for customization.
 - **TARGET_FLOATING_FEATURE_DISABLE_BLUR_EFFECTS**: Disables blur effects for better performance and battery life.
+- **TARGET_FLOATING_FEATURE_ENABLE_ULTRA_POWER_SAVING**: Ultra power saving, this thing is useless but yeah if you want it then take it.
+- **TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH**: Disables Smart Switch on setup.
 
 ## Special Features
 - **TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED**: Adds fastbootd support to stock recovery.
@@ -40,6 +42,7 @@
 - **TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM**: Includes Spotify into the Alarm tones
 - **TARGET_FLOATING_FEATURE_INCLUDE_EASY_MODE**: Easy mode, for huge icons and things, specifically made for people(s) who has difficulty in reading
 - **TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON**: Disable this, useless thing ever made.
+- **TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES**: This feature requires proper or bare minimum mdNIE support on the ROM and maybe the device to get it workin' properly
 
 ## Audio & Display
 - **TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER**: Fixes LDAC audio distortion for lower-end Bluetooth audio devices.
@@ -63,6 +66,8 @@
 - **FORCE_ENABLE_POP_UP_PLAYER_ON_SVP**: Force enables Popup player on Samsung Video Player
 - **BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD**: Force enables Popup player on Samsung Video Player
 - **BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD**: Disables Setup Wizard - for enterprise or trusted use case only, i'm not responsible for legal actions against you!
+- **TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN**: Brings Game Launcher into the homescreen.
+- **TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS**: The battery health level thing, like the one from iPhone. Thnx to UN1CA!
 
 ## Language & Locale
 - **SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD**: Sets default language and region for the first boot, fill these variables to switch to your language **NEW_DEFAULT_LANGUAGE_ON_PRODUCT** **NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT**
@@ -79,7 +84,7 @@
 - **MY_KEYSTORE_ALIAS**: To be filled by the builder with their "Keystore Alias"
 - **MY_KEYSTORE_PASSWORD**: To be filled by the builder with their "Keystore Alias Password"
 - **MY_KEYSTORE_PATH**: To be filled by the builder with their "Keystore path"
-- **TARGET_REMOVE_SMARTSWITCH_DAEMON**: Removes the smart switch listener port.
+- **TARGET_REMOVE_SMARTSWITCH_DAEMON**: Removes the smart switch listener port, be sure to remove it cuz' it's useless.
 - **BUILD_TARGET_REMOVE_SYSTEM_LOGGING**: Removes unnecessary logging stuffs
 - **BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET**: Brings back network speed-o-meter in the systemUI qs 
 - **BUILD_TARGET_BRING_NEWGEN_ASSISTANT**: For android <= 11, brings assistant 2.0

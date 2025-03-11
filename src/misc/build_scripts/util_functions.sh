@@ -88,8 +88,10 @@ function build_and_sign() {
     java -jar ./dependencies/bin/apktool.jar build --api-level "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}" &>/dev/null
     if [ -z "$MY_KEYSTORE_PATH" ]; then
         java -jar ./dependencies/bin/signer.jar --apk ${extracted_dir_path}/dist/*.apk
+            warns "NOTE: you are now using uber test-key and it's not safe to use this on a pubilc build of this rom, please use your own key to sign packages!" "TEST_KEY_WARNS"
     elif [ -f "$MY_KEYSTORE_PATH" ]; then
-        java -jar ./dependencies/bin/signer.jar -apk ${extracted_dir_path}/dist/*.apk --ks $MY_KEYSTORE_PATH --ksAlias $MY_KEYSTORE_ALIAS --ksPass $MY_KEYSTORE_PASSWORD
+        [ "$MY_KEYSTORE_PATH" == "../test-keys/HorizonUX-testkey.jks" ] && warns "NOTE: you are now using HorizonUX test-key and it's not safe to use this on a pubilc build of this rom, please use your own key to sign packages!" "TEST_KEY_WARNS"
+        java -jar ./dependencies/bin/signer.jar -apk ${extracted_dir_path}/dist/*.apk --ks $MY_KEYSTORE_PATH --ksAlias $MY_KEYSTORE_ALIAS --ksPass $MY_KEYSTORE_PASSWORD --ksKeyPass $MY_KEYSTORE_ALIAS_KEY_PASSWORD
     fi
     mv ${extracted_dir_path}/dist/$(ls | grep aligned-debugSigned.apk | head -n 1) $app_path/
     rm -rf ${extracted_dir_path}/build ${extracted_dir_path}/dist/
@@ -178,6 +180,7 @@ function tinkerWithCSCFeaturesFile() {
         java -jar ../dependencies/bin/omc-decoder.jar -i ${TARGET_BUILD_CSC_FEATURE_PATH} -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
         TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
         rm -rf "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+        isXmlDecoded=true
     elif [ "$(string_format -l "$1")" == "--encode" ]; then
         java -jar ../dependencies/bin/omc-decoder.jar -e -i $TARGET_BUILD_CSC_FEATURE_PATH -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
     fi
@@ -459,7 +462,7 @@ function absolute_path() {
     local parsed_argument=$(string_format -l $1 | wc -c)
     local parsed_argument="$(string_format -l $1 | cut -c 3-$parsed_argument)"
     if $BATTLEMAGE_BUILD; then
-        if string_format -l ${TARGET_BUILD_PARTITIONS[@]} | grep -q $parsed_argument; then
+        if ls $HASH_KEY_FOR_SUPER_BLOCK_PATH/ | grep -q $parsed_argument; then
             if [ -f "${HASH_KEY_FOR_SUPER_BLOCK_PATH}/$parsed_argument/etc" ]; then
                 echo "${HASH_KEY_FOR_SUPER_BLOCK_PATH}/$parsed_argument"
             elif [ -f "${HASH_KEY_FOR_SUPER_BLOCK_PATH}/$parsed_argument/$parsed_argument/etc" ]; then
@@ -638,11 +641,6 @@ function check_build_prop() {
 }
 
 function check_partition_in_target() {
-    local partition="$1"
-    if ! echo "${TARGET_BUILD_PARTITIONS[@]}" | grep -q "$partition"; then
-        abort "The $partition block is not mentioned in the TARGET_BUILD_PARTITIONS variable. Please add it and try again."
-    fi
-}
 
 function set_partition_flag() {
     local partition="$1"

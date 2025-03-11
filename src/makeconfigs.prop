@@ -21,16 +21,16 @@ openSeperateConsoleForDebugging=false
 # signature key configs, please proceed with caution before playing with this
 # be sure to fill if you are going to use your own key to sign app packages
 # don't upload your rom if you have used the testkey to sign packages.
-MY_KEYSTORE_ALIAS=
-MY_KEYSTORE_PASSWORD=
-MY_KEYSTORE_PATH=
+MY_KEYSTORE_ALIAS=Horizon_test
+MY_KEYSTORE_PASSWORD=ayyochill24
+MY_KEYSTORE_PATH=../test-keys/HorizonUX-testkey.jks
+MY_KEYSTORE_ALIAS_KEY_PASSWORD="${MY_KEYSTORE_ALIAS}"
 
 # replace these with your dir
 SYSTEM_DIR=
 SYSTEM_EXT_DIR=
 VENDOR_DIR=
 PRODUCT_DIR=
-PRISM_DIR=
 
 # Horizon codename and etc..
 CODENAME="Birds"
@@ -108,14 +108,6 @@ BUILD_TARGET_SHUTDOWN_ANIMATION_FPS=
 # this variable will enable some debugging features and this thing will make your phone overheat and hang alot, do with pre-caution!s
 TARGET_BUILD_IS_FOR_DEBUGGING=false
 
-# replace those empty quotes with system , vendor and etc etc.
-TARGET_BUILD_PARTITIONS=(
-    "system"
-    "vendor"
-    "product"
-    ""
-)
-
 # applies patches to bluetooth library if the bluetooth doesnt work properly.
 TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES=false
 
@@ -140,8 +132,8 @@ TARGET_INCLUDE_SAMSUNG_THEMING_MODULES=false
 RECOVERY_IMAGE_PATH=
 PRODUCT_CSC_NAME=BTE
 SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD=false
-NEW_DEFAULT_LANGUAGE_ON_PRODUCT=en
-NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT=US
+NEW_DEFAULT_LANGUAGE_ON_PRODUCT=ja
+NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT=JP
 
 # floating feature configs. THANKS Furiousdroid for the suggestion!
 TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN=false
