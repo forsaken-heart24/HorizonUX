@@ -309,19 +309,19 @@ fi
 if boolReturn "$BUILD_TARGET_REMOVE_SYSTEM_LOGGING"; then
 	console_print "Disabling unnecessary logging stuffs in android..."
 	add_float_xml_values "SEC_FLOATING_FEATURE_SYSTEM_CONFIG_SYSINT_DQA_LOGLEVEL" "3"
-	setprop "logcat.live" "disable"
-	setprop "sys.dropdump.on" "Off"
-	setprop "persist.debug.atrace.boottrace" "0"
-	setprop "persist.log.ewlogd" "0"
-	setprop "sys.lpdumpd" "0"
-	setprop "persist.device_config.global_settings.sys_traced" "0"
-	setprop "persist.traced.enable" "0"
-	setprop "persist.sys.lmk.reportkills" "false"
-	setprop "log.tag.ConnectivityManager" "S"
-	setprop "log.tag.ConnectivityService" "S"
-	setprop "log.tag.NetworkLogger" "S"
-	setprop "log.tag.IptablesRestoreController" "S"
-	setprop "log.tag.ClatdController" "S"
+	setprop --system "logcat.live" "disable"
+	setprop --system "sys.dropdump.on" "Off"
+	setprop --system "persist.debug.atrace.boottrace" "0"
+	setprop --system "persist.log.ewlogd" "0"
+	setprop --system "sys.lpdumpd" "0"
+	setprop --system "persist.device_config.global_settings.sys_traced" "0"
+	setprop --system "persist.traced.enable" "0"
+	setprop --system "persist.sys.lmk.reportkills" "false"
+	setprop --system "log.tag.ConnectivityManager" "S"
+	setprop --system "log.tag.ConnectivityService" "S"
+	setprop --system "log.tag.NetworkLogger" "S"
+	setprop --system "log.tag.IptablesRestoreController" "S"
+	setprop --system "log.tag.ClatdController" "S"
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 28 && "${BUILD_TARGET_SDK_VERSION}" -le 31 ]]; then
     apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
     if [[ "${BUILD_TARGET_SDK_VERSION}" -eq 28 ]]; then
@@ -345,7 +345,7 @@ fi
 
 if boolReturn "$BUILD_TARGET_BRING_NEWGEN_ASSISTANT"; then
 	console_print "Enabling New Gen Google Assistant..."
-	setprop "ro.opa.eligible_device" "true"
+	setprop --system "ro.opa.eligible_device" "true"
 fi
 
 if boolReturn "$BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU"; then
@@ -381,8 +381,26 @@ fi
 
 if boolReturn "$BUILD_TARGET_DISABLE_KNOX_PROPERTIES"; then
 	console_print "Disabling Knox and applying rmm fix.."
-	setprop "ro.securestorage.knox" "false"
-	setprop "ro.security.vaultkeeper.native" "0"
+	setprop --system "ro.securestorage.knox" "false"
+	setprop --system "ro.security.vaultkeeper.native" "0"
+	if [ "$BUILD_TARGET_SDK_VERSION" == "34" ]; then
+		# Thanks salvo!
+		setprop --system security.mdf.result   "                       "
+		setprop --system security.mdf   "                       "
+		setprop --system ro.security.mdf.ver   "                       "
+		setprop --system ro.security.mdf.release   "                       "
+		setprop --system ro.security.wlan.ver   "                       "
+		setprop --system ro.security.wlan.release   "                       "
+		setprop --system ro.security.bt.ver   "                       "
+		setprop --system ro.security.bt.release  "                       "
+		setprop --system ro.security.bio.ver "                  "
+		setprop --system ro.security.bio.release  "                   "
+		setprop --system ro.security.mdf.ux "        "
+		setprop --system "ro.security.fips.ux" "Disabled"
+		setprop --system ro.security.fips_bssl.ver "                     "
+		setprop --vendor ro.security.fips_skc.ver "                       "
+		setprop --vendor ro.security.fips_scrypto.ver "                  "
+	fi
 	add_csc_xml_values "CscFeature_Knox_SupportKnoxGuard" "FALSE"
 fi
 
@@ -429,8 +447,8 @@ add_csc_xml_values "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Settings_GOTA" "TRUE"
 add_csc_xml_values "CscFeature_Settings_FOTA" "FALSE"
 if [[ -n "${BUILD_TARGET_BOOT_ANIMATION_FPS}" && "${BUILD_TARGET_BOOT_ANIMATION_FPS}" -le "60" && -n "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" && "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" -le "60" ]]; then
-	setprop "boot.fps" "${BUILD_TARGET_BOOT_ANIMATION_FPS}"
-	setprop "shutdown.fps" "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}"
+	setprop --system "boot.fps" "${BUILD_TARGET_BOOT_ANIMATION_FPS}"
+	setprop --system "shutdown.fps" "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}"
 fi
 default_language_configuration ${NEW_DEFAULT_LANGUAGE_ON_PRODUCT} ${NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT}
 change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE}"
