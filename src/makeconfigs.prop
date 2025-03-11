@@ -204,7 +204,4 @@ DISABLE_DYNAMIC_RANGE_COMPRESSION=false
 # ASKS works as an another layer in the signature verification which checks if the public key certificate from the SEC-INF (present in the samsung apps) matches the actual application signature
 # this doesn't disable the google's app signature verification
 DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION=false
-
-# this shit is in hyperOS for some reason, i added just to make the experience a bit better.
-#SWITCH_TO_HIGH_REFRESH_RATE_ON_LOCKSCREEN=false
 ############################################# Misc Configs #############################################

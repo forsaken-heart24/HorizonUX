@@ -12,8 +12,8 @@
 **PRISM_DIR**: Put your extracted prism folder path there.
 
 ## Device Name & Setup
-- **CUSTOM_SETUP_WELCOME_MESSAGE**: Customizes the device name in the "About" section without affecting the real brand. Requires `TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES` set to true.
 - **TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES**: Enables custom welcome message during setup.
+- **CUSTOM_SETUP_WELCOME_MESSAGE**: Fill-up your custom setup wizard welcome and goodbye texts, requires `TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES` to be set to true
 
 ## Screen & Refresh Rate
 - **BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE**: Sets the default refresh rate (recommend 60Hz).
@@ -51,7 +51,7 @@
 - **DISABLE_DYNAMIC_RANGE_COMPRESSION**: Dynamic range compression (DRC) is a process that reduces the difference between the loudest and quietest parts of an audio signal.
 
 ## Additional Customization
-- **TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE**: Adjusts launcher animation for different performance tiers (LowEnd, HighEnd, etc.).
+- **TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE**: Adjusts launcher animation for different performance tiers (LowEnd, LowestEnd, LowEndFast, Mass (mid-rangers, not available after 3.1), HighEnd, CHNHighEND & HighEnd_Tablet).
 - **CUSTOM_WALLPAPER_RES_JSON_GENERATOR**: Adds multiple wallpapers with ease.
 - **TARGET_FLOATING_FEATURE_SUPPORTS_WIRELESS_POWER_SHARING**: Enables wireless power sharing if supported by hardware.
 - **BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU**: Brings mobile data toggle on the power menu context.
@@ -91,6 +91,7 @@
 - **BUILD_TARGET_DISABLE_KNOX_PROPERTIES**: For android <= 11, try this at own risk because it disables knox via properties which are untested.
 - **BUILD_TARGET_BOOT_ANIMATION_FPS**: Add any integer value lesser than or equal to 60 if you have a bootanimation that has video/gif like transistions
 - **BUILD_TARGET_SHUTDOWN_ANIMATION_FPS**: Same applies for this variable
+- **RECOVERY_IMAGE_PATH**: To be filled by the builder if they want to patch their device's recovery.
 
 ## Fill these to prevent build errors.
 - **PRODUCT_CSC_NAME**: The csc code of your product image, don't put random string there.
