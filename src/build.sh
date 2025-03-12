@@ -463,29 +463,31 @@ if [ "${BUILD_TARGET_SDK_VERSION}" -ge "34" ] && boolReturn "$BRINGUP_CN_SMARTMA
 	mkdir -p ../local_build/etc/permissions/ ../local_build/etc/app/SmartManager_v6_DeviceSecurity \
 	../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN ../local_build/etc/priv-app/SmartManager_v5 ../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity \
 	../local_build/etc/priv-app/SmartManagerCN ../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN ../local_build/etc/priv-app/SAppLock ../local_build/etc/priv-app/Firewall;
-	# now move these for a quick revert if anything goes wrong.
-	# xmls
-	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
-	mv "$HORIZON_SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
-	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "../local_build/etc/permissions/"
-	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
-	mv "$HORIZON_SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
-	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml" "../local_build/etc/permissions/"
-	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "../local_build/etc/permissions/"
-	mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "../local_build/etc/permissions/"
-	# actual thing
-	mv "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity"
-	mv "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN"
-	mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v5/*" "../local_build/etc/priv-app/SmartManager_v5"
-	mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity"
-	mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManagerCN/*" "../local_build/etc/priv-app/SmartManagerCN"
-	mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN"
-	mv "$HORIZON_SYSTEM_DIR/priv-app/SAppLock/*" "../local_build/etc/priv-app/SAppLock"
-	mv "$HORIZON_SYSTEM_DIR/priv-app/Firewall/*" "../local_build/etc/priv-app/Firewall"
-	# change float values, as per updater-script from @saadelasfur/SmartManager/Installers/SmartManagerCN/updater-script
-	# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L87
-	#                                                          -                                                                           #
-	# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L99
+	{
+		# now move these for a quick revert if anything goes wrong.
+		# xmls
+		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
+		mv "$HORIZON_SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
+		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "../local_build/etc/permissions/"
+		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
+		mv "$HORIZON_SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
+		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml" "../local_build/etc/permissions/"
+		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "../local_build/etc/permissions/"
+		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "../local_build/etc/permissions/"
+		# actual thing
+		mv "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity"
+		mv "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN"
+		mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v5/*" "../local_build/etc/priv-app/SmartManager_v5"
+		mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity"
+		mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManagerCN/*" "../local_build/etc/priv-app/SmartManagerCN"
+		mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN"
+		mv "$HORIZON_SYSTEM_DIR/priv-app/SAppLock/*" "../local_build/etc/priv-app/SAppLock"
+		mv "$HORIZON_SYSTEM_DIR/priv-app/Firewall/*" "../local_build/etc/priv-app/Firewall"
+		# change float values, as per updater-script from @saadelasfur/SmartManager/Installers/SmartManagerCN/updater-script
+		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L87
+		#                                                          -                                                                           #
+		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L99
+	} &>$thisConsoleTempLogFile
 	change_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
 	change_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
 	add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" "TRUE"
@@ -517,6 +519,18 @@ if [ "${BUILD_TARGET_SDK_VERSION}" -ge "34" ] && boolReturn "$BRINGUP_CN_SMARTMA
 		done
 	done
 fi
+
+# brotherboard
+{
+	if boolReturn "$TINKER_MAX_REFRESH_RATE"; then
+		if [[ -z "${DTBO_IMAGE_PATH}" || ! -f "${DTBO_IMAGE_PATH}" ]]; then
+			warns "Can't patch dtbo because the dtbo image path is inaccessable." "DTBO_PATCH_FAILED"
+		else
+			. ${SCRIPTS[6]}
+		fi
+	fi
+}
+# brotherboard
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 console_print "Running misc jobs..."

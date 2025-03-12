@@ -18,10 +18,8 @@
 # Luna's Telegram >> @forsaken_heart24
 
 # base variables:
-DTBO_IMAGE="$1"
-REFRESH_RATE="$2"
-OUTPUT="dtbo.${REFRESH_RATE}Hz"
-REFRESH_RATE__=$(printf '%X' $REFRESH_RATE)
+OUTPUT="dtbo.${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE}Hz"
+THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__=$(printf '%X' $THIS_IS_MY_DEVICE_MAX_REFRESH_RATE)
 
 # initial checks.
 for dependencies in mkdtimg imjtool; do
@@ -29,16 +27,16 @@ for dependencies in mkdtimg imjtool; do
 done
 
 [ "$errors" -ge "1" ] && abort "Install those dependencies to continue."
-[ ! -f "config.cfg" ] && abort "Device specific configuration file is not found"
+[ ! -f "./config.cfg" ] && abort "Device specific configuration file is not found"
 
-if [ "$REFRESH_RATE" -ge "70" ]; then
+if [ "$THIS_IS_MY_DEVICE_MAX_REFRESH_RATE" -ge "70" ]; then
     warns "you've chose to overclock your device more than 70Hz, please do this at your own risk!" "OVERCLOCK_WARNING"
     warns "revert back to the stock or try to change refresh rate configs again if the device is unable to boot" "OVERCLOCK_WARNING"
 fi
 
 # main
 echo " - Extracting image"
-imjtool $DTBO_IMAGE extract 
+imjtool $DTBO_IMAGE_PATH extract 
 mv extracted $OUTPUT
 cd $OUTPUT
 echo " - Converting dtb to dts"
@@ -48,10 +46,10 @@ done
 rm -rf *.dtb
 
 # fix matches
-echo " - Overriding rate matches to ${REFRESH_RATE} (${REFRESH_RATE__})"
-find . -type f -exec sed -i "s/timing,refresh = <0x..>/timing,refresh = <0x${rate}>/g" {} +
-find . -type f -exec sed -i "s/active_fps = <0x..>/active_fps = <0x${rate}>/g" {} +
-find . -type f -exec sed -i "s/display_mode = <0x438 0x968 0x.. 0x00 0x00 0x00 0x00/display_mode = <0x438 0x968 0x${rate} 0x00 0x00 0x00 0x00/g" {} +
+echo " - Overriding rate matches to ${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE} (${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__})"
+find . -type f -exec sed -i "s/timing,refresh = <0x..>/timing,refresh = <0x${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__}>/g" {} +
+find . -type f -exec sed -i "s/active_fps = <0x..>/active_fps = <0x${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__}>/g" {} +
+find . -type f -exec sed -i "s/display_mode = <0x438 0x968 0x.. 0x00 0x00 0x00 0x00/display_mode = <0x438 0x968 0x${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__} 0x00 0x00 0x00 0x00/g" {} +
 
 # convert these minions
 echo " - Converting dts to dtb"

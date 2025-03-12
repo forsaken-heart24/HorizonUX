@@ -224,4 +224,9 @@ DISABLE_DYNAMIC_RANGE_COMPRESSION=false
 # ASKS works as an another layer in the signature verification which checks if the public key certificate from the SEC-INF (present in the samsung apps) matches the actual application signature
 # this doesn't disable the google's app signature verification
 DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION=false
+
+# Made near possible to change max refresh rate of a device with the help of @BrotherBoard | Thanks bro board!
+TINKER_MAX_REFRESH_RATE=false
+DTBO_IMAGE_PATH=
+THIS_IS_MY_DEVICE_MAX_REFRESH_RATE=60
 ############################################# Misc Configs #############################################

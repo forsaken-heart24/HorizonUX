@@ -9,7 +9,6 @@
 **SYSTEM_EXT_DIR**: Put your extracted system_ext folder path there.
 **VENDOR_DIR**: Put your extracted vendor folder path there.
 **PRODUCT_DIR**: Put your extracted product folder path there.
-**PRISM_DIR**: Put your extracted prism folder path there.
 
 ## Device Name & Setup
 - **TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES**: Enables custom welcome message during setup.
@@ -80,6 +79,9 @@
 
 ## Advanced, enable or disable these with your own concern
 - **TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER**: This feature removes a file which is necessary for drm / ott platforms, please do note that the widevine level will fallback to L3 which will disable HD playbacks. DRM-protected apps might work after appling this patch but im not sure.
+- **TINKER_MAX_REFRESH_RATE**: Set this to true and fill the variables below to change your device's max refresh rate. Thanks @BrotherBoard
+- **DTBO_IMAGE_PATH**: Put your dtbo image path there.
+- **THIS_IS_MY_DEVICE_MAX_REFRESH_RATE**: Put the refresh rate you want to change to.
 
 ## Advanced
 - **MY_KEYSTORE_ALIAS**: To be filled by the builder with their "Keystore Alias"
@@ -102,5 +104,3 @@
 This script allows deep customization of your customized OneUI ROM, from performance tweaks to aesthetic changes. Make sure to enable only the features you need! Enjoy building your custom ROM! 😊
 
 **Be sure to give the credits lah!**
-
-
