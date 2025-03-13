@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright (C) 2025 Luna
 #

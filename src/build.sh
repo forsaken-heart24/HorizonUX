@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright (C) 2025 Luna
 #
@@ -242,6 +244,7 @@ fi
 if boolReturn $TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH; then
 	console_print "Disabling Smart Switch feature in setup...."
 	change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SMART_SWITCH" "FALSE"
+	apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
 fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES; then
@@ -580,13 +583,10 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -l
         apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[18]}"
     fi
     if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "30" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[20]}"
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[19]}"
         apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[22]}"
     elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "31" ]]; then
         apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
-    fi
-    if [[ "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[21]}"
     fi
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "30" ]]; then

@@ -329,7 +329,6 @@ bool installLowLevelImages(const char *imagePath, const char *blockPath, const c
     return true;
 }
 
-
 char *getSystemProperty(const char *filepath, const char *propertyVariableName) {
     static char buildProperty[256];  
     FILE *file = fopen(filepath, "r");

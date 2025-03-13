@@ -121,3 +121,33 @@ void sendNotification(const char *message) {
     snprintf(buffer, sizeof(buffer), "cmd notification post -S bigtext -t 'HorizonUX' 'Tag' \"%s\"", message);
     executeCommands(buffer, "");
 }
+
+char *getSystemProperty(const char *filepath, const char *propertyVariableName) {
+    static char buildProperty[256];  
+    FILE *file = fopen(filepath, "r");
+    if(!file) {
+        snprintf(buildProperty, sizeof(buildProperty), "getprop %s", propertyVariableName);
+        FILE *cmd = popen(buildProperty, "r");
+        if(cmd) {
+            if(fgets(buildProperty, sizeof(buildProperty), cmd)) {
+                buildProperty[strcspn(buildProperty, "\r\n")] = 0;
+            }
+            pclose(cmd);
+            return buildProperty;
+        }
+        return "KILL.796f7572.73656c660a";
+    }
+    char line[256];
+    size_t propertyLen = strlen(propertyVariableName);
+    while(fgets(line, sizeof(line), file)) {
+        if(strncmp(line, propertyVariableName, propertyLen) == 0 && line[propertyLen] == '=') {
+            strncpy(buildProperty, line + propertyLen + 1, sizeof(buildProperty) - 1);
+            buildProperty[sizeof(buildProperty) - 1] = '\0';
+            buildProperty[strcspn(buildProperty, "\r\n")] = 0;
+            fclose(file);
+            return buildProperty;
+        }
+    }
+    fclose(file);
+    return "KILL.796f7572.73656c660a";
+}

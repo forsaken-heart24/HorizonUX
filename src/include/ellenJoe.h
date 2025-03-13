@@ -14,24 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+#ifndef ELLENJOE_H
+#define ELLENJOE_H
+#include "horizonutils.h"
+#include "modulesLoader.h"
+#include "horizonux.h"
+#define DEFAULT_PROP_FILE "/system/build.prop"
 
-#ifndef HORIZON_H
-#define HORIZON_H
-
-#include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-// FUCKING function FUCKING declarations.
-bool isTheDeviceBootCompleted();
-bool isTheDeviceisTurnedOn();
-int isPackageInstalled(const char *packageName);
-int sendToastMessages(const char *service, const char *message);
-int manageBlocks(const char *infile, const char *outfile, size_t block_size, size_t count);
-void sendNotification(const char *message);
-char *getSystemProperty(const char *filepath, const char *propertyVariableName);
-int setSystemProperty(const char *propertyVariable, const char *propertyVariableValue);
+// functions
+char *grep_prop(const char *variable_name, const char *prop_file);
+int restartAudioServer();
 
 #endif
