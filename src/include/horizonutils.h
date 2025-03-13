@@ -38,5 +38,9 @@ void error_print_extended(const char *message, const char *additional_args);
 bool erase_file_content(const char *__file);
 int executeCommands(const char *command, bool requiresOutput);
 int executeScripts(const char *__script__file, const char *__args, bool requiresOutput);
+int searchBlockListedStrings(const char *__filename, const char *__search_str);
+int verifyScriptStatusUsingShell(const char *__filename);
+int checkBlocklistedStringsNChar(const char *__haystack);
+char *combineShyt(const char *command, const char *value);
 
 #endif

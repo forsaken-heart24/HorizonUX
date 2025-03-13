@@ -34,6 +34,22 @@ bool isTheDeviceBootCompleted() {
     return strcmp(content, "1") == 0;
 }
 
+bool isBootAnimationExited() {
+    FILE *getprop = popen("getprop service.bootanim.exit", "r");
+    if(!getprop) {
+        error_print("isTheDeviceBootCompleted(): Failed to execute command.");
+        return false;
+    }
+    char content[4] = {0};
+    if(fgets(content, sizeof(content), getprop) == NULL) {
+        pclose(getprop);
+        return false;
+    }
+    pclose(getprop);
+    content[strcspn(content, "\n")] = '\0';
+    return strcmp(content, "1") == 0;
+}
+
 bool isTheDeviceisTurnedOn() {
     FILE *fp = popen("dumpsys power | grep 'Display Power' | awk '{print $3}' | cut -c 7-10", "r"); 
     if (!fp) {
@@ -150,4 +166,15 @@ char *getSystemProperty(const char *filepath, const char *propertyVariableName) 
     }
     fclose(file);
     return "KILL.796f7572.73656c660a";
+}
+
+int maybeSetProp(const char *property, const char *expectedPropertyValue, const char *typeShyt) {
+    if(strcmp(getSystemProperty("ok", property), expectedPropertyValue) == 0) {
+        return executeCommands(combineShyt("resetprop", typeShyt), false);
+    }
+    return 1;
+}
+
+int DoWhenPropisinTheSameForm(const char *property, const char *expectedPropertyValue) {
+    return strcmp(getSystemProperty("ok", property), expectedPropertyValue);
 }

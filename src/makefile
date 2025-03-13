@@ -27,29 +27,33 @@ endif
 
 # Output binaries
 UPDATER_OUTPUT = ../local_build/binaries/updater-script
-LOADER_OUTPUT = ../local_build/binaries/mainModuleLoader.elf
+LOADER_OUTPUT = ../local_build/binaries/bashScriptLoader
 
 # Source files for each target
-UPDATER_SRCS = ./include/horizonutils.c ./include/horizonux.c ./include/horizoninstaller.c ./HorizonInstaller/main.c
-LOADER_SRCS = ./include/horizonutils.c ./include/modulesLoader.c ./modulesLoader/mainModuleLoader.c
+UPDATER_SRCS = ./include/horizonutils.c ./include/horizonux.c ./include/horizoninstaller.c 
+LOADER_SRCS = ./include/horizonux.c ./include/horizonutils.c
 
-# Error log
-ERR_LOG = compiler__errors
+# Main source path
+UPDATER_MAIN = ./HorizonInstaller/main.c
+LOADER_MAIN = ./bashScriptLoader/main.c
+
+# Error logs path
+ERR_LOG = ../local_build/logs/compiler__errors
 
 # Default: Build both
-all: check_compiler updater test-updater loader test-loader
+all: test-updater test-loader
 
 # Check if the compiler exists
 check_compiler:
 	@if ! command -v $(COMPILER) >/dev/null 2>&1; then \
-	    echo "Error: '$(COMPILER)' not found. Please install 'aarch64-linux-gnu-gcc' if targeting ARM."; \
+	    echo "Error: '$(COMPILER)' not found. Please install '$(COMPILER)'"; \
 	    exit 1; \
 	fi
 
 # Build updater-script
-updater:
+updater: check_compiler
 	@echo "Building HorizonInstaller..."
-	@if $(COMPILER) -I./include $(UPDATER_SRCS) -o $(UPDATER_OUTPUT) $(EXTRA_FLAGS) > $(ERR_LOG) 2>&1; then \
+	@if $(COMPILER) -I./include $(UPDATER_SRCS) $(UPDATER_MAIN) -o $(UPDATER_OUTPUT) $(EXTRA_FLAGS) > $(ERR_LOG) 2>&1; then \
 	    echo "Build successful: $(UPDATER_OUTPUT)"; \
 	else \
 	    echo "Error: Compilation failed. Check $(ERR_LOG) for details."; \
@@ -57,9 +61,9 @@ updater:
 	fi
 
 # Build mainModuleLoader
-loader:
+loader: check_compiler
 	@echo "Building moduleLoader..."
-	@if $(COMPILER) -I./include $(LOADER_SRCS) -o $(LOADER_OUTPUT) $(EXTRA_FLAGS) > $(ERR_LOG) 2>&1; then \
+	@if $(COMPILER) -I./include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) $(EXTRA_FLAGS) > $(ERR_LOG) 2>&1; then \
 	    echo "Build successful: $(LOADER_OUTPUT)"; \
 	else \
 	    echo "Error: Compilation failed. Check $(ERR_LOG) for details."; \
@@ -68,11 +72,11 @@ loader:
 
 # Test updater-script
 test_updater:
-	@echo "Testing updater-script..."
 	@if [ ! -f "$(UPDATER_OUTPUT)" ]; then \
 	    echo "Rebuilding $(UPDATER_OUTPUT)..."; \
 	    $(MAKE) updater; \
 	fi
+	@echo "Testing updater-script..."
 	@if $(UPDATER_OUTPUT) --test >/dev/null 2>&1; then \
 	    echo "✅ Test passed: $(UPDATER_OUTPUT) works as expected!"; \
 	else \
@@ -85,11 +89,11 @@ test_updater:
 
 # Test mainModuleLoader
 test_loader:
-	@echo "Testing moduleLoader..."
 	@if [ ! -f "$(LOADER_OUTPUT)" ]; then \
 	    echo "Rebuilding $(LOADER_OUTPUT)..."; \
 	    $(MAKE) loader; \
 	fi
+	@echo "Testing bashScriptLoader..."
 	@if $(LOADER_OUTPUT) --test >/dev/null 2>&1; then \
 	    echo "✅ Test passed: $(LOADER_OUTPUT) works as expected!"; \
 	else \

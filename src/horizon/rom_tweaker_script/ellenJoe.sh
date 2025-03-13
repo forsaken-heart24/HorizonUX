@@ -191,8 +191,6 @@ if is_boot_completed; then
     maybe_nuke_prop persist.log.tag.LSPosed
     maybe_nuke_prop persist.log.tag.LSPosed-Bridge
     maybe_nuke_prop ro.build.selinux
-    # start bro board's touch fix commands
-    [ "$(grep_prop persist.horizonux.brotherboard.touch_fix)" == "$(string_case --lower "available")" ] && start brotherboard_touch_fix
     # let's try to disable user apps log visibitlity...
     for idkmanwtfdowhateveridcyouarebomblikemefrfr in $(pm list packages | cut -d':' -f2); do
         cmd package log-visibility --disable $idkmanwtfdowhateveridcyouarebomblikemefrfr || horizon_log "ellenJoe" "Can't disable logs for this application: ${idkmanwtfdowhateveridcyouarebomblikemefrfr}..."
@@ -229,7 +227,7 @@ if is_boot_completed; then
             # Add GMS to battery optimization
             dumpsys deviceidle whitelist com.google.android.gms
     } >> ${the_logfile}
-    if grep_prop "persist.horizonux.audio.resampler"; then
+    if [ "$(grep_prop "persist.horizonux.audio.resampler")" == "available" ]; then
         horizon_log "horizonux_features_verifier" "The audio resampler is enabled in this build...."
         horizon_log "late_start_service" "Starting HorizonUX resampler..."
         resetprop ro.audio.resampler.psd.enable_at_samplerate 44100

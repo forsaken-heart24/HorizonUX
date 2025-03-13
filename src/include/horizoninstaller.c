@@ -328,24 +328,3 @@ bool installLowLevelImages(const char *imagePath, const char *blockPath, const c
     }
     return true;
 }
-
-char *getSystemProperty(const char *filepath, const char *propertyVariableName) {
-    static char buildProperty[256];  
-    FILE *file = fopen(filepath, "r");
-    if(!file) {
-        return "KILL.796f7572.73656c660a";
-    }
-    char line[256];
-    size_t propertyLen = strlen(propertyVariableName);
-    while(fgets(line, sizeof(line), file)) {
-        if(strncmp(line, propertyVariableName, propertyLen) == 0 && line[propertyLen] == '=') {
-            strncpy(buildProperty, line + propertyLen + 1, sizeof(buildProperty) - 1);
-            buildProperty[sizeof(buildProperty) - 1] = '\0';
-            buildProperty[strcspn(buildProperty, "\r\n")] = 0;
-            fclose(file);
-            return buildProperty;
-        }
-    }
-    fclose(file);
-    return "KILL.796f7572.73656c660a";
-}

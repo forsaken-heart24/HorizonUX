@@ -261,15 +261,15 @@ boolReturn $TARGET_INCLUDE_SAMSUNG_THEMING_MODULES && check_internet_connection 
 # installs audio resampler.
 if boolReturn $TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER; then
 	console_print "Enabling HorizonUX audio resampler..."
-	echo -e "\n# HorizonUX Audio resampler manager prop\npersist.horizonux.audio.resampler=available\n" >> $HORIZON_SYSTEM_PROPERTY_FILE
+	setprop --system "persist.horizonux.audio.resampler" "available"
 else
 	console_print "Disabling HorizonUX audio resampler..."
-	echo -e "\n# HorizonUX Audio resampler manager prop\npersist.horizonux.audio.resampler=unavailable\n" >> $HORIZON_SYSTEM_PROPERTY_FILE
+	setprop --system "persist.horizonux.audio.resampler" "unavailable"
 fi
 
 if boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX; then
 	console_print "Adding brotherboard's GSI touch fix..."
-	echo -e "persist.horizonux.brotherboard.touch_fix=available\n" >> $HORIZON_SYSTEM_PROPERTY_FILE
+	setprop --system "persist.horizonux.brotherboard.touch_fix" "available"
 	cp -af ./horizon/rom_tweaker_script/brotherboard_touch_fix.sh $HORIZON_SYSTEM_DIR/bin/
 fi
 
@@ -552,7 +552,7 @@ rm -rf $HORIZON_SYSTEM_DIR/hidden $HORIZON_SYSTEM_DIR/preload $HORIZON_SYSTEM_DI
 cp -af ./misc/etc/ringtones_and_etc/media/audio/* $HORIZON_SYSTEM_DIR/media/audio/
 cp -af ./horizon/rom_tweaker_script/init.ellen.rc $HORIZON_SYSTEM_DIR/etc/init/
 cp -af ./horizon/rom_tweaker_script/ellenJoe.sh $HORIZON_SYSTEM_DIR/bin/
-boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX && echo -e "\nservice brotherboard_touch_fix /system/bin/sh -c /system/bin/brotherboard_touch_fix.sh\n\tuser root\n\tgroup root\n\toneshot" >> $HORIZON_SYSTEM_DIR/etc/init/init.ellen.rc
+boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX && echo -e "\nservice brotherboard_touch_fix /system/bin/bashScriptLoader --brotherboard-touch-fix\n\tuser root\n\tgroup root\n\toneshot\n\n# let's start this daemon on sys.boot_completed = 1\non property:sys.boot_completed=1\n\tstart brotherboard_touch_fix\n# Thanks brotherboard" >> $HORIZON_SYSTEM_DIR/etc/init/init.ellen.rc
 change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE"
 boolReturn $TARGET_INCLUDE_CUSTOM_BRAND_NAME && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}"
 existance "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" && touch $HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so

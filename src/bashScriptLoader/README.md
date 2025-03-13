@@ -1,6 +1,6 @@
 ![emergency_food](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/emergency_food.png?raw=true)
 
-# Cross-Compiling (arm64) | To compile:
+# To compile (works on every arch but compiles for arm64):
 ```
 cd HorizonUX/src
 make loader

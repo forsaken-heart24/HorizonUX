@@ -26,12 +26,14 @@
 
 // FUCKING function FUCKING declarations.
 bool isTheDeviceBootCompleted();
+bool isBootAnimationExited();
 bool isTheDeviceisTurnedOn();
 int isPackageInstalled(const char *packageName);
 int sendToastMessages(const char *service, const char *message);
 int manageBlocks(const char *infile, const char *outfile, size_t block_size, size_t count);
 void sendNotification(const char *message);
 char *getSystemProperty(const char *filepath, const char *propertyVariableName);
-int setSystemProperty(const char *propertyVariable, const char *propertyVariableValue);
+int maybeSetProp(const char *property, const char *expectedPropertyValue, const char *typeShyt);
+int DoWhenPropisinTheSameForm(const char *property, const char *expectedPropertyValue);
 
 #endif
