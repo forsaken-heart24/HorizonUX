@@ -21,7 +21,7 @@ function grep_prop() {
 	local variable_name=$1
 	local prop_file=$2
 	local args="$#"
-	if [ ! "$args" -eq "2" ]; then
+	if [ ! "$args" -eq '2' ]; then
 		return 1
 	fi
     [ -z "$prop_file" ] && prop_file=/system/build.prop 
@@ -31,7 +31,7 @@ function grep_prop() {
 function restart_audioserver() {
     # Wait for system boot completion and audioserver to boot up
     for i in `seq 1 5`; do
-        if [ "`getprop sys.boot_completed`" = "1" ] && [ -n "`getprop init.svc.audioserver`" ]; then
+        if [ "`getprop sys.boot_completed`" = '1' ] && [ -n "`getprop init.svc.audioserver`" ]; then
             break
         fi
         sleep 1.3
@@ -63,22 +63,15 @@ function restart_audioserver() {
 }
 
 function is_boot_completed() {
-	[ "$(getprop sys.boot_completed)" == "1" ] && return 0 
-	return 1
+    return $(if [ -z "$(getprop sys.boot_completed)" ]; then return 1; else echo "$(getprop service.bootanim.progress)"; fi)
 }
 
 function is_bootanimation_exited() {
-	[ "$(getprop service.bootanim.exit)" == "1" ] && return 0 
-	return 1
+    return $(if [ -z "$(getprop service.bootanim.exit)" ]; then return 1; else echo "$(getprop service.bootanim.progress)"; fi)
 }
 
-function maybe_set_prop() {
-    local prop="$1"
-    local contains="$2"
-    local value="$3"
-    if [[ "$(getprop "$prop")" == *"$contains"* ]]; then
-        resetprop "$prop" "$value"
-    fi
+function bootanimStillRunning() {
+    return $(if [ -z "$(getprop service.bootanim.progress)" ]; then return 1; else echo "$(getprop service.bootanim.progress)"; fi)
 }
 
 function string_case() {
@@ -122,7 +115,7 @@ function maybe_kill_daemons() {
 function dawn() {
     local dir=$1
     local the_fifty_jeez=$(string_case -l $(du -h $dir | head -n 1 | cut -c 4-4))
-    if [ "$(echo $the_fifty_jeez | grep -q m)" ] || [ "$(echo $the_fifty_jeez | grep -q g)" ]; then
+    if echo $the_fifty_jeez | grep -q m ] || echo $the_fifty_jeez | grep -q g; then
         return 0
     fi
     return 1
@@ -144,101 +137,103 @@ function check_reset_prop() {
     [ -z $VALUE ] || [ $VALUE = $EXPECTED ] || resetprop $NAME $EXPECTED
 }
 
-# let's cook an tmp file to save our logs because we have to save things on it
-# and after that we have to move it to the /data/media/0/Horizon/logs/ because we
-# still have no idea whether the device is freaking encrypted or not. You might say that
-# we can plug things but idc, im just gonna f'round with the temp file and fuckin' move
-# it to the directory.
-if ! is_boot_completed; then
-    the_logfile=$(mktemp)
-    horizon_log "ellenJoe" "using the $the_logfile file to store logs because the storage haven't decryped yet!"
-fi
-
 ########################################### main() #############################################
 # let's change the default theme to dark, Thanks to nobletaro for the idea!
-if [ "$(settings get secure device_provisioned)" == "0" ]; then
+if [[ "$(getprop service.bootanim.progress)" == '1' && "$(settings get secure device_provisioned)" == '0' ]]; then
     settings put secure ui_night_mode 2
     cmd uimode night yes
 fi
 
-if is_boot_completed; then
-    # we are gonna remove everything inside the dir if uhhh... it takes up an megabyte(s) of space
-    dawn "/data/media/0/Horizon/logs/" && rm -rf /data/media/0/Horizon/logs/*
-    the_logfile="/data/media/0/Horizon/logs/horizon_ellenJoe_tweaker_logs.log"
-    horizon_log "ellenJoe" "The ROM decryped the storage, using the $the_logfile file to store logs..."
-    # spoof the device to green state, making it seem like an locked device.
-    check_reset_prop "ro.boot.vbmeta.device_state" "locked"
-    check_reset_prop "ro.boot.verifiedbootstate" "green"
-    check_reset_prop "ro.boot.flash.locked" "1"
-    check_reset_prop "ro.boot.veritymode" "enforcing"
-    check_reset_prop "ro.boot.warranty_bit" "0"
-    check_reset_prop "ro.warranty_bit" "0"
-    check_reset_prop "ro.debuggable" "0"
-    check_reset_prop "ro.secure" "1"
-    check_reset_prop "ro.adb.secure" "1"
-    check_reset_prop "ro.build.type" "user"
-    check_reset_prop "ro.build.tags" "release-keys"
-    check_reset_prop "ro.vendor.boot.warranty_bit" "0"
-    check_reset_prop "ro.vendor.warranty_bit" "0"
-    check_reset_prop "vendor.boot.vbmeta.device_state" "locked"
-    check_reset_prop "vendor.boot.verifiedbootstate" "green"
-    check_reset_prop "ro.secureboot.lockstate" "locked"
-    # Hide that we booted from recovery when magisk is in recovery mode
-    contains_reset_prop "ro.bootmode" "recovery" "unknown"
-    contains_reset_prop "ro.boot.bootmode" "recovery" "unknown"
-    contains_reset_prop "vendor.boot.bootmode" "recovery" "unknown"
-    # nuke these mfs if they have any value
-    maybe_nuke_prop persist.log.tag.LSPosed
-    maybe_nuke_prop persist.log.tag.LSPosed-Bridge
-    maybe_nuke_prop ro.build.selinux
-    # let's try to disable user apps log visibitlity...
-    for idkmanwtfdowhateveridcyouarebomblikemefrfr in $(pm list packages | cut -d':' -f2); do
-        cmd package log-visibility --disable $idkmanwtfdowhateveridcyouarebomblikemefrfr || horizon_log "ellenJoe" "Can't disable logs for this application: ${idkmanwtfdowhateveridcyouarebomblikemefrfr}..."
-    done
-    # gms doze crap 
-    horizon_log "GMSDoze" "Tweaking gms..."
-    horizon_log "GMSDoze" "The logs of the tweaks can be seen below:"
-    {
-            # Disable collective device administrators for all users
-            for U in $(ls /data/user); do
-                for C in "auth.managed.admin.DeviceAdminReceiver" "mdm.receivers.MdmDeviceAdminReceiver"; do
-                    pm disable --user $U com.google.android.gms/com.google.android.gms.$C
-                done
-            done
-            # The GMS0 variable holds the Google Mobile Services package name
-            GMS0="\"com.google.android.gms\""
-            STR1="allow-unthrottled-location package=$GMS0"
-            STR2="allow-ignore-location-settings package=$GMS0"
-            STR3="allow-in-power-save package=$GMS0"
-            STR4="allow-in-data-usage-save package=$GMS0"
-            # Find all XML files under /data/adb directory (case-insensitive search for .xml files)
-            find /data/adb/* -type f -iname "*.xml" -print |
-            while IFS= read -r XML; do
-                for X in $XML; do
-                # If any of the defined strings (STR1, STR2, STR3, STR4) are found in the file,
-                # execute the following block
-                if grep -qE "$STR1|$STR2|$STR3|$STR4" $X 2>/dev/null; then
-                    # Use sed to remove the matched strings from the XML file
-                    # It deletes lines containing any of STR1, STR2, STR3, or STR4
-                    sed -i "/$STR1/d;/$STR2/d;/$STR3/d;/$STR4/d" $X
-                fi
-                done
-            done
-            # Add GMS to battery optimization
-            dumpsys deviceidle whitelist com.google.android.gms
-    } >> ${the_logfile}
-    if [ "$(grep_prop "persist.horizonux.audio.resampler")" == "available" ]; then
-        horizon_log "horizonux_features_verifier" "The audio resampler is enabled in this build...."
-        horizon_log "late_start_service" "Starting HorizonUX resampler..."
-        resetprop ro.audio.resampler.psd.enable_at_samplerate 44100
-        resetprop ro.audio.resampler.psd.stopband 194
-        resetprop ro.audio.resampler.psd.halflength 520
-        resetprop ro.audio.resampler.psd.cutoff_percent 85
-        horizon_log "late_start_service" "Restarting audioserver to apply the changes in your device..."
-        if restart_audioserver; then
-            horizon_log "late_start_service" "audioserver restarted successfully..."
+if [ "$(getprop persist.horizonux.ellen)" == "available" ]; then
+    if is_boot_completed; then
+        # we are gonna remove everything inside the dir if uhhh... it takes up an megabyte(s) of space
+        if dawn "/data/media/0/Horizon/logs/"; then
+            rm -rf /data/media/0/Horizon/logs/*
+            the_logfile="/data/media/0/Horizon/logs/horizon_ellenJoe_tweaker_logs.log"
+            horizon_log "ellenJoe" "The ROM decryped the storage, using the $the_logfile file to store logs..."
         else
-            horizon_log "late_start_service" "failed to reboot audioserver, the resampler stuffs aren't saved.. sorryyy"
+            # let's cook an tmp file to save our logs because we have to save things on it
+            # and after that we have to move it to the /data/media/0/Horizon/logs/ because we
+            # still have no idea whether the device is freaking encrypted or not. You might say that
+            # we can plug things but idc, im just gonna f'round with the temp file and fuckin' move
+            # it to the directory.
+            the_logfile=$(mktemp)
+            horizon_log "ellenJoe" "using the $the_logfile file to store logs because the storage haven't decryped yet!"
+        fi
+        # spoof the device to green state, making it seem like an locked device.
+        check_reset_prop "ro.boot.vbmeta.device_state" "locked"
+        check_reset_prop "ro.boot.verifiedbootstate" "green"
+        check_reset_prop "ro.boot.flash.locked" '1'
+        check_reset_prop "ro.boot.veritymode" "enforcing"
+        check_reset_prop "ro.boot.warranty_bit" '0'
+        check_reset_prop "ro.warranty_bit" '0'
+        check_reset_prop "ro.debuggable" '0'
+        check_reset_prop "ro.secure" '1'
+        check_reset_prop "ro.adb.secure" '1'
+        check_reset_prop "ro.build.type" "user"
+        check_reset_prop "ro.build.tags" "release-keys"
+        check_reset_prop "ro.vendor.boot.warranty_bit" '0'
+        check_reset_prop "ro.vendor.warranty_bit" '0'
+        check_reset_prop "vendor.boot.vbmeta.device_state" "locked"
+        check_reset_prop "vendor.boot.verifiedbootstate" "green"
+        check_reset_prop "ro.secureboot.lockstate" "locked"
+        # Hide that we booted from recovery when magisk is in recovery mode
+        contains_reset_prop "ro.bootmode" "recovery" "unknown"
+        contains_reset_prop "ro.boot.bootmode" "recovery" "unknown"
+        contains_reset_prop "vendor.boot.bootmode" "recovery" "unknown"
+        # nuke these mfs if they have any value
+        maybe_nuke_prop persist.log.tag.LSPosed
+        maybe_nuke_prop persist.log.tag.LSPosed-Bridge
+        maybe_nuke_prop ro.build.selinux
+        # let's try to disable user apps log visibitlity...
+        for idkmanwtfdowhateveridcyouarebomblikemefrfr in $(pm list packages | cut -d':' -f2); do
+            cmd package log-visibility --disable $idkmanwtfdowhateveridcyouarebomblikemefrfr || horizon_log "ellenJoe" "Can't disable logs for this application: ${idkmanwtfdowhateveridcyouarebomblikemefrfr}..."
+        done
+        # gms doze crap 
+        horizon_log "GMSDoze" "Tweaking gms..."
+        horizon_log "GMSDoze" "The logs of the tweaks can be seen below:"
+        {
+                # Disable collective device administrators for all users
+                for U in $(ls /data/user); do
+                    for C in "auth.managed.admin.DeviceAdminReceiver" "mdm.receivers.MdmDeviceAdminReceiver"; do
+                        pm disable --user $U com.google.android.gms/com.google.android.gms.$C
+                    done
+                done
+                # The GMS0 variable holds the Google Mobile Services package name
+                GMS0="\"com.google.android.gms\""
+                STR1="allow-unthrottled-location package=$GMS0"
+                STR2="allow-ignore-location-settings package=$GMS0"
+                STR3="allow-in-power-save package=$GMS0"
+                STR4="allow-in-data-usage-save package=$GMS0"
+                # Find all XML files under /data/adb directory (case-insensitive search for .xml files)
+                find /data/adb/* -type f -iname "*.xml" -print |
+                while IFS= read -r XML; do
+                    for X in $XML; do
+                    # If any of the defined strings (STR1, STR2, STR3, STR4) are found in the file,
+                    # execute the following block
+                    if grep -qE "$STR1|$STR2|$STR3|$STR4" $X 2>/dev/null; then
+                        # Use sed to remove the matched strings from the XML file
+                        # It deletes lines containing any of STR1, STR2, STR3, or STR4
+                        sed -i "/$STR1/d;/$STR2/d;/$STR3/d;/$STR4/d" $X
+                    fi
+                    done
+                done
+                # Add GMS to battery optimization
+                dumpsys deviceidle whitelist com.google.android.gms
+        } >> ${the_logfile}
+        if [ "$(grep_prop "persist.horizonux.audio.resampler")" == "available" ]; then
+            horizon_log "horizonux_features_verifier" "The audio resampler is enabled in this build...."
+            horizon_log "late_start_service" "Starting HorizonUX resampler..."
+            resetprop ro.audio.resampler.psd.enable_at_samplerate 44100
+            resetprop ro.audio.resampler.psd.stopband 194
+            resetprop ro.audio.resampler.psd.halflength 520
+            resetprop ro.audio.resampler.psd.cutoff_percent 85
+            horizon_log "late_start_service" "Restarting audioserver to apply the changes in your device..."
+            if restart_audioserver; then
+                horizon_log "late_start_service" "audioserver restarted successfully..."
+            else
+                horizon_log "late_start_service" "failed to reboot audioserver, the resampler stuffs aren't saved.. sorryyy"
+            fi
         fi
     fi
 fi

@@ -205,6 +205,9 @@ TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER=false
 
 # removes a smart switch listener port from the init shell.
 TARGET_REMOVE_SMARTSWITCH_DAEMON=false
+
+# Ellen, a script that spoofs and does some misc jobs if the device is booting.
+TARGET_INCLUDE_HORIZONUX_ELLEN=false
 ############################################# Exclusive HorizonUX Features #############################################
 
 ############################################# Misc Configs #############################################

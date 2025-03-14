@@ -550,9 +550,8 @@ change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGE
 setprop --vendor "vendor.audio.offload.buffer.size.kb" "256"
 rm -rf $HORIZON_SYSTEM_DIR/hidden $HORIZON_SYSTEM_DIR/preload $HORIZON_SYSTEM_DIR/recovery-from-boot.p $HORIZON_SYSTEM_DIR/bin/install-recovery.sh
 cp -af ./misc/etc/ringtones_and_etc/media/audio/* $HORIZON_SYSTEM_DIR/media/audio/
-cp -af ./horizon/rom_tweaker_script/init.ellen.rc $HORIZON_SYSTEM_DIR/etc/init/
+cat ./horizon/rom_tweaker_script/init.ellen.rc > ../local_build/etc/init.ellen.rc
 cp -af ./horizon/rom_tweaker_script/ellenJoe.sh $HORIZON_SYSTEM_DIR/bin/
-boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX && echo -e "\nservice brotherboard_touch_fix /system/bin/bashScriptLoader --brotherboard-touch-fix\n\tuser root\n\tgroup root\n\toneshot\n\n# let's start this daemon on sys.boot_completed = 1\non property:sys.boot_completed=1\n\tstart brotherboard_touch_fix\n# Thanks brotherboard" >> $HORIZON_SYSTEM_DIR/etc/init/init.ellen.rc
 change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE"
 boolReturn $TARGET_INCLUDE_CUSTOM_BRAND_NAME && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}"
 existance "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" && touch $HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so
@@ -566,6 +565,7 @@ done
 if existance "./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/"; then
 	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsungloop.qmg $HORIZON_SYSTEM_DIR/media/
 	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsung.qmg $HORIZON_SYSTEM_DIR/media/
+	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/shutdown.qmg $HORIZON_SYSTEM_DIR/media/
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
     if [[ "$BUILD_TARGET_SDK_VERSION" -eq "28" ]]; then
@@ -596,6 +596,39 @@ if ask "Do you want to add a stub app for missing activities?"; then
 	mkdir -p $HORIZON_SYSTEM_DIR/app/HorizonStub/
 	build_and_sign "./horizon/packages/HorizonStub" "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
 fi
+if boolReturn "$TARGET_INCLUDE_HORIZONUX_ELLEN"; then
+	setprop --system "persist.horizonux.ellen" "available"
+cat >> ../local_build/etc/init.ellen.rc << EOF
+# let's change the system theme to dark if the requirements are ment.
+on property:service.bootanim.exit=1
+	start ellen
+
+# init tweaks start from here.
+on property:sys.boot_completed=1
+	start ellen
+	
+# shell script that does the job and kills itself after it.
+service ellen /system/bin/bashScriptLoader --ellenJoe
+	user root
+	group root
+	oneshot
+
+EOF
+fi
+if boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX; then
+cat >> ../local_build/etc/init.ellen.rc << EOF
+service brotherboard_touch_fix /system/bin/bashScriptLoader --brotherboard-touch-fix
+        user root
+        group root
+        oneshot
+
+# let's start this daemon on sys.bootanim.progress = 1
+on property:sys.bootanim.progress=1
+        start brotherboard_touch_fix
+# Thanks brotherboard
+EOF
+fi
+cp ../local_build/etc/init.ellen.rc $HORIZON_SYSTEM_DIR/etc/init/init.ellen.rc
 console_print "Check the ../local_build/ folder for the items you have built."
 console_print "Please sign the built overlay or application packages manually with your own private keys;"
 console_print "Do not use any public keys provided by any application building software. "

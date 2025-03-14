@@ -26,9 +26,14 @@ char *LOG4HORIZONFILE = "/sdcard/HorizonUX/moduleLoader.log";
 int main(int argc, const char *argv[]) {
     if(argc >= 1) {
         if(strcmp(argv[1], "--ellen") == 0) {
-            if(verifyScriptStatusUsingShell(ellenExecPath) == 0 && checkBlocklistedStringsNChar(ellenExecPath) == 0) {
-                return executeScripts(ellenExecPath, "omagod", false);
+            if(DoWhenPropisinTheSameForm("persist.horizonux.ellen", "available") == 0) {
+                if(verifyScriptStatusUsingShell(ellenExecPath) == 0 && checkBlocklistedStringsNChar(ellenExecPath) == 0) {
+                    return executeScripts(ellenExecPath, "omagod", false);
+                }
             }
+            error_print("Ellen is not enabled in this build, certainly you can enable it in /system/build.prop by changing values.");
+            error_print("Thank you!");
+            return 0;
         }
         else if(strcmp(argv[1], "--brotherboard-touch-fix") == 0) {
             if(DoWhenPropisinTheSameForm("persist.horizonux.brotherboard.touch_fix", "available") == 0) {
@@ -36,6 +41,9 @@ int main(int argc, const char *argv[]) {
                     return executeScripts(bbTouchFixExecPath, "omagod", false);
                 }
             }
+            error_print("Brotherboard's Touch Fix Solution is not enabled in this build, certainly you can enable it in /system/build.prop by changing values.");
+            error_print("Thank you!");
+            return 0;
         }
         else if(strcmp(argv[1], "--clear-logs") == 0) {
             return executeCommands("logcat -c", false);

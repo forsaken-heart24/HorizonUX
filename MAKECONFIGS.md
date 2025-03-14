@@ -3,8 +3,7 @@
 # Build Configuration Variables
 
 ## TODO: To be filled by the builder
-- Don't fill these if you have a super raw image file laying around your storage medium, just enter the path to it if the script
-- Asks it.
+- Don't fill these if you have a super raw image file laying around your storage medium, just enter the path to it if the script asks it.
 **SYSTEM_DIR**: Put your extracted system folder path there.
 **SYSTEM_EXT_DIR**: Put your extracted system_ext folder path there.
 **VENDOR_DIR**: Put your extracted vendor folder path there.
@@ -95,6 +94,7 @@
 - **BUILD_TARGET_BOOT_ANIMATION_FPS**: Add any integer value lesser than or equal to 60 if you have a bootanimation that has video/gif like transistions
 - **BUILD_TARGET_SHUTDOWN_ANIMATION_FPS**: Same applies for this variable
 - **RECOVERY_IMAGE_PATH**: To be filled by the builder if they want to patch their device's recovery.
+- **TARGET_INCLUDE_HORIZONUX_ELLEN**: Ellen, a script that spoofs and does some misc jobs when the device is booting. (kinda like a "tweaker" but it doesn't do anything to performance)
 
 ## Fill these to prevent build errors.
 - **PRODUCT_CSC_NAME**: The csc code of your product image, don't put random string there.

@@ -27,7 +27,7 @@ while true; do
             new="$old"
         fi
     fi
-done
+done &
 echo "$?" > /sdcard/.brotherboard_touch_fix_pid
 echo "$?" > /data/local/tmp/.brotherboard_touch_fix_pid
 cmd notification post -S bigtext -t 'HorizonUX' 'Tag' "Be gone, touch issues! Thanks to brotherboard!"

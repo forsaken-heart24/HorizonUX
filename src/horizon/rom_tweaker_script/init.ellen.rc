@@ -14,19 +14,3 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-on boot
-	start ellen
-
-on property:sys.boot_completed=1
-	start ellen
-	
-# let's spoof the device.
-on property:service.bootanim.exit=1
-	start ellen
-	
-# shell script that does the job and kills itself after it.
-service ellen /system/bin/bashScriptLoader --ellenJoe
-	user root
-	group root
-	oneshot
