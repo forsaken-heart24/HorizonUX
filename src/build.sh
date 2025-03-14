@@ -17,25 +17,130 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# nuke the old log file.
-rm -rf ..local_build/logs/*
-TMPDIR=$(mktemp --tmpdir=.)
-
 # mako mako mako mako Those who know💀
-for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/; do
-    mkdir -p ../local_build/$i
+for i in system/product/priv-app system/product/etc system/product/overlay \
+         system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
+         system/etc/init/; do
+    mkdir -p "../local_build/$i"
 done
 
-# check if mentioned files do exist or not.
-for i in "./misc/build_scripts/util_functions.sh" "./monika.conf" "./makeconfigs.prop" "./misc/build_scripts/target_configs.sh"; do
-	if [ ! -f "$i" ]; then
-		echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
-		sleep 0.5
-		exit 1
-	else
-		. "$i"
-	fi
+# Check if required files exist
+for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika.conf"; do
+    if [ ! -f "$i" ]; then
+        echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
+        sleep 0.5
+        exit 1
+    else
+        . "$i"
+    fi
 done
+
+# Cache partitions
+if [ "$BATTLEMAGE_BUILD" != "true" ]; then
+    if [ ! -f "${SYSTEM_DIR}/build.prop" ] && [ ! -f "${SYSTEM_DIR}/system/build.prop" ]; then
+        abort "The system partition is not found."
+    elif [ ! -d "${SYSTEM_EXT_DIR}/etc" ] && [ ! -d "${SYSTEM_DIR}/system_ext/etc" ]; then
+        abort "The system_ext partition is not found."
+    elif [ ! -d "${VENDOR_DIR}" ] && [ ! -d "${VENDOR_DIR}/vendor" ]; then
+        abort "The vendor partition is not found."
+    elif [ ! -d "${PRODUCT_DIR}" ] && [ ! -d "${PRODUCT_DIR}/product" ]; then
+        abort "The product partition is not found."
+    fi
+    HORIZON_PRODUCT_DIR=$PRODUCT_DIR
+    HORIZON_SYSTEM_DIR=$SYSTEM_DIR
+    HORIZON_SYSTEM_EXT_DIR=$SYSTEM_EXT_DIR
+    HORIZON_VENDOR_DIR=$VENDOR_DIR
+else
+    for partition in system vendor product; do
+        if echo "$katarenai" | grep -q "$partition"; then
+            if check_build_prop "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$partition"; then
+                set_partition_flag "$partition"
+            fi
+        fi
+    done
+    HORIZON_PRODUCT_DIR=$(kang_dir "product")
+    HORIZON_SYSTEM_DIR=$(kang_dir "system")
+    HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")
+    HORIZON_VENDOR_DIR=$(kang_dir "vendor")
+fi
+
+# Set build username
+BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut -c 2-200)"
+thisConsoleTempLogFile="../local_build/logs/hux_build.log"
+
+# Remove old log files
+rm -rf ../local_build/logs/*
+TMPDIR=$(mktemp -d 2>/dev/null || echo "../local_build/tmp/hux")
+
+# Ask user to mount super image
+console_print "Do you want to mount super image and proceed?"
+if ask "Type \"yes\" to mount the super image..."; then
+    printf "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m Please enter the path to the super.img file: \e[0;37m"
+    read super_image_path
+    if [ ! -f "$super_image_path" ]; then
+        abort "Invalid image path: $super_image_path. Ensure the correct path is provided."
+    fi
+    if ! mount_super_image "$super_image_path"; then
+        abort "Failed to mount super.img."
+    fi
+    BATTLEMAGE_BUILD=true
+else
+    BATTLEMAGE_BUILD=false
+fi
+
+# Temporary file creation
+if command -v mktemp >/dev/null; then
+    TMPFILE=$(mktemp)
+else
+    TMPFILE="../local_build/logs/bomboclattt"
+fi
+
+# Locate build.prop files
+HORIZON_PRISM_PROPERTY_FILE=$(find_partition_property_file "prism")
+HORIZON_PRODUCT_PROPERTY_FILE=$(find_partition_property_file "product")
+HORIZON_SYSTEM_PROPERTY_FILE=$(find_partition_property_file "system")
+HORIZON_SYSTEM_EXT_PROPERTY_FILE=$(find_partition_property_file "system_ext")
+HORIZON_VENDOR_PROPERTY_FILE=$(find_partition_property_file "vendor")
+
+# Locate overlay paths
+HORIZON_PRODUCT_OVERLAY=""
+if [ -d "$HORIZON_PRODUCT_DIR/overlay" ]; then
+    HORIZON_PRODUCT_OVERLAY="$HORIZON_PRODUCT_DIR/overlay"
+elif [ -d "$HORIZON_SYSTEM_DIR/product/overlay" ]; then
+    HORIZON_PRODUCT_OVERLAY="$HORIZON_SYSTEM_DIR/product/overlay"
+fi
+HORIZON_VENDOR_OVERLAY="$HORIZON_HORIZON_VENDOR_DIR/overlay"
+HORIZON_FALLBACK_OVERLAY_PATH=${HORIZON_PRODUCT_OVERLAY:-$HORIZON_VENDOR_OVERLAY}
+
+# Check dependencies
+if [ "$testEnv" != "true" ]; then
+    if [ ! -f "${SCRIPTS[0]}" ]; then
+        abort "Script files are missing, exiting..."
+    elif [ -z "$(command -v zip)" ]; then
+        abort "zip is not installed. Please install it to proceed."
+    elif [ -z "$(command -v python3)" ]; then
+        warns "python3 is not installed. It's not required unless you want to patch your recovery image." "DEPENDENCIES_ERRORS"
+    elif [ ! -f "$PREFIX/bin/java" ]; then
+        abort "Please install the latest openjdk to proceed."
+    fi
+fi
+
+# Locate feature files
+for i in "$HORIZON_SYSTEM_DIR/etc/floating_feature.xml" "$HORIZON_VENDOR_DIR/etc/floating_feature.xml"; do
+    if [ -f "$i" ]; then
+        TARGET_BUILD_FLOATING_FEATURE_PATH="$i"
+        break
+    fi
+done
+
+TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+if [ ! -f "$TARGET_BUILD_CSC_FEATURE_PATH" ]; then
+    abort "Product CSC File is not found, please change the \"PRODUCT_CSC_NAME\" (in makeconfigs.prop) according to the one in your product image"
+else
+    if file "$TARGET_BUILD_CSC_FEATURE_PATH" | grep -q "cscfeature.xml: data"; then
+        tinkerWithCSCFeaturesFile --decode
+    fi
+fi
 
 # ok, fbans dropped!
 echo -e "\033[0;31m########################################################################"
@@ -64,10 +169,12 @@ if boolReturn $TARGET_BUILD_IS_FOR_DEBUGGING; then
 	for i in "ro.debuggable 1" "ro.adb.secure 0"; do 
 		setprop --system "$(echo $i | awk '{print $1}')" "$(echo $i | awk '{print $2}')"
 	done
-	for i in $HORIZON_PRODUCT_PROPERTY_FILE $HORIZON_SYSTEM_DIR/product/*/build.prop;
-		existance "${i}" && setprop --product "persist.sys.usb.config" "mtp,adb"
-	done
+	setprop --product "persist.sys.usb.config" "mtp,adb"
 fi
+
+# Stack build properties into a temporary directory
+console_print "Storing the ROM's build properties into a temporary directory..."
+stack_build_properties
 
 if [ "$BUILD_TARGET_ANDROID_VERSION" == "14" ]; then
 	console_print "removing some bloats, thnx Salvo!"
@@ -104,37 +211,37 @@ fi
 if boolReturn $TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES; then
 	console_print "adding custom setup wizard text...."
 	custom_setup_finished_messsage
-	build_and_sign ./horizon/overlay_packages/sec_setup_wizard_horizonux_overlay/ $HORIZON_FALLBACK_OVERLAY_PATH
+	build_and_sign ./horizon/overlay_packages/sec_setup_wizard_horizonux_overlay $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_REMOVE_NONE_SECURITY_OPTION; then
 	warns_api_limitations "11"
 	console_print "removing none security option from lockscreen settings..."
-	echo -e "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n\t<bool name=\"config_hide_none_security_option\">true</bool>\n" > ./horizon/packages/settings/oneui3/remove_none_option_on_security_tab/res/values/bools.xml
+	echo -e "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n\t<bool name=\"config_hide_none_security_option\">true</bool>\n" > ./horizon/overlay_packages/settings/oneui3/remove_none_option_on_security_tab/res/values/bools.xml
 fi
 
 if boolReturn $TARGET_REMOVE_SWIPE_SECURITY_OPTION; then
 	console_print "removing swipe security option from lockscreen settings..."
 	warns_api_limitations "11"
-	echo -e "\t<bool name=\"config_hide_swipe_security_option\">true</bool>\n</resources>" >> ./horizon/packages/settings/oneui3/remove_none_option_on_security_tab/res/values/bools.xml
+	echo -e "\t<bool name=\"config_hide_swipe_security_option\">true</bool>\n</resources>" >> ./horizon/overlay_packages/settings/oneui3/remove_none_option_on_security_tab/res/values/bools.xml
 else
-	echo "</resources>" >> ./horizon/packages/settings/oneui3/remove_none_option_on_security_tab/res/values/bools.xml
+	echo "</resources>" >> ./horizon/overlay_packages/settings/oneui3/remove_none_option_on_security_tab/res/values/bools.xml
 fi
 
-if boolReturn $TARGET_REMOVE_SWIPE_SECURITY_OPTION; then
+if boolReturn $TARGET_REMOVE_NONE_SECURITY_OPTION || boolReturn $TARGET_REMOVE_SWIPE_SECURITY_OPTION; then
 	warns_api_limitations "11"
-	build_and_sign ./horizon/overlay_packages/settings/oneui3/remove_none_option_on_security_tab/ $HORIZON_FALLBACK_OVERLAY_PATH
+	build_and_sign ./horizon/overlay_packages/settings/oneui3/remove_none_option_on_security_tab $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_ADD_EXTRA_ANIMATION_SCALES; then
 	console_print "cooking extra animation scales.."
-	build_and_sign ./horizon/overlay_packages/settings/oneui3/extra_animation_scales/ $HORIZON_FALLBACK_OVERLAY_PATH
+	build_and_sign ./horizon/overlay_packages/settings/oneui3/extra_animation_scales $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS; then
 	console_print "cooking rounded corners on pip window...."
 	warns_api_limitations "11"
-	build_and_sign ./horizon/overlay_packages/systemui/oneui3/rounded_corners_on_pip/ $HORIZON_FALLBACK_OVERLAY_PATH
+	build_and_sign ./horizon/overlay_packages/systemui/oneui3/rounded_corners_on_pip $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN; then
@@ -276,8 +383,8 @@ fi
 # L, see the dawn makeconfigs.prop file :\
 if boolReturn $TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER_PLUGIN; then
 	for part in $HORIZON_SYSTEM_DIR $HORIZON_VENDOR_DIR; do
-		for libdir in $part/lib $part/lib64; Do
-			if existance "$part/$libdir/liboemcrypto.so"; then
+		for libdir in "$part/lib" "$part/lib64"; do
+			if [ -f "$part/$libdir/liboemcrypto.so" ]; then
 				touch "$part/$libdir/liboemcrypto.so"
 			fi 
 		done
@@ -342,25 +449,26 @@ if boolReturn "$BUILD_TARGET_REMOVE_SYSTEM_LOGGING"; then
 	setprop --system "log.tag.NetworkLogger" "S"
 	setprop --system "log.tag.IptablesRestoreController" "S"
 	setprop --system "log.tag.ClatdController" "S"
-if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 28 && "${BUILD_TARGET_SDK_VERSION}" -le 31 ]]; then
-    apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
-    if [[ "${BUILD_TARGET_SDK_VERSION}" -eq 28 ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[0]}"
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[6]}"
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[9]}"
-    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 29 ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[7]}"
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[1]}"
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[10]}"
-    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 30 ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[8]}"
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[2]}"
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[11]}"
-    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 31 ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[9]}"
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[3]}"
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[12]}"
-    fi
+	if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 28 && "${BUILD_TARGET_SDK_VERSION}" -le 31 ]]; then
+		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
+		if [[ "${BUILD_TARGET_SDK_VERSION}" -eq 28 ]]; then
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[0]}"
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[6]}"
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[9]}"
+		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 29 ]]; then
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[7]}"
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[1]}"
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[10]}"
+		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 30 ]]; then
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[8]}"
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[2]}"
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[11]}"
+		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 31 ]]; then
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[9]}"
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[3]}"
+			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[12]}"
+		fi
+	fi
 fi
 
 if boolReturn "$BUILD_TARGET_BRING_NEWGEN_ASSISTANT"; then
@@ -445,7 +553,7 @@ if boolReturn "$BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK"; then
 	add_csc_xml_values "CscFeature_Video_BlockNotiSoundDuringStreaming" "TRUE"
 fi
 
-if boolReturn "$BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL"
+if boolReturn "$BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL"; then
 	add_csc_xml_values "CscFeature_Video_SupportPlayDuringCall" "TRUE"
 	console_print "Forced the system to play media while call..."
 fi
@@ -548,105 +656,59 @@ fi
 default_language_configuration ${NEW_DEFAULT_LANGUAGE_ON_PRODUCT} ${NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT}
 change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE}"
 setprop --vendor "vendor.audio.offload.buffer.size.kb" "256"
-rm -rf $HORIZON_SYSTEM_DIR/hidden $HORIZON_SYSTEM_DIR/preload $HORIZON_SYSTEM_DIR/recovery-from-boot.p $HORIZON_SYSTEM_DIR/bin/install-recovery.sh
-cp -af ./misc/etc/ringtones_and_etc/media/audio/* $HORIZON_SYSTEM_DIR/media/audio/
+rm -rf "$HORIZON_SYSTEM_DIR/hidden" "$HORIZON_SYSTEM_DIR/preload" "$HORIZON_SYSTEM_DIR/recovery-from-boot.p" "$HORIZON_SYSTEM_DIR/bin/install-recovery.sh"
+cp -af ./misc/etc/ringtones_and_etc/media/audio/* "$HORIZON_SYSTEM_DIR/media/audio/"
 cat ./horizon/rom_tweaker_script/init.ellen.rc > ../local_build/etc/init.ellen.rc
-cp -af ./horizon/rom_tweaker_script/ellenJoe.sh $HORIZON_SYSTEM_DIR/bin/
+cp -af ./horizon/rom_tweaker_script/ellenJoe.sh "$HORIZON_SYSTEM_DIR/bin/"
 change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE"
-boolReturn $TARGET_INCLUDE_CUSTOM_BRAND_NAME && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}"
-existance "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" && touch $HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so
+boolReturn "$TARGET_INCLUDE_CUSTOM_BRAND_NAME" && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}"
+existance "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" && touch "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so"
 for i in "logcat.live disable" "sys.dropdump.on Off" "profiler.force_disable_err_rpt 1" "profiler.force_disable_ulog 1" \
 		 "sys.lpdumpd 0" "persist.device_config.global_settings.sys_traced 0" "persist.traced.enable 0" "persist.sys.lmk.reportkills false" \
 		 "log.tag.ConnectivityManager S" "log.tag.ConnectivityService S" "log.tag.NetworkLogger S" \
 		 "log.tag.IptablesRestoreController S" "log.tag.ClatdController S"; do
-			# use echo to null-terminate the var value.
-			setprop --system "$(echo "${i}" | awk '{printf $1}')" "$(echo "${i}" | awk '{printf $2}')"
+		# use echo to null-terminate the var value.
+		setprop --system "$(echo "${i}" | awk '{printf $1}')" "$(echo "${i}" | awk '{printf $2}')"
 done
 if existance "./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/"; then
-	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsungloop.qmg $HORIZON_SYSTEM_DIR/media/
-	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsung.qmg $HORIZON_SYSTEM_DIR/media/
-	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/shutdown.qmg $HORIZON_SYSTEM_DIR/media/
+	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsungloop.qmg "$HORIZON_SYSTEM_DIR/media/"
+	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsung.qmg "$HORIZON_SYSTEM_DIR/media/"
+	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/shutdown.qmg "$HORIZON_SYSTEM_DIR/media/"
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-    if [[ "$BUILD_TARGET_SDK_VERSION" -eq "28" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[4]}"
-    fi
-    # Let's patch restart_radio_process for my own will. PLEASE LET THIS SLIDE OUTT!!!!
-    if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "29" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
-    fi
-    if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "29" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[5]}"
-    elif [[ "${BUILD_TARGET_SDK_VERSION}" -ge "30" && "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
-    elif [[ "${BUILD_TARGET_SDK_VERSION}" -ge "32" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[18]}"
-    fi
-    if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "30" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[19]}"
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[22]}"
-    elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "31" ]]; then
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
-    fi
+	if [[ "$BUILD_TARGET_SDK_VERSION" -eq "28" ]]; then
+		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[4]}"
+	fi
+	if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "29" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
+		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
+	fi
+	if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "29" ]]; then
+		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[5]}"
+	elif [[ "${BUILD_TARGET_SDK_VERSION}" -ge "30" && "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
+		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
+	elif [[ "${BUILD_TARGET_SDK_VERSION}" -ge "32" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
+		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[18]}"
+	fi
+	if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "30" ]]; then
+		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[19]}"
+		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[22]}"
+	elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "31" ]]; then
+		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
+	fi
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "30" ]]; then
-    cat ./diff_patches/system/etc/init/freecess.rc > "$HORIZON_SYSTEM_DIR/etc/init/freecess.rc"
+	cat ./diff_patches/system/etc/init/freecess.rc > $HORIZON_SYSTEM_DIR/etc/init/freecess.rc
 fi
 if ask "Do you want to add a stub app for missing activities?"; then
-	mkdir -p $HORIZON_SYSTEM_DIR/app/HorizonStub/
+	mkdir -p "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
 	build_and_sign "./horizon/packages/HorizonStub" "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
 fi
-if boolReturn "$TARGET_INCLUDE_HORIZONUX_ELLEN"; then
-	setprop --system "persist.horizonux.ellen" "available"
-cat >> ../local_build/etc/init.ellen.rc << EOF
-# let's change the system theme to dark if the requirements are ment.
-on property:service.bootanim.exit=1
-	start ellen
-
-# init tweaks start from here.
-on property:sys.boot_completed=1
-	start ellen
-	
-# shell script that does the job and kills itself after it.
-service ellen /system/bin/bashScriptLoader --ellenJoe
-	user root
-	group root
-	oneshot
-
-EOF
+if boolReturn "$BATTLEMAGE_BUILD"; then
+	console_print "Please review the image for the changes..."
+	umount "$HASH_KEY_FOR_SUPER_BLOCK_PATH"
+	rmdir "$HASH_KEY_FOR_SUPER_BLOCK_PATH"
 fi
-if boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX; then
-cat >> ../local_build/etc/init.ellen.rc << EOF
-service brotherboard_touch_fix /system/bin/bashScriptLoader --brotherboard-touch-fix
-        user root
-        group root
-        oneshot
-
-# let's start this daemon on sys.bootanim.progress = 1
-on property:sys.bootanim.progress=1
-        start brotherboard_touch_fix
-# Thanks brotherboard
-EOF
+if [ "${isXmlDecoded}" == "true" ]; then
+	tinkerWithCSCFeaturesFile --encode
 fi
-cp ../local_build/etc/init.ellen.rc $HORIZON_SYSTEM_DIR/etc/init/init.ellen.rc
-console_print "Check the ../local_build/ folder for the items you have built."
-console_print "Please sign the built overlay or application packages manually with your own private keys;"
-console_print "Do not use any public keys provided by any application building software. "
-console_print "script errors are moved to the ../local_build/logs/error_ring.log file, please consider checking it out! "
-if boolReturn "${BATTLEMAGE_BUILD}"; then
-	console_print "Please review the image for the changes, if the changes aren't applied you can always extract and mod them"
-    umount $HASH_KEY_FOR_SUPER_BLOCK_PATH
-    rmdir $HASH_KEY_FOR_SUPER_BLOCK_PATH
-fi
-
-[ "${isXmlDecoded}" == "true" ] && tinkerWithCSCFeaturesFile --encode
-mv $thisConsoleTempLogFile ../local_build/logs/$thisConsoleTempLogFile.log
-
-# fuck this fucking directory before it fucking fucks up the fucking use cases man, fuck this fucking bullshit that i have to fuck with
-# hope this fucking shit ends fucking soon.
-rm -rf $TMPDIR
-
-[ "$(string_format -l $openSeperateConsoleForDebugging)" == "true" ] || { \
-	echo "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - This console will get killed soon, share the logs to the developer's handle if you are concerned about anything!" >> $thisConsoleTempLogFile;
-	kill $pid &>/dev/null;
-}
+rm -rf "$TMPDIR"

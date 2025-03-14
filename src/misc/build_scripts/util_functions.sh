@@ -19,6 +19,19 @@
 
 #!/usr/bin/env bash
 
+function grep_prop() {
+    local variable_name="$1"
+    local prop_file="${2:-$SYSTEM_DIR/build.prop}"
+    if [ -z "$variable_name" ] || [ -z "$prop_file" ]; then
+        return 1
+    fi
+    if [ ! -f "$prop_file" ]; then
+        echo "Error: Property file '$prop_file' not found." >&2
+        return 1
+    fi
+    grep "^${variable_name}=" "$prop_file" | cut -d '=' -f 2- | tr -d '"'
+}
+
 function setprop() {
     local propFile
     local propVariableName="$2"
@@ -40,20 +53,18 @@ function setprop() {
 
 function abort() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
-    echo -e "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1" >> $thisConsoleTempLogFile
-    [ "$(string_format -l $openSeperateConsoleForDebugging)" == "true" ] && echo "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - This console will get killed because this script didn't run properly, share the logs with the developer's handle." >> $thisConsoleTempLogFile
+    echo -e "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1" >> ../local_build/logs/hux_build.log
     sleep 0.5
     if [ "${BATTLEMAGE_BUILD}" == "true" ]; then
         umount $HASH_KEY_FOR_SUPER_BLOCK_PATH &>/dev/null
         rmdir $HASH_KEY_FOR_SUPER_BLOCK_PATH &>/dev/null
     fi
-    kill $pid
     exit 1
 }
 
 function warns() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] / [:\e[0;36mWARN\e[0;37m:] / [:\e[0;32m$2\e[0;37m:] -\e[0;33m $1\e[0;37m"
-    echo -e "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1" >> $thisConsoleTempLogFile
+    echo -e "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1" >> ../local_build/logs/hux_build.log
 }
 
 function console_print() {
@@ -95,31 +106,48 @@ function custom_setup_finished_messsage() {
 }
 
 function build_and_sign() {
-    local app_path="$2"
     local extracted_dir_path="$1"
+    local app_path="$2"
     local apkFileName
+    local signed_apk
+    local apk_file
+    if [ ! -d "$extracted_dir_path" ]; then
+        abort "Invalid Apkfile path: $extracted_dir_path"
+    fi
     if [ -f "$extracted_dir_path/apktool.yml" ]; then 
-        apkFileName=$(grep apkFileName $extracted_dir_path/apktool.yml | cut -c 14-1000)
+        apkFileName=$(grep "apkFileName" "$extracted_dir_path/apktool.yml" | cut -d ':' -f 2 | tr -d ' "')
     else 
-        abort "Invalid Apkfile path.."
+        abort "Invalid apktool.yml file in: $extracted_dir_path"
     fi
-    rm -rf ${extracted_dir_path}/dist/*
-    java -jar ./dependencies/bin/apktool.jar build --api-level "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}" &>/dev/null
+    mkdir -p "$extracted_dir_path/dist/"
+    java -jar ./dependencies/bin/apktool.jar build "$extracted_dir_path" &>/dev/null
+    if [ $? -ne 0 ]; then
+        abort "Apktool build failed for $extracted_dir_path"
+    fi
+    # luna.horizonux.system.settings.nullster-aligned-debugSigned.apk
+    apk_file="$(echo "$extracted_dir_path/dist/*.apk")"
+    if [ -z "$apk_file" ]; then
+        abort "No APK found in $extracted_dir_path/dist/"
+    fi
     if [ -z "$MY_KEYSTORE_PATH" ]; then
-        java -jar ./dependencies/bin/signer.jar --apk ${extracted_dir_path}/dist/*.apk
-            warns "NOTE: you are now using uber test-key and it's not safe to use this on a pubilc build of this rom, please use your own key to sign packages!" "TEST_KEY_WARNS"
+        java -jar ./dependencies/bin/signer.jar --apk "$apk_file"
+        warns "NOTE: You are using Uber test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
     elif [ -f "$MY_KEYSTORE_PATH" ]; then
-        [ "$MY_KEYSTORE_PATH" == "../test-keys/HorizonUX-testkey.jks" ] && warns "NOTE: you are now using HorizonUX test-key and it's not safe to use this on a pubilc build of this rom, please use your own key to sign packages!" "TEST_KEY_WARNS"
-        java -jar ./dependencies/bin/signer.jar -apk ${extracted_dir_path}/dist/*.apk --ks $MY_KEYSTORE_PATH --ksAlias $MY_KEYSTORE_ALIAS --ksPass $MY_KEYSTORE_PASSWORD --ksKeyPass $MY_KEYSTORE_ALIAS_KEY_PASSWORD
+        if [ "$MY_KEYSTORE_PATH" == "../test-keys/HorizonUX-testkey.jks" ]; then
+            warns "NOTE: You are using HorizonUX test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
+        fi
+        java -jar ./dependencies/bin/signer.jar --apk "$apk_file" \
+            --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" \
+            --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD"
     fi
-    mv ${extracted_dir_path}/dist/$(ls | grep aligned-debugSigned.apk | head -n 1) $app_path/
-    rm -rf ${extracted_dir_path}/build ${extracted_dir_path}/dist/
-}
-
-function custom_setup_finished_messsage() {
-    [ -z "${CUSTOM_SETUP_WELCOME_MESSAGE}" ] && CUSTOM_SETUP_WELCOME_MESSAGE="Welcome to HorizonUX"
-    [ "${CUSTOM_SETUP_WELCOME_MESSAGE}" == "xxx" ] && CUSTOM_SETUP_WELCOME_MESSAGE="Welcome to HorizonUX"
-    sed -i 's|<string name="outro_title">.*</string>|<string name="outro_title">&quot;${CUSTOM_SETUP_WELCOME_MESSAGE}&quot;</string>|' ./packages/sec_setup_wizard_horizonux_overlay/res/values/strings.xml
+    rm $apk_file
+    signed_apk="$(echo "$extracted_dir_path/dist/*.apk")"
+    if [ -n "$signed_apk" ]; then
+        mv "$signed_apk" "$app_path/"
+    else
+        abort "No signed APK found in $extracted_dir_path/dist/"
+    fi
+    rm -rf "$extracted_dir_path/build" "$extracted_dir_path/dist/"
 }
 
 function catch_duplicates_in_xml() {
@@ -208,14 +236,26 @@ function tinkerWithCSCFeaturesFile() {
 function change_xml_values() {
     local feature_code="$1"
     local feature_code_value="$2"
-    # Convert feature_code to uppercase
-    feature_code="$(string_format --lower "${feature_code}")"
-    # catch the duplicate values and warn the user lol.
-    if [ "$(catch_duplicates_xml "${feature_code}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}")" -ge "2" ]; then
+    # Convert feature_code to lowercase
+    feature_code="$(echo "${feature_code}" | tr '[:upper:]' '[:lower:]')"
+    # Check for duplicate values
+    local duplicate_count
+    duplicate_count=$(catch_duplicates_xml "${feature_code}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}" 2>/dev/null || echo 0)
+    if [ "$duplicate_count" -gt 0 ]; then
         warns "${feature_code} named feature has duplicate values, please remove them to prevent conflicts."
     fi
-    # Use sed to update the XML value
-    sed -i "s|<${feature_code}>.*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+    # Ensure the XML file exists before modifying
+    if [ ! -f "${TARGET_BUILD_FLOATING_FEATURE_PATH}" ]; then
+        abort "Error: XML file ${TARGET_BUILD_FLOATING_FEATURE_PATH} not found!"
+    fi
+    # Check if the feature exists in the XML file
+    if grep -q "<${feature_code}>" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"; then
+        # Modify existing feature value
+        sed -i "s|<${feature_code}>.*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+    else
+        # Append the feature if it doesn't exist
+        sed -i "/<\/config>/i \    <${feature_code}>${feature_code_value}</${feature_code}>" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+    fi
 }
 
 # these things are intended for those " pro " programmers 
@@ -259,7 +299,7 @@ function ask() {
     local answer
     printf "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m $1\e[0;37m (y/n) : "
     read answer
-    answer="$(string_format -l "${answer}")"
+    answer="$(echo "$answer" | tr '[:upper:]' '[:lower:]')"
     if [[ "${answer}" == "y" || "${answer}" == "yes" ]]; then
         return 0
     fi
@@ -281,8 +321,8 @@ function remove_attributes() {
 			# Check if the line starts a <hal> block
 			if [[ "$line" == *"<hal"* ]]; then
 				# Read the entire <hal> block into a variable
-				block="$line"
-				skip_block=false
+                block="$line"
+                skip_block=false
 
 				# Check subsequent lines for the closing </hal>
 				while IFS= read -r line; do
@@ -477,60 +517,47 @@ function generate_random_hash() {
 # for compatibility vro
 function execute_scripts() {
     local script="$1"
-    $BATTLEMAGE_BUILD && { . $script --battlemage 2>> $thisConsoleTempLogFile; } || { . $script --non-battlemage 2>> $thisConsoleTempLogFile; }
+    $BATTLEMAGE_BUILD && { . $script --battlemage 2>> ../local_build/logs/hux_build.log; } || { . $script --non-battlemage 2>> ../local_build/logs/hux_build.log; }
 }
 
 function absolute_path() {
-    local parsed_argument=$(string_format -l $1 | wc -c)
-    local parsed_argument="$(string_format -l $1 | cut -c 3-$parsed_argument)"
-    if $BATTLEMAGE_BUILD; then
-        if ls $HASH_KEY_FOR_SUPER_BLOCK_PATH/ | grep -q $parsed_argument; then
-            if [ -f "${HASH_KEY_FOR_SUPER_BLOCK_PATH}/$parsed_argument/etc" ]; then
-                echo "${HASH_KEY_FOR_SUPER_BLOCK_PATH}/$parsed_argument"
-            elif [ -f "${HASH_KEY_FOR_SUPER_BLOCK_PATH}/$parsed_argument/$parsed_argument/etc" ]; then
-                echo "${HASH_KEY_FOR_SUPER_BLOCK_PATH}/$parsed_argument/$parsed_argument"
+    local parsed_argument
+    parsed_argument="$(string_format -l "$1")"
+    parsed_argument="${parsed_argument:2}"
+    if [[ "$BATTLEMAGE_BUILD" == "true" ]]; then
+        if [[ -d "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument" ]]; then
+            if [[ -f "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument/etc" ]]; then
+                echo "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument"
+            elif [[ -f "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument/$parsed_argument/etc" ]]; then
+                echo "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument/$parsed_argument"
             fi
         else
-            abort "no way this cant be happening..."
+            abort "No way, this can't be happening..."
         fi
     else
-        case $parsed_argument in
+        case "$parsed_argument" in
             system)
-                if [ -f "${HORIZON_SYSTEM_DIR}/build.prop" ]; then
-                    echo "${HORIZON_SYSTEM_DIR}"
-                elif [ -f "${HORIZON_SYSTEM_DIR}/system/build.prop" ]; then
-                    echo "${HORIZON_SYSTEM_DIR}/system"
-                fi
+                [[ -f "$HORIZON_SYSTEM_DIR/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR" && return
+                [[ -f "$HORIZON_SYSTEM_DIR/system/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR/system" && return
             ;;
             system_ext)
-                # i've chose to find the etc because after android 11 i guess, the build.prop in system_ext was moved to /system_ext/etc/build.prop on newer versions
-                # the etc wont get changed that's why lol.
-                if [ -f "$HORIZON_SYSTEM_DIR/system_ext/etc" ]; then
-                    echo "$HORIZON_SYSTEM_DIR/system_ext"
-                else
-                    echo "$HORIZON_SYSTEM_EXT_DIR"
-                fi
+                [[ -f "$HORIZON_SYSTEM_DIR/system_ext/etc" ]] && echo "$HORIZON_SYSTEM_DIR/system_ext" && return
+                echo "$HORIZON_SYSTEM_EXT_DIR"
             ;;
             vendor)
-                if [ -f "${HORIZON_VENDOR_DIR}/build.prop" ]; then
-                    echo "${HORIZON_VENDOR_DIR}"
-                elif [ -f "${HORIZON_VENDOR_DIR}/vendor/build.prop" ]; then
-                    echo "${HORIZON_VENDOR_DIR}/vendor"
-                fi
+                [[ -f "$HORIZON_VENDOR_DIR/build.prop" ]] && echo "$HORIZON_VENDOR_DIR" && return
+                [[ -f "$HORIZON_VENDOR_DIR/vendor/build.prop" ]] && echo "$HORIZON_VENDOR_DIR/vendor"
             ;;
             product)
-                if [ -f "${HORIZON_PRODUCT_DIR}/build.prop" ]; then
-                    echo "${HORIZON_PRODUCT_DIR}"
-                elif [ -f "${HORIZON_PRODUCT_DIR}/product/build.prop" ]; then
-                    echo "${HORIZON_PRODUCT_DIR}/product"
-                fi
+                [[ -f "$HORIZON_PRODUCT_DIR/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR" && return
+                [[ -f "$HORIZON_PRODUCT_DIR/product/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR/product"
             ;;
             prism)
-                if [ -f "${HORIZON_PRISM_DIR}/build.prop" ]; then
-                    echo "${HORIZON_PRISM_DIR}"
-                elif [ -f "${HORIZON_PRISM_DIR}/prism/build.prop" ]; then
-                    echo "${HORIZON_PRISM_DIR}/prism"
-                fi
+                [[ -f "$HORIZON_PRISM_DIR/build.prop" ]] && echo "$HORIZON_PRISM_DIR" && return
+                [[ -f "$HORIZON_PRISM_DIR/prism/build.prop" ]] && echo "$HORIZON_PRISM_DIR/prism"
+            ;;
+            *)
+                abort "Invalid partition argument: $parsed_argument"
             ;;
         esac
     fi
@@ -632,6 +659,11 @@ function kang_dir() {
     local WhySoSerious=$(string_format --lower "$1")
     if "${BATTLEMAGE_BUILD}"; then
         dir="$katarenai/$1"
+        if [ -f "$dir/etc" ]; then
+            echo "$dir"
+        elif [ -f "$dir/$1/etc" ]; then
+            echo "$dir/$1"
+        fi
     else
         if [ "$WhySoSerious1" == "prism" ]; then
             dir="$HORIZON_PRISM_DIR"
@@ -661,8 +693,6 @@ function check_build_prop() {
     fi
     return 1
 }
-
-function check_partition_in_target() {
 
 function set_partition_flag() {
     local partition="$1"
@@ -799,10 +829,7 @@ function fetch_file_arch() {
 function verify() {
     local file="$1"
     local fileHash="$2"
-    if [ -f "$file" ]; then
-        [ "$(sha512sum $file | awk '{print $1}')" = "$fileHash" ] && return 0
-    fi
-    return 1
+    return $([ "$(sha512sum $file | awk '{print $1}')" = "$fileHash" ])
 }
 
 # stupid FUCKING function that i have to FUCKING make it to FUCKING fix my FUCKING code.
@@ -813,29 +840,4 @@ function boolReturn() {
         return 0
     fi
     return 1
-}
-
-function build_program() {
-    local file="$1"
-    local header="-I$2"
-    local special_argument="$3"
-    local compiler
-    local parsedFileExtension="${file##*.}"
-
-    # fuckluna.c
-    [ "$parsedFileExtension" == "c" ] && compiler=gcc
-    [ "$parsedFileExtension" == "cpp" ] && compiler=g++
-    [ -z "$header" ] && header=""
-    [ -z "$compiler" ] && abort "Unknown file, change the format specifier if it's a c or a c++ program."
-
-    # build bs starts from here.
-    if string_format "$special_argument" | grep -q isLibrary=false; then
-        $compiler $header $file &>compiler_build.log
-    elif string_format "$special_argument" | grep -q isLibrary=true; then
-        $compiler $header $file -shared &>compiler_build.log
-    fi
-
-    # error checks.
-    [ "$?" -ge "1" ] && abort "can't build the program, check the compiler_build.log for details"
-    echo " - The given program compiled without any sensitive errors, consider checking the compiler_build.log file"
 }
