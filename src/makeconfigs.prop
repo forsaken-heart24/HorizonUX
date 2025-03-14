@@ -46,6 +46,9 @@ SYSTEM_EXT_DIR=
 VENDOR_DIR=
 PRODUCT_DIR=
 
+# floating features exact dir, to be set by the builder
+TARGET_BUILD_FLOATING_FEATURE_PATH=
+
 # Horizon codename and etc..
 CODENAME="Birds"
 CODENAME_VERSION_REFERENCE_ID=0.0

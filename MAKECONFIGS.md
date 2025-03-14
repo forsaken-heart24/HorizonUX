@@ -8,6 +8,7 @@
 **SYSTEM_EXT_DIR**: Put your extracted system_ext folder path there.
 **VENDOR_DIR**: Put your extracted vendor folder path there.
 **PRODUCT_DIR**: Put your extracted product folder path there.
+**TARGET_BUILD_FLOATING_FEATURE_PATH**: Floating features exact dir.
 
 ## Device Name & Setup
 - **TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES**: Enables custom welcome message during setup.

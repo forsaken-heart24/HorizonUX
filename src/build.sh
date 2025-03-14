@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# mako mako mako mako Those who know💀
+# mako mako mako mako those who know💀
 for i in system/product/priv-app system/product/etc system/product/overlay \
          system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
          system/etc/init/; do
@@ -34,6 +34,14 @@ for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika
         . "$i"
     fi
 done
+
+# Set build username
+BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut -c 2-200)"
+thisConsoleTempLogFile="../local_build/logs/hux_build.log"
+
+# Remove old log files
+rm -rf ../local_build/logs/*
+TMPDIR=$(mktemp -d 2>/dev/null || echo "../local_build/tmp/hux")
 
 # Cache partitions
 if [ "$BATTLEMAGE_BUILD" != "true" ]; then
@@ -63,14 +71,6 @@ else
     HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")
     HORIZON_VENDOR_DIR=$(kang_dir "vendor")
 fi
-
-# Set build username
-BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut -c 2-200)"
-thisConsoleTempLogFile="../local_build/logs/hux_build.log"
-
-# Remove old log files
-rm -rf ../local_build/logs/*
-TMPDIR=$(mktemp -d 2>/dev/null || echo "../local_build/tmp/hux")
 
 # Ask user to mount super image
 console_print "Do you want to mount super image and proceed?"
@@ -126,12 +126,9 @@ if [ "$testEnv" != "true" ]; then
 fi
 
 # Locate feature files
-for i in "$HORIZON_SYSTEM_DIR/etc/floating_feature.xml" "$HORIZON_VENDOR_DIR/etc/floating_feature.xml"; do
-    if [ -f "$i" ]; then
-        TARGET_BUILD_FLOATING_FEATURE_PATH="$i"
-        break
-    fi
-done
+if [ -f "${TARGET_BUILD_FLOATING_FEATURE_PATH}" ]; then
+    abort "Floating features File is not found, please change the \"TARGET_BUILD_FLOATING_FEATURE_PATH\" (in makeconfigs.prop) according to the one in your vendor or system image"
+fi
 
 TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
 if [ ! -f "$TARGET_BUILD_CSC_FEATURE_PATH" ]; then
