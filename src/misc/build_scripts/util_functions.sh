@@ -74,28 +74,32 @@ function console_print() {
 function default_language_configuration() {
     local language="$1"
     local country="$2"
-    [ -z $language ] && language=en
-    [ -z $country ] && country=US
-    
+    [ -z "$language" ] && language="en"
+    [ -z "$country" ] && country="US"
+
     # change the strings cases to prevent issues on the system.
-    language=$(string_format -l $language)
-    country=$(string_format -u $country)
-    
+    language=$(echo "$language" | tr '[:upper:]' '[:lower:]')
+    country=$(echo "$country" | tr '[:lower:]' '[:upper:]')
+
     # capture and abort the op if the length is invalid.
-    if [ "$(echo ${country} | wc -c)" -ge "4" ]; then
-        abort "invalid country string length."
-    elif [ "$(echo ${language} | wc -c)" -ge "4" ]; then
-        abort "invalid language string length."
+    if [ "${#country}" -ge 4 ]; then
+        abort "Invalid country string length."
+    elif [ "${#language}" -ge 4 ]; then
+        abort "Invalid language string length."
     fi
-    
+
     # thing that actually switches the default lang.
-    if [ -f "$(absolute_path --product)/omc/${PRODUCT_CSC_NAME}/conf/consumer.xml" ]; then
-        sed 's|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g' $(absolute_path --product)/omc/${PRODUCT_CSC_NAME}/conf/consumer.xml
-        sed 's|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g' $(absolute_path --product)/omc/${PRODUCT_CSC_NAME}/conf/consumer.xml
-    else 
-        local tmp_dir="$(echo "$(absolute_path --product)/omc/*/conf/consumer.xml")"
-        sed 's|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g' $tmp_dir
-        sed 's|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g' $tmp_dir
+    if [ -f "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml" ]; then
+        sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" \
+            "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml"
+        sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" \
+            "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml"
+    else
+        for file in "$HORIZON_PRODUCT_DIR/omc/"*/conf/customer.xml; do
+            [ -f "$file" ] || continue
+            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$file"
+            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$file"
+        done
     fi
 }
 
@@ -223,13 +227,26 @@ function add_csc_xml_values() {
 }
 
 function tinkerWithCSCFeaturesFile() {
-    if [ "$(string_format -l "$1")" == "--decode" ]; then
-        java -jar ../dependencies/bin/omc-decoder.jar -i ${TARGET_BUILD_CSC_FEATURE_PATH} -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
+    if [ "$(echo "$1" | tr '[:upper:]' '[:lower:]')" == "--decode" ]; then
+        if [ ! -f "${TARGET_BUILD_CSC_FEATURE_PATH}" ]; then
+            abort "CSC feature file not found!"
+            return 1
+        fi
+        java -jar ../dependencies/bin/omc-decoder.jar -i "${TARGET_BUILD_CSC_FEATURE_PATH}" -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
         TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
         rm -rf "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
-        isXmlDecoded=true
-    elif [ "$(string_format -l "$1")" == "--encode" ]; then
-        java -jar ../dependencies/bin/omc-decoder.jar -e -i $TARGET_BUILD_CSC_FEATURE_PATH -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+        export isXmlDecoded=true
+    elif [ "$(echo "$1" | tr '[:upper:]' '[:lower:]')" == "--encode" ]; then
+        if [ "${isXmlDecoded}" == "true" ]; then
+            if [ ! -f "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml" ]; then
+                abort "Decoded CSC feature file not found!"
+                return 1
+            fi
+            java -jar ../dependencies/bin/omc-decoder.jar -e -i "${TARGET_BUILD_CSC_FEATURE_PATH}" -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+        fi
+    else
+        abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode"
+        return 1
     fi
 }
 
@@ -254,7 +271,7 @@ function change_xml_values() {
         sed -i "s|<${feature_code}>.*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
     else
         # Append the feature if it doesn't exist
-        sed -i "/<\/config>/i \    <${feature_code}>${feature_code_value}</${feature_code}>" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+        sed -i "/<\/config>/i \ \ \ \ <${feature_code}>${feature_code_value}</${feature_code}>" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
     fi
 }
 
@@ -585,19 +602,27 @@ function fetch_rom_arch() {
     fi
 }
 
+function debugPrint() {
+    [ ! -z "${DEBUG_SCRIPT}" ] && console_print "$@"
+}
+
 function apply_diff_patches() {
     local DiffPatchFile="$1"
     local TheFileToPatch="$2"
-    if [ "$#" == "0" ] || [ "$#" -lt "2" ] || [ "$#" -ge "3" ]; then
-        abort "Usage: <diff .patch file> <the file to patch>"
+    if [ "$#" -ne 2 ]; then
+        abort "Error: Missing arguments. Usage: apply_diff_patches <patch file> <target file>"
     fi
-    if [ ! -f "${DiffPatchFile}" ]; then
-        abort "please provide a valid path or file."
-    elif [ ! -f "${TheFileToPatch}" ]; then
-        abort "please provide a valid path or file."
+    if [ ! -f "$DiffPatchFile" ]; then
+        debugPrint "Patch file '$DiffPatchFile' not found."
+        abort "Error: Patch file '${DiffPatchFile}' not found."
     fi
-    if ! patch ${TheFileToPatch} < ${DiffPatchFile} &>/dev/null; then
-        warns "Couldn't patch the requested file, please try again" "DIFF_PATCHER"
+    if [ ! -f "$TheFileToPatch" ]; then
+        debugPrint "Target file '$TheFileToPatch' not found."
+        abort "Error: Target file '${TheFileToPatch}' not found."
+    fi
+    if ! patch "$TheFileToPatch" < "$DiffPatchFile" 2>&1 | tee /tmp/patch_error.log; then
+        debugPrint "Patch failed: ${DiffPatchFile} → ${TheFileToPatch}"
+        warns "Patch failed! Check /tmp/patch_error.log for details." "DIFF_PATCHER"
     fi
 }
 

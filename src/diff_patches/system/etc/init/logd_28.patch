@@ -1,12 +1,20 @@
---- logd_28.rc	2025-03-09 20:37:27.998527800 +0530
-+++ logd_28_edited.rc	2025-03-09 20:38:28.925071000 +0530
-@@ -28,3 +28,8 @@
+--- logd_28.rc	2025-03-15 14:26:02.751068700 +0000
++++ logd_28_edited.rc	2025-03-15 14:27:05.423527200 +0000
+@@ -1,6 +1,6 @@
++# horizon changes:
+ on early-boot
+-    # Debugging for SystemAnalysis
+-    setprop debug.enable true
++    setprop debug.enable false
+ 
+ service logd /system/bin/logd
+     socket logd stream 0666 logd logd
+@@ -28,3 +28,7 @@
  # Debugging for SystemAnalysis
  on property:ro.boot.debug_level=0x4f4c && property:ro.product_ship=true
      setprop debug.enable false
 +
++# horizon changes:
 +on property:sys.boot_completed=1
-+    setprop debug.enable false
 +    stop logd
-+    stop logd-reinit
 \ No newline at end of file

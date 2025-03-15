@@ -1,5 +1,5 @@
---- vold_30.rc	2025-01-21 05:51:56.150807300 -0800
-+++ vold_30_edited.rc	2025-01-21 05:52:13.046322400 -0800
+--- vold_30.rc	2025-03-15 14:24:31.254848600 +0000
++++ vold_30_edited.rc	2025-03-15 14:24:54.452294800 +0000
 @@ -3,8 +3,6 @@
          --fsck_context=u:r:fsck:s0 --fsck_untrusted_context=u:r:fsck_untrusted:s0
      class core

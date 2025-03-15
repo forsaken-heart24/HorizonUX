@@ -1,25 +1,12 @@
---- atrace.rc	2025-01-19 06:16:06.827821000 -0800
-+++ atrace_edited.rc	2025-01-19 06:17:38.382940900 -0800
-@@ -7,7 +7,7 @@
-     chmod 0222 /sys/kernel/tracing/trace_marker
- 
- # Scheduler tracepoints require schedstats=enable
--    write /proc/sys/kernel/sched_schedstats 0
-+    write /proc/sys/kernel/sched_schedstats 1
- 
- # Grant unix world read/write permissions to kernel tracepoints.
- # Access control to these files is now entirely in selinux policy.
-@@ -339,9 +339,10 @@
+--- atrace_31.rc	2025-03-15 13:51:21.380241100 +0000
++++ atrace_31_edited.rc	2025-03-15 13:52:19.036623400 +0000
+@@ -339,7 +339,8 @@
      chmod 0666 /sys/kernel/tracing/instances/mm_events/per_cpu/cpu15/trace
  
  on property:persist.debug.atrace.boottrace=1
 -    start boottrace
-+    # sepolicy bs? idgaf!
 +    setprop persist.debug.atrace.boottrace 0
++    stop boottrace
  
  # Run atrace with the categories written in a file
  service boottrace /system/bin/atrace --async_start -f /data/misc/boottrace/categories
-     disabled
--    oneshot
-+    oneshot
-\ No newline at end of file

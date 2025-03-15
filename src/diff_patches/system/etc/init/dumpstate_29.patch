@@ -1,6 +1,6 @@
---- dumpstate_29.rc	2025-03-09 20:33:54.434086000 +0530
-+++ dumpstate_29_edited.rc	2025-03-09 20:35:08.444718200 +0530
-@@ -59,4 +59,12 @@
+--- dumpstate_29.rc	2025-03-15 14:09:36.120964700 +0000
++++ dumpstate_29_edited.rc	2025-03-15 14:09:58.731046000 +0000
+@@ -59,4 +59,13 @@
      class main
      socket dumpstate stream 0660 shell log
      disabled
@@ -8,11 +8,12 @@
 \ No newline at end of file
 +    oneshot
 +
++# horizon changes:
 +on property:sys.boot_completed=1
 +    stop dumpstate
-+    stop dumpstatef
 +    stop dumpstatez
-+    stop compact_dump
 +    stop bugreport
 +    stop bugreportd
++    stop compact_dump
++    stop dumpstatef
 \ No newline at end of file

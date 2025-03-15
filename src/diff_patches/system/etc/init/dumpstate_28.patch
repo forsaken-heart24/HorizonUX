@@ -1,12 +1,13 @@
---- dumpstate.rc	2025-03-09 20:27:09.029613500 +0530
-+++ dumpstate_28.rc	2025-03-09 20:28:30.591647700 +0530
-@@ -49,3 +49,8 @@
+--- dumpstate_28.p	2025-03-15 14:04:23.719222100 +0000
++++ dumpstate_28_edited.rc	2025-03-15 14:05:49.803929300 +0000
+@@ -49,3 +49,10 @@
      class main
      disabled
      oneshot
 +
++# horizon changes:
 +on property:sys.boot_completed=1
++    stop compact_dump
 +    stop dumpstate
 +    stop dumpstatez
 +    stop bugreport
-\ No newline at end of file

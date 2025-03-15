@@ -1,0 +1,19 @@
+--- freecess.rc	2025-03-15 14:16:54.268996600 +0000
++++ freecess_edited.rc	2025-03-15 14:18:27.986265600 +0000
+@@ -1,3 +1,4 @@
++# horizon changes:
+ service freecessmonitor /system/bin/freecessmonitor
+     class main
+     user system
+@@ -5,7 +6,10 @@
+     disabled
+ 
+ on property:sys.config.freecess_monitor=true
+-    start freecessmonitor
++    setprop sys.config.freecess_monitor false
+ 
+ on property:sys.config.freecess_monitor=false
+     stop freecessmonitor
++
++on property:sys.boot_completed=1
++    stop freecessmonitor

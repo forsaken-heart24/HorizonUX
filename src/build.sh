@@ -92,7 +92,7 @@ fi
 if command -v mktemp >/dev/null; then
     TMPFILE=$(mktemp)
 else
-    TMPFILE="../local_build/logs/bomboclattt"
+    TMPFILE="../local_build/logs/hux_build.log"
 fi
 
 # Locate build.prop files
@@ -126,7 +126,7 @@ if [ "$testEnv" != "true" ]; then
 fi
 
 # Locate feature files
-if [ -f "${TARGET_BUILD_FLOATING_FEATURE_PATH}" ]; then
+if [ ! -f "${TARGET_BUILD_FLOATING_FEATURE_PATH}" ]; then
     abort "Floating features File is not found, please change the \"TARGET_BUILD_FLOATING_FEATURE_PATH\" (in makeconfigs.prop) according to the one in your vendor or system image"
 fi
 
@@ -134,10 +134,15 @@ TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf
 if [ ! -f "$TARGET_BUILD_CSC_FEATURE_PATH" ]; then
     abort "Product CSC File is not found, please change the \"PRODUCT_CSC_NAME\" (in makeconfigs.prop) according to the one in your product image"
 else
-    if file "$TARGET_BUILD_CSC_FEATURE_PATH" | grep -q "cscfeature.xml: data"; then
+    if file "$TARGET_BUILD_CSC_FEATURE_PATH" | grep -q "data"; then
         tinkerWithCSCFeaturesFile --decode
     fi
 fi
+
+# fix: "grep: /build.prop: No such file or directory" moved to build.sh to fix that error.
+BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
+BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
+BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 
 # ok, fbans dropped!
 echo -e "\033[0;31m########################################################################"
@@ -290,9 +295,9 @@ if boolReturn $TARGET_FLOATING_FEATURE_DISABLE_BLUR_EFFECTS; then
         change_xml_values "$blur_effects" "FALSE"
     done
 else
-	if [ "$BUILD_TARGET_SDK_VERSION" -ge "32" ]; then
+	if [ "$BUILD_TARGET_SDK_VERSION" == "32|33|34|35" ]; then
 		warns "Actual blur from flagship device is not available for now, so stay tuned!" "CRYABOUTTHISPLEASE"
-	elif [ "$BUILD_TARGET_SDK_VERSION" -ge "28" ]; then
+	elif [ "$BUILD_TARGET_SDK_VERSION" == "28|28|30|31|32|33|34|35" ]; then
 		console_print "Enabling blur effects..."
 		for blur_effects in SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_PARTIAL_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_CAPTURED_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG; do
 			change_xml_values "$blur_effects" "TRUE"
@@ -565,7 +570,7 @@ if boolReturn "$BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD"; then
 	add_csc_xml_values "CscFeature_SetupWizard_DisablePrivacyPolicyAgreement" "TRUE"
 fi
 
-if [ "${BUILD_TARGET_SDK_VERSION}" -ge "34" ] && boolReturn "$BRINGUP_CN_SMARTMANAGER_DEVICE"; then
+if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMARTMANAGER_DEVICE"; then
 	console_print "Replacing stock smartmanager and device care with the chinese version..."
 	# mkdir at the temp dir
 	mkdir -p ../local_build/etc/permissions/ ../local_build/etc/app/SmartManager_v6_DeviceSecurity \
@@ -658,7 +663,9 @@ cp -af ./misc/etc/ringtones_and_etc/media/audio/* "$HORIZON_SYSTEM_DIR/media/aud
 cat ./horizon/rom_tweaker_script/init.ellen.rc > ../local_build/etc/init.ellen.rc
 cp -af ./horizon/rom_tweaker_script/ellenJoe.sh "$HORIZON_SYSTEM_DIR/bin/"
 change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE"
-boolReturn "$TARGET_INCLUDE_CUSTOM_BRAND_NAME" && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}"
+if boolReturn "$TARGET_INCLUDE_CUSTOM_BRAND_NAME"; then
+	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}"
+fi
 existance "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" && touch "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so"
 for i in "logcat.live disable" "sys.dropdump.on Off" "profiler.force_disable_err_rpt 1" "profiler.force_disable_ulog 1" \
 		 "sys.lpdumpd 0" "persist.device_config.global_settings.sys_traced 0" "persist.traced.enable 0" "persist.sys.lmk.reportkills false" \
@@ -672,29 +679,33 @@ if existance "./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARG
 	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsung.qmg "$HORIZON_SYSTEM_DIR/media/"
 	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/shutdown.qmg "$HORIZON_SYSTEM_DIR/media/"
 fi
-if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-	if [[ "$BUILD_TARGET_SDK_VERSION" -eq "28" ]]; then
-		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[4]}"
-	fi
-	if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "29" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
-	fi
-	if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "29" ]]; then
-		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[5]}"
-	elif [[ "${BUILD_TARGET_SDK_VERSION}" -ge "30" && "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
-		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
-	elif [[ "${BUILD_TARGET_SDK_VERSION}" -ge "32" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[18]}"
-	fi
-	if [[ "${BUILD_TARGET_SDK_VERSION}" -eq "30" ]]; then
-		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[19]}"
-		apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[22]}"
-	elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq "31" ]]; then
-		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
-	fi
-fi
+case "${BUILD_TARGET_SDK_VERSION}" in
+    28)
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[4]}"
+    ;;
+    29)
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[5]}"
+        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[14]}"
+    ;;
+    30)
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
+        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[20]}"
+        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[22]}"
+        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[15]}"
+    ;;
+    31)
+        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
+        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
+    ;;
+esac
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "30" ]]; then
-	cat ./diff_patches/system/etc/init/freecess.rc > $HORIZON_SYSTEM_DIR/etc/init/freecess.rc
+    apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/freecess.rc" "${DIFF_UNIFIED_PATCHES[22]}"
+fi
+if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
+    apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[21]}"
+fi
+if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "29" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
+    apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
 fi
 if ask "Do you want to add a stub app for missing activities?"; then
 	mkdir -p "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
@@ -705,7 +716,5 @@ if boolReturn "$BATTLEMAGE_BUILD"; then
 	umount "$HASH_KEY_FOR_SUPER_BLOCK_PATH"
 	rmdir "$HASH_KEY_FOR_SUPER_BLOCK_PATH"
 fi
-if [ "${isXmlDecoded}" == "true" ]; then
-	tinkerWithCSCFeaturesFile --encode
-fi
+tinkerWithCSCFeaturesFile --encode
 rm -rf "$TMPDIR"

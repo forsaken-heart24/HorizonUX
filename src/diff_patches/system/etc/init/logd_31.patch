@@ -1,9 +1,12 @@
---- logd_31.rc	2025-03-09 20:43:45.445015600 +0530
-+++ logd_31_edited.rc	2025-03-09 20:44:14.764266100 +0530
-@@ -33,3 +33,5 @@
+--- logd_31.rc	2025-03-15 14:31:32.298997300 +0000
++++ logd_31_edited.rc	2025-03-15 14:32:06.191563200 +0000
+@@ -31,5 +31,8 @@
+     chown logd logd /dev/event-log-tags
+     chmod 0644 /dev/event-log-tags
  
++# horizon changes:
  on property:sys.boot_completed=1
      start logd-auditctl
-+    stop ewlogd
 +    stop logd
++    stop ewlogd
 \ No newline at end of file

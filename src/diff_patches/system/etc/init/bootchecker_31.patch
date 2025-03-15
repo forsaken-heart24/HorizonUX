@@ -1,5 +1,5 @@
---- bootchecker.rc	2025-01-19 06:21:19.871364800 -0800
-+++ bootchecker_edited.rc	2025-01-19 06:21:47.581816600 -0800
+--- bootchecker_31.rc	2025-03-15 13:59:00.564849000 +0000
++++ bootchecker_31_edited.rc	2025-03-15 13:59:16.522500100 +0000
 @@ -1,13 +1,4 @@
  # bootchecker rc file, 
 -on early-init
@@ -14,10 +14,3 @@
  service bootchecker /system/bin/bootchecker
      class late_start
      user system
-@@ -26,4 +17,4 @@
-     oneshot
- 
- on property:dev.bootcomplete=1
--    start bootchecker-bootc
-+    start bootchecker-bootc
-\ No newline at end of file

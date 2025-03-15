@@ -1,5 +1,5 @@
---- uncrypt.rc	2025-01-14 04:35:06.032374900 -0800
-+++ uncrypt_edited.rc	2025-01-14 04:35:58.143929900 -0800
+--- uncrypt_30.rc	2025-03-15 14:22:50.033137400 +0000
++++ uncrypt_30_edited.rc	2025-03-15 14:23:20.075190600 +0000
 @@ -1,6 +1,4 @@
  on post-fs-data
 -    # SAMSUNG
@@ -7,16 +7,14 @@
      mkdir /data/fota 0770 system system
      mkdir /cache/fota 0770 system system
      chmod 0660 /cache/recovery/command
-@@ -27,10 +25,4 @@
-     class main
+@@ -28,9 +26,3 @@
      socket uncrypt stream 600 system system
      disabled
--    oneshot
+     oneshot
 -
 -service flash_recovery_sec /system/bin/install-recovery.sh
 -    class main
 -    user root
 -    group root system cache
 -    oneshot
-+    oneshot
 \ No newline at end of file

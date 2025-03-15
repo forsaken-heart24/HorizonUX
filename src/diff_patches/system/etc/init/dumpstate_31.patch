@@ -1,42 +1,14 @@
---- dumpstate.rc	2025-01-19 06:23:45.603729600 -0800
-+++ dumpstate_edited.rc	2025-01-19 06:39:33.773874100 -0800
-@@ -4,18 +4,6 @@
-     setprop init.svc.bugreportd stopped
-     setprop init.svc.bugreportm stopped
- 
--on property:init.svc.dumpstate=running
--    setprop dumpstate.is_running 1
--on property:init.svc.dumpstatez=running
--    setprop dumpstate.is_running 1
--on property:init.svc.bugreportd=running
--    setprop dumpstate.is_running 1
--on property:init.svc.bugreportm=running
--    setprop dumpstate.is_running 1
--on property:init.svc.dumpstate=stopped && property:init.svc.dumpstatez=stopped \
--    && property:init.svc.bugreportd=stopped && property:init.svc.bugreportm=stopped
--    setprop dumpstate.is_running 0
--
- # Blinking led if dumpstate is running in HC model
- on property:ro.build.product=gshhwifi && property:init.svc.bugreportm=running \
-     && property:ro.boot.debug_level=0x494d # mid
-@@ -56,3 +44,19 @@
+--- dumpstate_31.rc	2025-03-15 14:14:47.822734600 +0000
++++ dumpstate_31_edited.rc	2025-03-15 14:15:31.696950700 +0000
+@@ -56,3 +56,10 @@
      class main
      disabled
      oneshot
 +
-+############### HorizonUX
-+# prevents dumpstate / log shits from starting, bugreports can't be taken cuz these are dead at that moment.
-+on property:init.svc.dumpstate=running
-+    setprop dumpstate.is_running 0
-+    setprop init.svc.dumpstate stopped
-+on property:init.svc.dumpstatez=running
-+    setprop dumpstate.is_running 0
-+    setprop init.svc.dumpstatez stopped
-+on property:init.svc.bugreportd=running
-+    setprop dumpstate.is_running 0
-+    setprop init.svc.bugreportd stopped
-+on property:init.svc.bugreportm=running
-+    setprop dumpstate.is_running 0
-+    setprop init.svc.bugreportm stopped
-+############### HorizonUX
++# horizon changes:
++on property:sys.boot_completed=1
++    stop dumpstate
++    stop dumpstatez
++    stop bugreportd
++    stop bugreportm
 \ No newline at end of file

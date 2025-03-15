@@ -1,11 +1,14 @@
---- logd_30.rc	2025-03-09 20:41:40.669165600 +0530
-+++ logd_30_edited.rc	2025-03-09 20:42:13.529651900 +0530
-@@ -33,6 +33,8 @@
+--- logd_30.rc	2025-03-15 14:30:16.551808600 +0000
++++ logd_30_edited.rc	2025-03-15 14:30:57.962763000 +0000
+@@ -31,8 +31,11 @@
+     chown logd logd /dev/event-log-tags
+     chmod 0644 /dev/event-log-tags
  
++# horizon changes:
  on property:sys.boot_completed=1
      start logd-auditctl
-+    stop ewlogd
 +    stop logd
++    stop ewlogd
  
  on init
      start ewlogd
