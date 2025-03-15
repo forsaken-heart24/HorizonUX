@@ -2,29 +2,27 @@
 <PreferenceScreen android:title="Horizon Artillery"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res/com.android.settings">
-
     <PreferenceCategory android:title="QS Settings Configurations">
         <SamsungSwitchPreference
             android:title="QS Panel Blur"
             android:key="no_blur_hide"
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:summaryOn="Psst, it's enabled."
             android:summaryOff="it's disabled."
             killApp="com.android.systemui" />
         <SamsungSwitchPreference
             android:title="Switch QS Background"
             android:key="no_scrim_hide"
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:summaryOn="Blurry QS"
             android:summaryOff="Mid Transparent"
             killApp="com.android.systemui" />
     </PreferenceCategory>
-
     <PreferenceCategory android:title="Miscellaneous">
         <SamsungSwitchPreference
             android:title="Switch to LTE or 4G Status Bar Icon"
             android:key="wr_use_lte"
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:summaryOn="You're currently using LTE icon"
             android:summaryOff="You're currently using 4G icon"
             killApp="com.android.systemui" />
@@ -49,7 +47,6 @@
                 android:targetClass="horizonux.screen.resolution.MainActivity" />
         </Preference>
     </PreferenceCategory>
-
     <PreferenceCategory android:title="Experimental Features">
         <SamsungSwitchPreference
             android:title="Enable Touch ID Unlock After Reboot (Has a Huge Security Risk)"
@@ -73,11 +70,6 @@
             android:key="running_apps"
             android:summary="View and control currently running background services"
             android:fragment="com.android.settings.applications.RunningServices" />
-        <SecPreference
-            android:title="Lock GPU Frequency to Max"
-            android:key="disablefoggotmomentslmao"
-            android:summary="Prevent GPU from dropping frequency levels"
-            android:fragment="horizon.helper_module.birds.horizon.helper_module.birds.DisableGPUFrequencySwitchingActivity" />
         <Preference
             android:title="Amoled Screen Hidden Settings"
             android:key="amoled_things"
@@ -87,5 +79,4 @@
                 android:targetClass="com.samsung.android.app.aodservice.com.samsung.android.app.clockpack.settings.TestModeSetting" />
         </Preference>
     </PreferenceCategory>
-
 </PreferenceScreen>

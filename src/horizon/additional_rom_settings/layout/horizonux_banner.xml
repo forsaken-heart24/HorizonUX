@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="https://schemas.android.com/apk/res/android" android:gravity="0x11" android:layout_width="-1" android:layout_height="-2">
-	<ImageView android:layout_width="-1" android:layout_height="-2" android:src="@drawable/horizonux_sec_markinim" />
+	<ImageView android:layout_width="-1" android:layout_height="-2" android:src="@drawable/horizonux_paimon" />
 </LinearLayout>	
