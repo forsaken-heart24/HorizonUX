@@ -29,7 +29,7 @@ function grep_prop() {
         echo "Error: Property file '$prop_file' not found." >&2
         return 1
     fi
-    grep "^${variable_name}=" "$prop_file" | cut -d '=' -f 2- | tr -d '"'
+    grep "^${variable_name}=" "$prop_file" | cut -d '=' -f 2- | tr -d '"' 2>$thisConsoleTempLogFile
 }
 
 function setprop() {
@@ -53,7 +53,7 @@ function setprop() {
 
 function abort() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
-    echo -e "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1" >> ../local_build/logs/hux_build.log
+    debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
     sleep 0.5
     if [ "${BATTLEMAGE_BUILD}" == "true" ]; then
         umount $HASH_KEY_FOR_SUPER_BLOCK_PATH &>/dev/null
@@ -64,7 +64,7 @@ function abort() {
 
 function warns() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] / [:\e[0;36mWARN\e[0;37m:] / [:\e[0;32m$2\e[0;37m:] -\e[0;33m $1\e[0;37m"
-    echo -e "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1" >> ../local_build/logs/hux_build.log
+    debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1"
 }
 
 function console_print() {
@@ -91,14 +91,14 @@ function default_language_configuration() {
     # thing that actually switches the default lang.
     if [ -f "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml" ]; then
         sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" \
-            "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml"
+            "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml" 2>$thisConsoleTempLogFile
         sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" \
-            "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml"
+            "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml" 2>$thisConsoleTempLogFile
     else
         for file in "$HORIZON_PRODUCT_DIR/omc/"*/conf/customer.xml; do
             [ -f "$file" ] || continue
-            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$file"
-            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$file"
+            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$file" 2>$thisConsoleTempLogFile
+            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$file" 2>$thisConsoleTempLogFile
         done
     fi
 }
@@ -188,7 +188,6 @@ function add_float_xml_values() {
     local feature_code_value="$2"
     # Convert feature_code to uppercase
     feature_code="$(string_format -u "${feature_code}")"
-    
     # check if we have duplicates or not, uf we have anything extra, call the catch_duplicates_in_xml to do the job lol.
     if [ "$(catch_duplicates_in_xml "${feature_code}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}")" == "0" ]; then
         # Create a temporary file to hold the modified content
@@ -260,6 +259,7 @@ function tinkerWithCSCFeaturesFile() {
         abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode"
         return 1
     fi
+    return 0
 }
 
 function change_xml_values() {
@@ -303,6 +303,7 @@ function int() {
     local variable_name="$1"
     local value="$2"
     # those shits are not working...
+    debugPrint "Requested to set ${variable_name} variable to with this value: ${value}"
     eval "$variable_name=$value"
 }
 
@@ -310,6 +311,7 @@ function bool() {
     local variable_name="$1"
     local value="$(string_format -l $2)"
     # Check if the value is either "true" or "false"
+    debugPrint "Requested to set ${variable_name} variable to with this value: ${value}"
     if [ "$value" == "true" || "$value" == "false" || "$value" == "1" || "$value" == "0" ]; then
         eval "$variable_name=$value"
     else
@@ -321,7 +323,7 @@ function bool() {
 # deprecated cuz useless.
 function warns_api_limitations() {
     local adrod_version=$1
-    warns "this feature is found on android $adrod_version, report if it doesn't work. thanks!" "TARGET_OUT_OF_BOUNDS"; 
+    warns "This feature is found on android $adrod_version, report if it doesn't work. thanks!" "TARGET_OUT_OF_BOUNDS"; 
 }
 
 function omc() {
@@ -341,9 +343,7 @@ function ask() {
     printf "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m $1\e[0;37m (y/n) : "
     read answer
     answer="$(echo "$answer" | tr '[:upper:]' '[:lower:]')"
-    if [[ "${answer}" == "y" || "${answer}" == "yes" ]]; then
-        return 0
-    fi
+    [[ "${answer}" == "y" || "${answer}" == "yes" ]] && return 0
     return 1
 }
 
@@ -351,6 +351,9 @@ function remove_attributes() {
 	local INPUT_FILE="$1"
 	local OUTPUT_FILE="$2"
 	local NAME_TO_SKIP="$3"
+
+    # log this:
+    debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Output File: ${OUTPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
 
 	# Start writing the new XML file
 	{
@@ -391,7 +394,8 @@ function remove_attributes() {
 	} > "$OUTPUT_FILE"
 
 	# Feedback
-	console_print "Rewritten XML saved to $OUTPUT_FILE, skipping <hal> with name='$NAME_TO_SKIP'."
+	console_print "Rewritten XML saved to $OUTPUT_FILE, skipping <hal> with name=$NAME_TO_SKIP."
+    debugPrint "remove_attributes(): Rewritten XML saved to $OUTPUT_FILE, skipping <hal> with name=$NAME_TO_SKIP."
 }
 
 function nuke_stuffs() {
@@ -552,6 +556,7 @@ function generate_random_hash() {
         warns "Don't you want me like i want you baby?" "arguments"
         abort "Not enough arguments..."
     fi
+    debugPrint "generate_random_hash(): Requested random seed: ${how_much}"
     timeout 0.1 cat /dev/urandom | xxd -p | head -n 1 | cut -c 1-${how_much}
 }
 
@@ -627,7 +632,11 @@ function fetch_rom_arch() {
 }
 
 function debugPrint() {
-    [ ! -z "${DEBUG_SCRIPT}" ] && console_print "$@"
+    if [ ! -z "${DEBUG_SCRIPT}" ]; then
+        console_print "$@"
+    else
+        echo "$@" >> ../local_build/logs/hux_build.log
+    fi
 }
 
 function apply_diff_patches() {
@@ -637,15 +646,15 @@ function apply_diff_patches() {
         abort "Error: Missing arguments. Usage: apply_diff_patches <patch file> <target file>"
     fi
     if [ ! -f "$DiffPatchFile" ]; then
-        debugPrint "Patch file '$DiffPatchFile' not found."
+        debugPrint "apply_diff_patches(): Patch file '$DiffPatchFile' not found."
         abort "Error: Patch file '${DiffPatchFile}' not found."
     fi
     if [ ! -f "$TheFileToPatch" ]; then
-        debugPrint "Target file '$TheFileToPatch' not found."
+        debugPrint "apply_diff_patches(): Target file '$TheFileToPatch' not found."
         abort "Error: Target file '${TheFileToPatch}' not found."
     fi
     if ! patch "$TheFileToPatch" < "$DiffPatchFile" 2>&1 | tee /tmp/patch_error.log; then
-        debugPrint "Patch failed: ${DiffPatchFile} → ${TheFileToPatch}"
+        debugPrint "apply_diff_patches(): Patch failed: ${DiffPatchFile} → ${TheFileToPatch}"
         warns "Patch failed! Check /tmp/patch_error.log for details." "DIFF_PATCHER"
     fi
 }
@@ -745,6 +754,7 @@ function check_build_prop() {
 
 function set_partition_flag() {
     local partition="$1"
+    debugPrint "set_partition_flag(): Set flag to ${partition}"
     bool BATTLEMAGE_HAS_$(string_format --upper $partition) true
 }
 

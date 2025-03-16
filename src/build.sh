@@ -22,6 +22,7 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
          system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
          system/etc/init/; do
     mkdir -p "../local_build/$i"
+	debugPrint "Making ../local_build/${i} directories.."
 done
 
 # Check if required files exist
@@ -31,34 +32,95 @@ for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika
         sleep 0.5
         exit 1
     else
+		debugPrint "Executing ${i}.."
         . "$i"
     fi
 done
 
-# Set build username
+# misc variables
 BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut -c 2-200)"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
-
-# Remove old log files
 rm -rf ../local_build/logs/*
-TMPDIR=$(mktemp -d 2>/dev/null || echo "../local_build/tmp/hux")
+TMPDIR="../local_build/tmp/hux"
+TMPFILE="../local_build/logs/hux_build.log"
+
+# fix: "grep: /build.prop: No such file or directory" moved to build.sh to fix that error.
+BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
+BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
+BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
+
+# Check dependencies
+if [ "$testEnv" != "true" ]; then
+    if [ ! -f "${SCRIPTS[0]}" ]; then
+        abort "Script files are missing, exiting..."
+    elif [ -z "$(command -v zip)" ]; then
+        abort "zip is not installed. Please install it to proceed."
+    elif [ -z "$(command -v python3)" ]; then
+        warns "python3 is not installed. It's not required unless you want to patch your recovery image." "DEPENDENCIES_ERRORS"
+    elif [ ! -f "$PREFIX/bin/java" ]; then
+        abort "Please install the latest openjdk to proceed."
+    fi
+fi
+
+# Locate feature files
+if [ ! -f "${TARGET_BUILD_FLOATING_FEATURE_PATH}" ]; then
+	debugPrint "Assign file path to the \"TARGET_BUILD_FLOATING_FEATURE_PATH\" variable..."
+    abort "Floating features File is not found, please change the \"TARGET_BUILD_FLOATING_FEATURE_PATH\" (in makeconfigs.prop) according to the one in your vendor or system image"
+fi
+TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+if [ ! -f "$TARGET_BUILD_CSC_FEATURE_PATH" ]; then
+	debugPrint "Assign file path to the \"TARGET_BUILD_CSC_FEATURE_PATH\" variable..."
+    abort "Product CSC File is not found, please change the \"PRODUCT_CSC_NAME\" (in makeconfigs.prop) according to the one in your product image"
+else
+	file "$TARGET_BUILD_CSC_FEATURE_PATH" | grep -q "data" && tinkerWithCSCFeaturesFile --decode
+fi
+
+# ok, fbans dropped!
+clear
+echo -e "\033[0;31m########################################################################"
+echo -e "   _  _     _   _            _                _   ___  __"
+echo -e " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
+echo -e "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
+echo -e "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
+echo -e "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
+echo -e "                                                         "
+echo -e "########################################################################\033[0m"
+console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
+console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
+console_print "The Current Username : $BUILD_USERNAME"
+console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
+console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
+console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')"
+console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
+console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
+console_print "Do you want to mount super image and proceed?"
+if ask "Type \"y\" to mount the super image..."; then
+    printf "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m Please enter the path to the super.img file: \e[0;37m"
+    read super_image_path
+    if [ ! -f "$super_image_path" ]; then
+        abort "Invalid image path: $super_image_path. Ensure the correct path is provided."
+    fi
+    if ! mount_super_image "$super_image_path"; then
+        abort "Failed to mount super.img."
+    fi
+	debugPrint "BATTLEMAGE_BUILD variable value is set to true"
+    BATTLEMAGE_BUILD=true
+else
+    BATTLEMAGE_BUILD=false
+	debugPrint "BATTLEMAGE_BUILD variable value is set to false"
+fi
 
 # Cache partitions
 if [ "$BATTLEMAGE_BUILD" != "true" ]; then
-    if [ ! -f "${SYSTEM_DIR}/build.prop" ] && [ ! -f "${SYSTEM_DIR}/system/build.prop" ]; then
-        abort "The system partition is not found."
-    elif [ ! -d "${SYSTEM_EXT_DIR}/etc" ] && [ ! -d "${SYSTEM_DIR}/system_ext/etc" ]; then
-        abort "The system_ext partition is not found."
-    elif [ ! -d "${VENDOR_DIR}" ] && [ ! -d "${VENDOR_DIR}/vendor" ]; then
-        abort "The vendor partition is not found."
-    elif [ ! -d "${PRODUCT_DIR}" ] && [ ! -d "${PRODUCT_DIR}/product" ]; then
-        abort "The product partition is not found."
-    fi
+    [ ! -f "${SYSTEM_DIR}/build.prop" ] && abort "The system partition is not found."
+    [ ! -d "${SYSTEM_EXT_DIR}/etc" ] && abort "The system_ext partition is not found."
+    [ ! -d "${VENDOR_DIR}" ] && abort "The vendor partition is not found."
+    [ ! -d "${PRODUCT_DIR}" ] && abort "The product partition is not found."
     HORIZON_PRODUCT_DIR=$PRODUCT_DIR
     HORIZON_SYSTEM_DIR=$SYSTEM_DIR
     HORIZON_SYSTEM_EXT_DIR=$SYSTEM_EXT_DIR
     HORIZON_VENDOR_DIR=$VENDOR_DIR
-else
+elif [ "$BATTLEMAGE_BUILD" == "true" ]; then
     for partition in system vendor product; do
         if echo "$katarenai" | grep -q "$partition"; then
             if check_build_prop "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$partition"; then
@@ -70,29 +132,6 @@ else
     HORIZON_SYSTEM_DIR=$(kang_dir "system")
     HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")
     HORIZON_VENDOR_DIR=$(kang_dir "vendor")
-fi
-
-# Ask user to mount super image
-console_print "Do you want to mount super image and proceed?"
-if ask "Type \"yes\" to mount the super image..."; then
-    printf "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m Please enter the path to the super.img file: \e[0;37m"
-    read super_image_path
-    if [ ! -f "$super_image_path" ]; then
-        abort "Invalid image path: $super_image_path. Ensure the correct path is provided."
-    fi
-    if ! mount_super_image "$super_image_path"; then
-        abort "Failed to mount super.img."
-    fi
-    BATTLEMAGE_BUILD=true
-else
-    BATTLEMAGE_BUILD=false
-fi
-
-# Temporary file creation
-if command -v mktemp >/dev/null; then
-    TMPFILE=$(mktemp)
-else
-    TMPFILE="../local_build/logs/hux_build.log"
 fi
 
 # Locate build.prop files
@@ -112,59 +151,16 @@ fi
 HORIZON_VENDOR_OVERLAY="$HORIZON_HORIZON_VENDOR_DIR/overlay"
 HORIZON_FALLBACK_OVERLAY_PATH=${HORIZON_PRODUCT_OVERLAY:-$HORIZON_VENDOR_OVERLAY}
 
-# Check dependencies
-if [ "$testEnv" != "true" ]; then
-    if [ ! -f "${SCRIPTS[0]}" ]; then
-        abort "Script files are missing, exiting..."
-    elif [ -z "$(command -v zip)" ]; then
-        abort "zip is not installed. Please install it to proceed."
-    elif [ -z "$(command -v python3)" ]; then
-        warns "python3 is not installed. It's not required unless you want to patch your recovery image." "DEPENDENCIES_ERRORS"
-    elif [ ! -f "$PREFIX/bin/java" ]; then
-        abort "Please install the latest openjdk to proceed."
-    fi
-fi
-
-# Locate feature files
-if [ ! -f "${TARGET_BUILD_FLOATING_FEATURE_PATH}" ]; then
-    abort "Floating features File is not found, please change the \"TARGET_BUILD_FLOATING_FEATURE_PATH\" (in makeconfigs.prop) according to the one in your vendor or system image"
-fi
-
-TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
-if [ ! -f "$TARGET_BUILD_CSC_FEATURE_PATH" ]; then
-    abort "Product CSC File is not found, please change the \"PRODUCT_CSC_NAME\" (in makeconfigs.prop) according to the one in your product image"
-else
-    if file "$TARGET_BUILD_CSC_FEATURE_PATH" | grep -q "data"; then
-        tinkerWithCSCFeaturesFile --decode
-    fi
-fi
-
-# fix: "grep: /build.prop: No such file or directory" moved to build.sh to fix that error.
-BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
-BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
-BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
-
-# ok, fbans dropped!
-echo -e "\033[0;31m########################################################################"
-echo -e "   _  _     _   _            _                _   ___  __"
-echo -e " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
-echo -e "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
-echo -e "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
-echo -e "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
-echo -e "                                                         "
-echo -e "########################################################################\033[0m"
-console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
-console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
-console_print "The Current Username : $BUILD_USERNAME"
-console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
-console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
-console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')"
-console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
-console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
-
 ################ boom
 if boolReturn $TARGET_BUILD_IS_FOR_DEBUGGING; then
-	echo -e "\n############ WARNING, EXPERIMENTAL FLAGS AHEAD!\nlogcat.live=enable\nsys.lpdumpd=1\npersist.debug.atrace.boottrace=1\npersist.device_config.global_settings.sys_traced=1\npersist.traced.enable=1\nlog.tag.ConnectivityManager=V\nlog.tag.ConnectivityService=V\nlog.tag.NetworkLogger=V\nlog.tag.IptablesRestoreController=V\nlog.tag.ClatdController=V\npersist.sys.lmk.reportkills=false\nsecurity.dsmsd.enable=true\npersist.log.ewlogd=1\nsys.config.freecess_monitor=true\npersist.heapprofd.enable=1\ntraced.lazy.heapprofd=1\ndebug.enable=true\nsys.wifitracing.started=1\nsecurity.edmaudit=false\nro.sys.dropdump.on=On\npersist.systemserver.sa_bindertracker=false\n############ WARNING, EXPERIMENTAL FLAGS AHEAD!" >> $HORIZON_SYSTEM_PROPERTY_FILE 
+	debugPrint "Bro thinks he's him ahh, debug flag is enabled lmao"
+    for i in "logcat.live enable" "sys.lpdumpd 1" "persist.debug.atrace.boottrace 1" "persist.device_config.global_settings.sys_traced 1" \
+		"persist.traced.enable 1" "log.tag.ConnectivityManager V" "log.tag.ConnectivityService V" "log.tag.NetworkLogger V" "log.tag.IptablesRestoreController V" \
+		"log.tag.ClatdController V" "persist.sys.lmk.reportkills false" "security.dsmsd.enable true" "persist.log.ewlogd 1" \
+		"sys.config.freecess_monitor true" "persist.heapprofd.enable 1" "traced.lazy.heapprofd 1" "debug.enable true" "sys.wifitracing.started 1" \
+		"security.edmaudit false" "ro.sys.dropdump.on On" "persist.systemserver.sa_bindertracker false"; do
+		setprop --system "$(echo $i | awk '{print $1}')" "$(echo $i | awk '{print $2}')"
+    done
 	echo -e "\n############ WARNING, EXPERIMENTAL FLAGS AHEAD!\nsetprop log.tag.snap_api::snpe VERBOSE\nsetprop log.tag.snap_api::V3 VERBOSE\nsetprop log.tag.snap_api::V2 VERBOSE\nsetprop log.tag.snap_compute::V3 VERBOSE\nsetprop log.tag.snap_compute::V2 VERBOSE\nsetprop log.tag.snaplite_lib VERBOSE\nsetprop log.tag.snap_api::snap_eden::V3 VERBOSE\nsetprop log.tag.snap_api::snap_ofi::V1 VERBOSE\nsetprop log.tag.snap_hidl_v3 VERBOSE\nsetprop log.tag.snap_service@1.2 VERBOSE\n############ WARNING, EXPERIMENTAL FLAGS AHEAD!" > $HORIZON_HORIZON_SYSTEM_DIR/etc/init/init.debug_castleprops.rc
 	warns "Debugging stuffs are enabled in this build, please proceed with caution and do remember that your device will heat more due to debugging process running in the background.." "DEBUGGING_ENABLER"
 	# change the values to enable debugging without authorization.
@@ -179,7 +175,7 @@ console_print "Storing the ROM's build properties into a temporary directory..."
 stack_build_properties
 
 if [ "$BUILD_TARGET_ANDROID_VERSION" == "14" ]; then
-	console_print "removing some bloats, thnx Salvo!"
+	console_print "Removing some bloats, thnx Salvo!"
 	rm -rf $HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml \
 	$HORIZON_SYSTEM_DIR/etc/public.libraries-wsm.samsung.txt \
 	$HORIZON_SYSTEM_DIR/lib/libhal.wsm.samsung.so \
@@ -200,8 +196,7 @@ fi
 
 if boolReturn $TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES; then
 	console_print "Patching bluetooth...."
-	existance "$HORIZON_SYSTEM_DIR/lib64/libbluetooth_jni.so" || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found, copy and put them in a random directory and try again.."
-	# patch this weird device lib.
+	[ -f "$HORIZON_SYSTEM_DIR/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found, copy and put them in a random directory and try again.."
 	HEX_PATCH "$HORIZON_SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052"
 fi
 
@@ -211,18 +206,18 @@ if boolReturn $TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED; then
 fi
 
 if boolReturn $TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES; then
-	console_print "adding custom setup wizard text...."
+	console_print "Adding custom setup wizard text...."
 	custom_setup_finished_messsage
 	build_and_sign ./horizon/overlay_packages/sec_setup_wizard_horizonux_overlay $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_REMOVE_NONE_SECURITY_OPTION; then
-	console_print "removing none security option from lockscreen settings..."
+	console_print "Removing none security option from lockscreen settings..."
 	change_xml_values "./horizon/overlay_packages/settings/oneui3/horizonux.autogenerated_rro/res/values/bools.xml" "config_hide_none_security_option" "true"
 fi
 
 if boolReturn $TARGET_REMOVE_SWIPE_SECURITY_OPTION; then
-	console_print "removing swipe security option from lockscreen settings..."
+	console_print "Removing swipe security option from lockscreen settings..."
 	change_xml_values "./horizon/overlay_packages/settings/oneui3/horizonux.autogenerated_rro/res/values/bools.xml" "config_hide_swipe_security_option" "true"
 fi
 
@@ -231,13 +226,12 @@ if boolReturn $TARGET_REMOVE_NONE_SECURITY_OPTION || boolReturn $TARGET_REMOVE_S
 fi
 
 if boolReturn $TARGET_ADD_EXTRA_ANIMATION_SCALES; then
-	console_print "cooking extra animation scales.."
+	console_print "Cooking extra animation scales.."
 	build_and_sign ./horizon/overlay_packages/settings/oneui3/extra_animation_scales $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
 if boolReturn $TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS; then
-	console_print "cooking rounded corners on pip window...."
-	warns_api_limitations "11"
+	console_print "Cooking rounded corners on pip window...."
 	build_and_sign ./horizon/overlay_packages/systemui/oneui3/rounded_corners_on_pip $HORIZON_FALLBACK_OVERLAY_PATH
 fi
 
@@ -359,7 +353,7 @@ if boolReturn $TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES; then
 fi
 
 # let's download goodlook modules from corsicanu's repo.
-echo -e "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - Starting to check and try to download goodlook modules, logs can be seen below if any errors spawn upon the process" >> $thisConsoleTempLogFile
+debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - Starting to check and try to download goodlook modules, logs can be seen below if any errors spawn upon the process"
 boolReturn $TARGET_INCLUDE_SAMSUNG_THEMING_MODULES && check_internet_connection "GOODLOCK_MODULES" && download_glmodules 2>> $thisConsoleTempLogFile
 
 # installs audio resampler.
@@ -446,7 +440,9 @@ if boolReturn "$BUILD_TARGET_REMOVE_SYSTEM_LOGGING"; then
 	setprop --system "log.tag.NetworkLogger" "S"
 	setprop --system "log.tag.IptablesRestoreController" "S"
 	setprop --system "log.tag.ClatdController" "S"
+	debugPrint "Patching atrace, dumpstate, and logd for ${BUILD_TARGET_SDK_VERSION} if possible...."
 	if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 28 && "${BUILD_TARGET_SDK_VERSION}" -le 31 ]]; then
+		debugPrint "Patching init_rilcommon.rc for ${BUILD_TARGET_SDK_VERSION}...."
 		apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/init_rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
 		if [[ "${BUILD_TARGET_SDK_VERSION}" -eq 28 ]]; then
 			apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[0]}"
@@ -572,6 +568,7 @@ if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMART
 	../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN ../local_build/etc/priv-app/SmartManager_v5 ../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity \
 	../local_build/etc/priv-app/SmartManagerCN ../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN ../local_build/etc/priv-app/SAppLock ../local_build/etc/priv-app/Firewall;
 	{
+		debugPrint "Moving SmartManager and Device Care to a temporary directory.."
 		# now move these for a quick revert if anything goes wrong.
 		# xmls
 		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
@@ -596,6 +593,7 @@ if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMART
 		#                                                          -                                                                           #
 		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L99
 	} &>$thisConsoleTempLogFile
+	debugPrint "Moved SmartManager and Device Care to a temporary directory.."
 	change_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
 	change_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
 	add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" "TRUE"
@@ -603,6 +601,7 @@ if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMART
 		for j in ${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS_SAVE_PATHS[@]}; do
 			download_stuffs "${i}" "${j}" || {
 				{
+					debugPrint "Looks like on of the loop is happen to fail, restoring the backup..."
 					# actual thing
 					mv "../local_build/etc/priv-app/Firewall/*" "$HORIZON_SYSTEM_DIR/priv-app/Firewall/"
 					mv "../local_build/etc/priv-app/SAppLock/*" "$HORIZON_SYSTEM_DIR/priv-app/SAppLock/"
@@ -621,26 +620,23 @@ if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMART
 					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
 					mv "../local_build/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
 					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					debugPrint "Seems like i did restore those files? didn't i?"
 				} &>$thisConsoleTempLogFile
 				warns "Failed to download stuffs from @saadelasfur github repo, moved everything to their places!" "FAILED_TO_DOWNLOAD_SMARTMANAGER"
 			}
 		done
 	done
 fi
-
-# brotherboard
-{
-	if boolReturn "$TINKER_MAX_REFRESH_RATE"; then
-		if [[ -z "${DTBO_IMAGE_PATH}" || ! -f "${DTBO_IMAGE_PATH}" ]]; then
-			warns "Can't patch dtbo because the dtbo image path is inaccessable." "DTBO_PATCH_FAILED"
-		else
-			. ${SCRIPTS[6]}
-		fi
+if boolReturn "$TINKER_MAX_REFRESH_RATE"; then
+	if [[ -z "${DTBO_IMAGE_PATH}" || ! -f "${DTBO_IMAGE_PATH}" ]]; then
+		warns "Can't patch dtbo because the dtbo image path is inaccessable." "DTBO_PATCH_FAILED"
+	else
+		. ${SCRIPTS[6]}
 	fi
-}
-# brotherboard
+fi
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
+debugPrint "End of the script, running misc stuffs.."
 console_print "Running misc jobs..."
 add_csc_xml_values "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"
