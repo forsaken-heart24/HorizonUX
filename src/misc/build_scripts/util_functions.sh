@@ -128,6 +128,18 @@ function build_and_sign() {
     if [ $? -ne 0 ]; then
         abort "Apktool build failed for $extracted_dir_path"
     fi
+
+    # change compile sdk version:
+    change_xml_values "${extracted_dir_path}/AndroidManifest.xml" "compileSdkVersion" "${BUILD_TARGET_SDK_VERSION}"
+    change_xml_values "${extracted_dir_path}/AndroidManifest.xml" "platformBuildVersionCode" "${BUILD_TARGET_SDK_VERSION}"
+    change_xml_values "${extracted_dir_path}/AndroidManifest.xml" "compileSdkVersionCodename" "${BUILD_TARGET_ANDROID_VERSION}"
+    change_xml_values "${extracted_dir_path}/AndroidManifest.xml" "platformBuildVersionName" "${BUILD_TARGET_ANDROID_VERSION}"
+    change_yaml_values "minSdkVersion" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
+    change_yaml_values "targetSdkVersion" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
+    change_yaml_values "version" "${CODENAME_VERSION_REFERENCE_ID}" "${extracted_dir_path}/apktool.yml"
+    change_yaml_values "versionName" "${CODENAME}" "${extracted_dir_path}/apktool.yml"
+    change_yaml_values "versionCode" "${CODEVERSION_REFERENCE_YAML}" "${extracted_dir_path}/apktool.yml"
+
     # luna.horizonux.system.settings.nullster-aligned-debugSigned.apk
     apk_file="$(echo "$extracted_dir_path/dist/*.apk")"
     if [ -z "$apk_file" ]; then
@@ -253,25 +265,36 @@ function tinkerWithCSCFeaturesFile() {
 function change_xml_values() {
     local feature_code="$1"
     local feature_code_value="$2"
+    local file="$3"
     # Convert feature_code to lowercase
     feature_code="$(echo "${feature_code}" | tr '[:upper:]' '[:lower:]')"
-    # Check for duplicate values
-    local duplicate_count
-    duplicate_count=$(catch_duplicates_xml "${feature_code}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}" 2>/dev/null || echo 0)
-    if [ "$duplicate_count" -gt 0 ]; then
-        warns "${feature_code} named feature has duplicate values, please remove them to prevent conflicts."
-    fi
-    # Ensure the XML file exists before modifying
-    if [ ! -f "${TARGET_BUILD_FLOATING_FEATURE_PATH}" ]; then
-        abort "Error: XML file ${TARGET_BUILD_FLOATING_FEATURE_PATH} not found!"
-    fi
-    # Check if the feature exists in the XML file
-    if grep -q "<${feature_code}>" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"; then
-        # Modify existing feature value
-        sed -i "s|<${feature_code}>.*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+    [ -z "$file" ] && abort "Error: No XML file specified!"
+    [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!"
+    if grep -q "<manifest" "$file"; then
+        if grep -q "${feature_code}=" "$file"; then
+            sed -i "s|\(${feature_code}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
+        else
+            sed -i "s|<manifest\(.*\)>|<manifest\1 ${feature_code}=\"${feature_code_value}\">|" "$file"
+        fi
     else
-        # Append the feature if it doesn't exist
-        sed -i "/<\/config>/i \ \ \ \ <${feature_code}>${feature_code_value}</${feature_code}>" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+        if grep -qi "<${feature_code}>" "$file"; then
+            sed -i "s|<${feature_code}>.*</${feature_code}>|<${feature_code}>${feature_code}</${feature_code}>|" "$file"
+        else
+            sed -i "/<\/config>/i \ \ \ \ <${feature_code}>${feature_code}</${feature_code}>" "$file"
+        fi
+    fi
+}
+
+function change_yaml_values() {
+    local key="$1"
+    local value="$2"
+    local file="$3"
+    [ -z "$file" ] && abort "Error: No file specified!"
+    [ ! -f "$file" ] && abort "Error: File '$file' not found!"
+    if grep -Eq "^[[:space:]]*${key}:" "$file"; then
+        sed -i -E "s|(^[[:space:]]*${key}:)[[:space:]]*.*|\1 ${value}|" "$file"
+    else
+        echo "${key}: ${value}" >> "$file"
     fi
 }
 
@@ -295,6 +318,7 @@ function bool() {
 }
 # these things are intended for those " pro " programmers 
 
+# deprecated cuz useless.
 function warns_api_limitations() {
     local adrod_version=$1
     warns "this feature is found on android $adrod_version, report if it doesn't work. thanks!" "TARGET_OUT_OF_BOUNDS"; 

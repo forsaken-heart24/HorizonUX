@@ -23,8 +23,8 @@
 - **TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING**: Tries to boost performance at the cost of overheating and battery life.
 
 ## Security
-- **TARGET_REMOVE_NONE_SECURITY_OPTION**: Disables the "none" option for lock screen security.
-- **TARGET_REMOVE_SWIPE_SECURITY_OPTION**: Disables the swipe-to-unlock option.
+- **TARGET_REMOVE_NONE_SECURITY_OPTION**: Disables the "None" option for lock screen security. Found in Android 11 and 12, but its compatibility with newer Android versions is uncertain.
+- **TARGET_REMOVE_SWIPE_SECURITY_OPTION**: Disables the swipe-to-unlock option. Found in Android 11 and 12, but it may not work on newer Android versions.
 
 ## Bloatware & Features
 - **TARGET_REMOVE_USELESS_VENDOR_STUFFS**: Removes bloat from the vendor partition.

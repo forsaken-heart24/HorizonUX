@@ -52,6 +52,7 @@ TARGET_BUILD_FLOATING_FEATURE_PATH=
 # Horizon codename and etc..
 CODENAME="Birds"
 CODENAME_VERSION_REFERENCE_ID=0.0
+CODEVERSION_REFERENCE_YAML=0.00001
 
 # Build Target properties..
 BUILD_TARGET_ANDROID_VERSION="$(grep "ro.build.version.release" "$(absolute_path --system)/build.prop" | head -n 1 | cut -c 26-28)"
