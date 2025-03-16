@@ -30,7 +30,7 @@ UPDATER_OUTPUT = ../local_build/binaries/updater-script
 LOADER_OUTPUT = ../local_build/binaries/bashScriptLoader
 
 # Source files for each target
-UPDATER_SRCS = ./include/horizonutils.c ./include/horizonux.c ./include/horizoninstaller.c 
+UPDATER_SRCS = ./include/horizonutils.c ./include/horizonux.c ./include/horizoninstaller.c
 LOADER_SRCS = ./include/horizonux.c ./include/horizonutils.c
 
 # Main source path

@@ -34,6 +34,7 @@ extern bool isHotFixAndShouldBeSkipped;
 extern bool iDontWantChecksumChecks;
 extern bool installationHasLowLevelDiskImages;
 extern bool tarballHasPasswordProtection; // anti kang shits
+extern bool createSnapshot;
 extern const char *tarballPassword; // anti kang shits
 extern const char *shippedAs; // for determining the file format
 extern char *LOG4HORIZONFILE;

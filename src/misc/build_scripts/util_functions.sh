@@ -454,7 +454,7 @@ function ADD_THE_WALLPAPER_METADATA() {
             which=2
             the_lockscreen_wallpaper_has_been_set=true
             ;;
-        additionals)
+        additional)
             isDefault=false
             which=1
             ;;
@@ -473,6 +473,7 @@ function ADD_THE_WALLPAPER_METADATA() {
     }${special_symbol}
 EOF
 
+    debugPrint "User chose to make wallpaper_${value}.png as ${type} screen wallpaper."
     printf " - Enter the path to the default ${type^} wallpaper: "
     read path
     if [ -f "$path" ]; then

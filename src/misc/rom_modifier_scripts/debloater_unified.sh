@@ -141,8 +141,8 @@ debloat_the_crap() {
     "${HORIZON_SYSTEM_EXT_DIR}/priv-app/${system_extra_privilaged_apps[@]}" "${HORIZON_PRODUCT_DIR}/app/${product_apps[@]}" \
     "${HORIZON_PRODUCT_DIR}/priv-app/${product_privilaged_apps[@]}"; do
     warns "Removing ${i}..." "HorizonDebloater"
-    if [ -f ${i} ]; then
-        rm -rf ${i} 2>./error_ring.log
+    if [ -d "${i}" ]; then
+        rm -rf "${i}" 2>./error_ring.log
     else
         console_print "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
     fi
@@ -220,15 +220,15 @@ nuke_or_ignore_these_stuffs() {
     ask "Do you want to nuke Carrier Services such as ESIM and Wifi-Calling" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[14]}"
 }
 
-if [ "${BUILD_TARGET_SDK_VERSION}" -ge "30" ] && [ "${BUILD_TARGET_SDK_VERSION}" -le "34" ]; then
+if [ "${BUILD_TARGET_SDK_VERSION}" == "30|31|32|33|34|35" ]; then
     console_print "Debloating your rom..."
     debloat_the_crap
     nuke_or_ignore_these_stuffs
-elif [ "${BUILD_TARGET_SDK_VERSION}" -eq "29" ]; then
+elif [ "${BUILD_TARGET_SDK_VERSION}" == "29" ]; then
     console_print "The list haven't really focused for Android Pie because no one uses it nowadays, sorry.."
     console_print "Debloating your rom..."
     debloat_the_crap
     nuke_or_ignore_these_stuffs
 else
-    console_print "This version of android is not supported, please do a pr if you can, otherwise just report this issue to the bugreporter bot (link can be found in the github bio)"
+    console_print "This version of android is not supported, please do a pr if you can, otherwise just report this issue to the bugreporter bot (link can be found in the readme)"
 fi

@@ -39,7 +39,8 @@ bool installationHasLowLevelDiskImages = false;
 // scroll down to put password in a variable.
 bool tarballHasPasswordProtection = false;
 
-char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto___horizonROMInstaller.log";
+//char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto___horizonROMInstaller.log";
+char *LOG4HORIZONFILE = "/sdcard/Horizon/logs/teto___horizonROMInstaller.log";
 const char *thisPatchBuildID = "";
 
 // wanana BANG!
@@ -84,6 +85,11 @@ const char *tarballPassword = "";
 
 // this variable can be: tarProtected (password protected tar), sparse and raw (which is the raw image factor)
 const char *shippedAs = "";
+
+// What it does is, it creates a snapshot of the current system before installing the ROM.
+// and after the installation, the user can restore the snapshot if anything goes wrong by adding snapshot in 
+// the installer file name.
+bool createSnapshot = false;
 
 int main(int argc, const char *argv[]) {
     // for testing this bin
