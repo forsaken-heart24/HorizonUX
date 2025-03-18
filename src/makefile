@@ -16,14 +16,8 @@
 #
 
 # Compiler and flags
-# COMPILER ?= gcc
-COMPILER ?= aarch64-linux-gnu-gcc
-EXTRA_FLAGS = -march=armv8-a
-
-# Adjust flags if using GCC
-ifeq ($(COMPILER),gcc)
-    EXTRA_FLAGS =
-endif
+COMPILER ?= gcc
+EXTRA_FLAGS :=
 
 # Output binaries
 UPDATER_OUTPUT = ../local_build/binaries/updater-script
@@ -41,12 +35,19 @@ LOADER_MAIN = ./bashScriptLoader/main.c
 ERR_LOG = ../local_build/logs/compiler__errors
 
 # Default: Build both
-all: test-updater test-loader
+all: updater loader
 
 # Check if the compiler exists
 check_compiler:
+	@if [ "$(COMP_DEF)" = "arm64" ]; then \
+		echo "- Setting compiler to aarch64-linux-gnu-gcc"; \
+	    $(eval COMPILER := aarch64-linux-gnu-gcc) \
+	    $(eval EXTRA_FLAGS := -march=armv8-a) \
+	else \
+	    echo "- Using default compiler: $(COMPILER)"; \
+	fi
 	@if ! command -v $(COMPILER) >/dev/null 2>&1; then \
-	    echo "Error: '$(COMPILER)' not found. Please install '$(COMPILER)'"; \
+	    echo "Error: '$(COMPILER)' not found. Please install it."; \
 	    exit 1; \
 	fi
 
@@ -54,9 +55,9 @@ check_compiler:
 updater: check_compiler
 	@echo "Building HorizonInstaller..."
 	@if $(COMPILER) -I./include $(UPDATER_SRCS) $(UPDATER_MAIN) -o $(UPDATER_OUTPUT) $(EXTRA_FLAGS) > $(ERR_LOG) 2>&1; then \
-	    echo "Build successful: $(UPDATER_OUTPUT)"; \
+	    echo "✅ Build successful: $(UPDATER_OUTPUT)"; \
 	else \
-	    echo "Error: Compilation failed. Check $(ERR_LOG) for details."; \
+	    echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
 	    exit 1; \
 	fi
 
@@ -64,18 +65,14 @@ updater: check_compiler
 loader: check_compiler
 	@echo "Building bashScriptLoader..."
 	@if $(COMPILER) -I./include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) $(EXTRA_FLAGS) > $(ERR_LOG) 2>&1; then \
-	    echo "Build successful: $(LOADER_OUTPUT)"; \
+	    echo "✅ Build successful: $(LOADER_OUTPUT)"; \
 	else \
-	    echo "Error: Compilation failed. Check $(ERR_LOG) for details."; \
+	    echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
 	    exit 1; \
 	fi
 
 # Test updater-script
-test_updater:
-	@if [ ! -f "$(UPDATER_OUTPUT)" ]; then \
-	    echo "Rebuilding $(UPDATER_OUTPUT)..."; \
-	    $(MAKE) updater; \
-	fi
+test_updater: updater
 	@echo "Testing updater-script..."
 	@if $(UPDATER_OUTPUT) --test >/dev/null 2>&1; then \
 	    echo "✅ Test passed: $(UPDATER_OUTPUT) works as expected!"; \
@@ -85,14 +82,9 @@ test_updater:
 	    echo "                     - Running on a non-ARM machine"; \
 	    echo "                     - Syntax Errors in the code"; \
 	fi
-	@rm -rf $(UPDATER_OUTPUT)
 
 # Test mainModuleLoader
-test_loader:
-	@if [ ! -f "$(LOADER_OUTPUT)" ]; then \
-	    echo "Rebuilding $(LOADER_OUTPUT)..."; \
-	    $(MAKE) loader; \
-	fi
+test_loader: loader
 	@echo "Testing bashScriptLoader..."
 	@if $(LOADER_OUTPUT) --test >/dev/null 2>&1; then \
 	    echo "✅ Test passed: $(LOADER_OUTPUT) works as expected!"; \
@@ -102,7 +94,6 @@ test_loader:
 	    echo "                     - Running on a non-ARM machine"; \
 	    echo "                     - Syntax Errors in the code"; \
 	fi
-	@rm -rf $(LOADER_OUTPUT)
 
 # Build and test everything
 test: test_updater test_loader
