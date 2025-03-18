@@ -339,35 +339,33 @@ function change_xml_values() {
     local feature_code="$1"
     local feature_code_value="$2"
     local file="$3"
-    
-    # DEBUG := TRUE:
     debugPrint "change_xml_values(): Arguments: $1 $2 $3"
-    
-    # Convert feature_code to uppercase and manifest_attr to lowercase
-    feature_code="$(echo "${feature_code}" | tr '[:lower:]' '[:upper:]')"
-    manifest_attr="$(echo "${feature_code}" | tr '[:upper:]' '[:lower:]')"
-
-    # Check if file is valid
     [ -z "$file" ] && abort "Error: No XML file specified!"
     [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!"
-
+    feature_code="$(echo "${feature_code}" | tr '[:lower:]' '[:upper:]')"
+    manifest_attr="${feature_code}"
+    closing_tag=$(grep -oE '</(manifest|SecFloatingFeatureSet|SamsungMobileFeature)>' "$file" | tail -n 1)
+    if [ -z "$closing_tag" ]; then
+        abort "Error: No valid closing tag found in $file!"
+    fi
     if grep -q "<manifest" "$file"; then
-        # Check if attribute already exists and update it
         if grep -q "${manifest_attr}=" "$file"; then
-            sed -i "s|\(${manifest_attr}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
+            if ! grep -q "${manifest_attr}=\"${feature_code_value}\"" "$file"; then
+                sed -i.bak "s|\(${manifest_attr}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
+                debugPrint "Updated ${manifest_attr} to ${feature_code_value} in $file"
+            else
+                debugPrint "${manifest_attr} is already set to ${feature_code_value}, skipping."
+            fi
+        fi
+    elif grep -qi "<${feature_code}>" "$file"; then
+        if ! grep -q "<${feature_code}>${feature_code_value}</${feature_code}>" "$file"; then
+            sed -i.bak "s|<${feature_code}>[^<]*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|" "$file"
+            debugPrint "Updated <${feature_code}> value to ${feature_code_value}"
         else
-            # Add attribute **only if it's missing**
-            sed -i "/<manifest/ s|>| ${manifest_attr}=\"${feature_code_value}\">|" "$file"
+            debugPrint "<${feature_code}> is already set to ${feature_code_value}, skipping."
         fi
     else
-        # Check if <feature_code> element exists
-        if grep -qi "<${feature_code}>" "$file"; then
-            # Update existing element value **only if different**
-            sed -i "s|<${feature_code}>[^<]*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|" "$file"
-        else
-            # Insert new feature **only if it doesn't exist**
-            sed -i "/<\/config>/i \ \ \ \ <${feature_code}>${feature_code_value}</${feature_code}>" "$file"
-        fi
+        debugPrint "No matching ${feature_code} or ${manifest_attr} found. Skipping modification."
     fi
 }
 
@@ -423,58 +421,73 @@ function ask() {
 }
 
 function remove_attributes() {
-	local INPUT_FILE="$1"
-	local OUTPUT_FILE="$2"
-	local NAME_TO_SKIP="$3"
+    local INPUT_FILE="$1"
+    local OUTPUT_FILE="$2"
+    local NAME_TO_SKIP="$3"
+    local MODIFIED=false  # Track if changes were made
 
-    # log this:
+    # Log start
     debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Output File: ${OUTPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
-    touch ${OUTPUT_FILE}
 
-	# Start writing the new XML file
-    [ ! -f "$INPUT_FILE" ] && { debugPrint "Input file wasn't found!"; return 1; }
-    [ -z "$NAME_TO_SKIP" ] && { debugPrint "Attr wasn't provided"; return 1; }
-	{
-		echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-		echo "<manifest version=\"2.0\" type=\"device\" target-level=\"3\">"
-		
-		# Read each line of the input XML
-		while IFS= read -r line; do
-			# Check if the line starts a <hal> block
-			if [[ "$line" == *"<hal"* ]]; then
-				# Read the entire <hal> block into a variable
+    # Validate input
+    [ ! -f "$INPUT_FILE" ] && { debugPrint "Error: Input file not found!"; return 1; }
+    [ -z "$NAME_TO_SKIP" ] && { debugPrint "Error: Attribute to skip was not provided"; return 1; }
+
+    # Create output file
+    touch "$OUTPUT_FILE"
+
+    # Start writing new XML
+    {
+
+        # Read the input XML file line by line
+        while IFS='' read -r line; do
+            # Check if this line starts a <hal> block
+            if [[ "$line" =~ ^[[:space:]]*"<hal" ]]; then
                 block="$line"
                 skip_block=false
 
-				# Check subsequent lines for the closing </hal>
-				while IFS= read -r line; do
-					block+=$'\n'"$line"
-					if [[ "$line" == *"</hal>"* ]]; then
-						break
-					fi
-				done
-				
-				# Check if the block contains the <name> to skip
-				if [[ "$block" == *"<name>$NAME_TO_SKIP</name>"* ]]; then
-					# Skip this block
-					continue
-				fi
-				
-				# Write the entire block to the output file if not skipped
-				echo "$block"
-			else
-				# Write lines that are not part of a <hal> block
-				echo "$line"
-			fi
-		done < "$INPUT_FILE"
-		
-		echo "</manifest>"
-	} > "$OUTPUT_FILE"
+                # Read the rest of the <hal> block
+                while IFS='' read -r inner_line; do
+                    block+=$'\n'"$inner_line"
 
-	# Feedback
-	console_print "Rewritten XML saved to $INPUT_FILE, skipping <hal> with name=$NAME_TO_SKIP."
-    debugPrint "remove_attributes(): Rewritten XML saved to $INPUT_FILE, skipping <hal> with name=$NAME_TO_SKIP."
-    mv ${OUTPUT_FILE} ${INPUT_FILE}
+                    # If we find a <name> tag with the specified value, mark this block for skipping
+                    if [[ "$inner_line" =~ ^[[:space:]]*"<name>"$NAME_TO_SKIP"</name>"[[:space:]]* ]]; then
+                        skip_block=true
+                    fi
+
+                    # Stop reading if we reach the closing </hal>
+                    if [[ "$inner_line" =~ ^[[:space:]]*"</hal>" ]]; then
+                        break
+                    fi
+                done
+
+                # If block was marked for skipping, do not write it to the output file
+                if $skip_block; then
+                    MODIFIED=true
+                    continue
+                fi
+
+                # Otherwise, write the block to the output
+                echo "$block"
+            else
+                # Write all other lines that are not part of a <hal> block
+                echo "$line"
+            fi
+        done < "$INPUT_FILE"
+
+        echo "</manifest>"
+    } > "$OUTPUT_FILE"
+
+    # Only replace the input file if changes were made
+    if $MODIFIED; then
+        mv "$OUTPUT_FILE" "$INPUT_FILE"
+        console_print "Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
+        debugPrint "remove_attributes(): Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
+    else
+        console_print "No changes made. <hal> with name=$NAME_TO_SKIP was not found."
+        debugPrint "remove_attributes(): No changes made. <hal> with name=$NAME_TO_SKIP was not found."
+        rm "$OUTPUT_FILE"  # Cleanup unused output file
+    fi
 }
 
 function nuke_stuffs() {
@@ -482,23 +495,30 @@ function nuke_stuffs() {
     local line
 	local shit
 	local stuffs2nukeinvintf=(
-        "android.hardware.dumpstate*.xml"
         "engmode_manifest.xml"
 		"vaultkeeper_manifest.xml"
         "dumpstate-default.xml"
         "wsm_manifest.xml"
     )
 	local stuffs2nukeininitdir=(
-		"${HORIZON_VENDOR_DIR}/etc/init/*android.hardware.dumpstate@*.rc"
+	    "${HORIZON_VENDOR_DIR}/etc/init/cass.rc"
 		"${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc"
-		"${HORIZON_VENDOR_DIR}/etc/init/cass.rc"
 		"${HORIZON_VENDOR_DIR}/etc/init/vaultkeeper_common.rc"
 		"${HORIZON_VENDOR_DIR}/etc/init/pa_daemon_teegris.rc"
 		"${HORIZON_VENDOR_DIR}/etc/init/wsm-service.rc"
 	)
-    for service in "security.wsm" "vendor.samsung.hardware.security.proca"; do
+    local binCraps=(
+        "${HORIZON_VENDOR_DIR}/bin/cass"
+        "${HORIZON_VENDOR_DIR}/bin/vaultkeeperd"
+        "${HORIZON_VENDOR_DIR}/bin/vendor.samsung.hardware.security.proca@*-service"
+        "${HORIZON_VENDOR_DIR}/bin/vendor.samsung.hardware.security.vaultkeeper@*-service"
+        "${HORIZON_VENDOR_DIR}/bin/vendor.samsung.hardware.security.wsm@*-service"
+    )
+    for service in "vendor.samsung.hardware.security.wsm" "vendor.samsung.hardware.security.proca"; do
         console_print "Removing ${service} service from the system config files..."
 		remove_attributes "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml" "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml__" "${service}"
+        rm -rf "${HORIZON_VENDOR_DIR}/etc/init/android.hardware.dumpstate@*.rc"
+        rm -rf "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/android.hardware.dumpstate*.xml"
         for line in "${stuffs2nukeinvintf[@]}"; do
 		    if [ -f "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/${line}" ]; then
 			    rm -f "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/${line}"
@@ -512,7 +532,7 @@ function nuke_stuffs() {
 		    fi
 	    done
         # idk man, it feels like it's useless because the vendor has the same codes on a init file.
-        rm -rf "${HORIZON_VENDOR_DIR}/etc/wlan_common_rc ${HORIZON_VENDOR_DIR}/etc/wlan_vendor_rc"
+        # rm -rf "${HORIZON_VENDOR_DIR}/etc/wlan_common_rc ${HORIZON_VENDOR_DIR}/etc/wlan_vendor_rc"
     done
 }
 
