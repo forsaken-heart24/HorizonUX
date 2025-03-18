@@ -1,0 +1,236 @@
+#
+# Copyright (C) 2025 Luna
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+###########################
+##              N O T E
+
+# change values to your needs and run the script.
+
+# true means it's enabled, false means it's disabled.
+
+# fill-up those blank variables to prevent build errors.
+
+# Thank you for using HorizonUX, please provide your feedback in our official chat!
+
+##              N O T E
+#########################
+
+# 12:35AM - 30-10-2024 @Luna : fuck no, i dont want to have an another version for testing purposes lmao.
+testEnv=false
+
+# signature key configs, please proceed with caution before playing with this
+# be sure to fill if you are going to use your own key to sign app packages
+# don't upload your rom if you have used the testkey to sign packages.
+MY_KEYSTORE_ALIAS=Horizon_test
+MY_KEYSTORE_PASSWORD=ayyochill24
+MY_KEYSTORE_PATH=../test-keys/HorizonUX-testkey.jks
+MY_KEYSTORE_ALIAS_KEY_PASSWORD="${MY_KEYSTORE_ALIAS}"
+
+# replace these with your dir
+SYSTEM_DIR=../../system/system
+SYSTEM_EXT_DIR=../../system/system/system_ext
+VENDOR_DIR=../../vendor
+PRODUCT_DIR=../../product
+
+# floating features exact dir, to be set by the builder
+TARGET_BUILD_FLOATING_FEATURE_PATH=../../vendor/etc/floating_feature.xml
+
+# Horizon codename and etc..
+CODENAME="Birds"
+CODENAME_VERSION_REFERENCE_ID=0.0
+CODEVERSION_REFERENCE_YAML=0.00001
+
+# Build Target properties..
+BUILD_TARGET_ANDROID_VERSION="$(grep "ro.build.version.release" "$(absolute_path --system)/build.prop" | head -n 1 | cut -c 26-28)"
+BUILD_TARGET_SDK_VERSION="$(grep "ro.build.version.sdk" "$(absolute_path --system)/build.prop" | cut -c 22-23)"
+BUILD_TARGET_MODEL=$(grep "ro.product.system.model" "$(absolute_path --system)/build.prop" | cut -c 25-33)
+BUILD_TARGET_SCREEN_WIDTH=
+BUILD_TARGET_SCREEN_HEIGHT= 
+
+# dang
+TARGET_INCLUDE_CUSTOM_BRAND_NAME=true
+BUILD_TARGET_CUSTOM_BRAND_NAME="HorizonUX - ${CODENAME} (v${CODENAME_VERSION_REFERENCE_ID})"
+
+# custom setup wizard welcome text.
+TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES=false
+CUSTOM_SETUP_WELCOME_MESSAGE="helno, please put your own typa rizzy drizzy shiiii here :D"
+
+#  60 or 90 or 120 maybe 144 if it exists (lmao it doesnt ik it) - put a single value, dont put multiple values here lol
+BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE=60
+BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES=false
+
+# removes unnecessary logging stuffs
+BUILD_TARGET_REMOVE_SYSTEM_LOGGING=true
+
+# brings back network speed in some regions
+BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET=true
+
+# for android <= 11, brings assistant 2.0
+# BUILD_TARGET_BRING_NEWGEN_ASSISTANT=true
+
+# for android <= 11, try this at own risk
+BUILD_TARGET_DISABLE_KNOX_PROPERTIES=false
+
+# Brings mobile data toggle on the power menu context.
+BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU=true
+
+# Forces the network icon to show 5 bars
+BUILD_TARGET_FORCE_FIVE_BAR_NETICON=true
+
+# Forces the system to play song(s) / music(s) while recording a video
+BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING=true
+
+# force enable Call Recording in the Samsung Dialer App
+BUILD_TARGET_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER=false
+
+# disables wifi calling if it set to true, otherwise (true), it enables it if disabled.
+BUILD_TARGET_DISABLE_WIFI_CALLING=true
+
+# Disables annoying sounds while calls.
+BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK=true
+
+# force skips junks like wifi setup and etc in the setup wizard
+BUILD_TARGET_SKIP_SETUP_JUNKS=true
+
+# forces the system to not close the camera app while calling
+BUILD_TARGET_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING=true
+
+# forces the Media Player to play a video during an call.
+BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL=false
+
+# Force enables Popup player on Samsung Video Player
+FORCE_ENABLE_POP_UP_PLAYER_ON_SVP=true
+
+# Disables Setup Wizard, i'm not responsible for legal actions against you!
+BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD=false
+
+# forces shutdown and bootanimation fps, use this if you have a video/gif like moving stuffs in your bootanimation
+BUILD_TARGET_BOOT_ANIMATION_FPS=
+BUILD_TARGET_SHUTDOWN_ANIMATION_FPS=
+
+# Brings Chinese version of Smartmanager and Device Care, thnx @saadelasfur
+BRINGUP_CN_SMARTMANAGER_DEVICE=false
+
+# Target properties.
+# this variable will enable some debugging features and this thing will make your phone overheat and hang alot, do with pre-caution!s
+TARGET_BUILD_IS_FOR_DEBUGGING=false
+
+# applies patches to bluetooth library if the bluetooth doesnt work properly.
+TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES=false
+
+# you know these :
+TARGET_REMOVE_NONE_SECURITY_OPTION=true
+TARGET_REMOVE_SWIPE_SECURITY_OPTION=true
+TARGET_REMOVE_USELESS_VENDOR_STUFFS=true
+TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS=true
+TARGET_ADD_EXTRA_ANIMATION_SCALES=true
+TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS=true
+
+# bring fastboot mode on samsung launched with android 10.
+TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED=false
+
+# this brings unlimited pictures backup.
+TARGET_INCLUDE_UNLIMITED_BACKUP=true
+
+# include goodlock or whatever samsung theming modules into the rom.
+TARGET_INCLUDE_SAMSUNG_THEMING_MODULES=false
+
+# misc properties..
+RECOVERY_IMAGE_PATH=
+PRODUCT_CSC_NAME=BTB
+SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD=false
+NEW_DEFAULT_LANGUAGE_ON_PRODUCT=ja
+NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT=JP
+
+# floating feature configs. THANKS Furiousdroid for the suggestion!
+TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN=false
+TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM=true
+TARGET_FLOATING_FEATURE_INCLUDE_EASY_MODE=false
+TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON=false
+
+# This thing is used to adjust the animation type of the device
+# This can be : LowEnd , LowestEnd , LowEndFast , Mass (mid-rangers, not available after 3.1) , HighEnd , CHNHighEND & HighEnd_Tablet
+TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE=HighEnd
+
+# The dawn battery health level thing, like the one from iPhone thnx to UN1CA!
+TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS=false
+
+# Enabling this would make the device to overheat and it would make an bigger impact on the battery life, do at your own risk.
+TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING=false
+
+# please disable the window blurs for battery life and ux performance.
+TARGET_FLOATING_FEATURE_DISABLE_BLUR_EFFECTS=true
+
+# - This feature requires proper or bare minimum mdNIE support on the ROM and maybe the device to get it workin' properly
+# - if your device have any of those screen modes mentioned below, it means that it might have a proper or bare minimum support of the mdNIE feature.
+# + Adaptive display
+# + AMOLED cinema
+# + AMOLED photo
+# + Basic
+# + Vivid
+TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES=false
+
+# Bring wireless power sharing, enable this flag if your device supports this lol.
+TARGET_FLOATING_FEATURE_SUPPORTS_WIRELESS_POWER_SHARING=false
+
+# ultra power saving, this thing is useless but yeah if you want it then take it.
+TARGET_FLOATING_FEATURE_ENABLE_ULTRA_POWER_SAVING=false
+
+# Tinker with smart switch, useless thing change it to true if you want to nuke this.
+TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH=true
+
+# bring dolby sound effects on games. (if supported + if the hw is capable of doing this)
+TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES=true
+
+############################################# Exclusive HorizonUX Features #############################################
+# this feature includes an prop level workaround that is used to avoid smoky distortion specifically to those LDAC Bluetooth earphones and DAC's under $30 (probably), this sets special re-sampling tweaks in the system level.
+TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER=false
+
+# this feature removes a file which is necessary for drm / ott platforms, please do note that the widevine level will fallback to L3
+# which will disable HD playbacks. DRM-protected apps might work after appling this patch but im not sure....
+TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER=true
+
+# removes a smart switch listener port from the init shell.
+TARGET_REMOVE_SMARTSWITCH_DAEMON=true
+
+# Ellen, a script that spoofs and does some misc jobs if the device is booting.
+TARGET_INCLUDE_HORIZONUX_ELLEN=false
+############################################# Exclusive HorizonUX Features #############################################
+
+############################################# Misc Configs #############################################
+# this allows you to add tons of wallpaper within some clicks.
+# you have to replace the auto-generated resources_info.json with the stock apk.
+CUSTOM_WALLPAPER_RES_JSON_GENERATOR=false
+
+# this allows you to disable display refresh rate override
+# this thing forces the refresh rate to 30Hz on some playbacks in platforms like youtube , tiktok & instagram.
+# ignore if you're building an android 13 or lesser version of oneui.
+DISABLE_DISPLAY_REFRESH_RATE_OVERRIDE=false
+
+# Dynamic range compression (DRC) is a process that reduces the difference between the loudest and quietest parts of an audio signal.
+# almost works on every OneUI version.
+DISABLE_DYNAMIC_RANGE_COMPRESSION=false
+
+# ASKS works as an another layer in the signature verification which checks if the public key certificate from the SEC-INF (present in the samsung apps) matches the actual application signature
+# this doesn't disable the google's app signature verification
+DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION=false
+
+# Made near possible to change max refresh rate of a device with the help of @BrotherBoard | Thanks bro board!
+TINKER_MAX_REFRESH_RATE=false
+DTBO_IMAGE_PATH=
+THIS_IS_MY_DEVICE_MAX_REFRESH_RATE=60
+############################################# Misc Configs #############################################

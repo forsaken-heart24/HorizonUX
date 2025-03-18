@@ -29,7 +29,7 @@ function grep_prop() {
         echo "Error: Property file '$prop_file' not found." >&2
         return 1
     fi
-    grep "^${variable_name}=" "$prop_file" | cut -d '=' -f 2- | tr -d '"' 2>$thisConsoleTempLogFile
+    grep "^${variable_name}=" "$prop_file" | cut -d '=' -f 2- | tr -d '"' 2>>$thisConsoleTempLogFile
 }
 
 function setprop() {
@@ -74,31 +74,44 @@ function console_print() {
 function default_language_configuration() {
     local language="$1"
     local country="$2"
+    # Default values
     [ -z "$language" ] && language="en"
     [ -z "$country" ] && country="US"
-
-    # change the strings cases to prevent issues on the system.
+    # Convert to proper case
     language=$(echo "$language" | tr '[:upper:]' '[:lower:]')
     country=$(echo "$country" | tr '[:lower:]' '[:upper:]')
-
-    # capture and abort the op if the length is invalid.
-    if [ "${#country}" -ge 4 ]; then
-        abort "Invalid country string length."
-    elif [ "${#language}" -ge 4 ]; then
-        abort "Invalid language string length."
+    # Validate length (ISO 639-1 for language, ISO 3166-1 alpha-2 for country)
+    if [[ ! "$language" =~ ^[a-z]{2,3}$ ]]; then
+        abort "Invalid language code: $language"
     fi
-
-    # thing that actually switches the default lang.
-    if [ -f "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml" ]; then
-        sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" \
-            "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml" 2>$thisConsoleTempLogFile
-        sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" \
-            "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml" 2>$thisConsoleTempLogFile
+    if [[ ! "$country" =~ ^[A-Z]{2,3}$ ]]; then
+        abort "Invalid country code: $country"
+    fi
+    # Path to CSC customer.xml
+    local customer_xml="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml"
+    if [ -f "$customer_xml" ]; then
+        # Only modify if values are different
+        if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$customer_xml" && \
+           grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$customer_xml"; then
+            debugPrint "Language already set to ${language}-${country}, skipping modification."
+        else
+            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$customer_xml" 2>>"$thisConsoleTempLogFile"
+            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$customer_xml" 2>>"$thisConsoleTempLogFile"
+            debugPrint "Updated default language to ${language}-${country} in $customer_xml"
+        fi
     else
+        debugPrint "customer.xml not found for ${PRODUCT_CSC_NAME}, applying changes to all OMC directories."
         for file in "$HORIZON_PRODUCT_DIR/omc/"*/conf/customer.xml; do
             [ -f "$file" ] || continue
-            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$file" 2>$thisConsoleTempLogFile
-            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$file" 2>$thisConsoleTempLogFile
+            # Skip modification if the values are already correct
+            if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$file" && \
+               grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$file"; then
+                debugPrint "Skipping $file (already set)"
+                continue
+            fi
+            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$file" 2>>"$thisConsoleTempLogFile"
+            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$file" 2>>"$thisConsoleTempLogFile"
+            debugPrint "Updated default language in $file"
         done
     fi
 }
@@ -115,54 +128,65 @@ function build_and_sign() {
     local apkFileName
     local signed_apk
     local apk_file
+
+    # Common checks
     if [ ! -d "$extracted_dir_path" ]; then
         abort "Invalid Apkfile path: $extracted_dir_path"
     fi
-    if [ -f "$extracted_dir_path/apktool.yml" ]; then 
-        apkFileName=$(grep "apkFileName" "$extracted_dir_path/apktool.yml" | cut -d ':' -f 2 | tr -d ' "')
-    else 
+    if [ ! -f "$extracted_dir_path/apktool.yml" ]; then 
         abort "Invalid apktool.yml file in: $extracted_dir_path"
     fi
-    mkdir -p "$extracted_dir_path/dist/"
-    java -jar ./dependencies/bin/apktool.jar build "$extracted_dir_path" &>/dev/null
-    if [ $? -ne 0 ]; then
-        abort "Apktool build failed for $extracted_dir_path"
-    fi
 
-    # change compile sdk version:
-    change_xml_values "${extracted_dir_path}/AndroidManifest.xml" "compileSdkVersion" "${BUILD_TARGET_SDK_VERSION}"
-    change_xml_values "${extracted_dir_path}/AndroidManifest.xml" "platformBuildVersionCode" "${BUILD_TARGET_SDK_VERSION}"
-    change_xml_values "${extracted_dir_path}/AndroidManifest.xml" "compileSdkVersionCodename" "${BUILD_TARGET_ANDROID_VERSION}"
-    change_xml_values "${extracted_dir_path}/AndroidManifest.xml" "platformBuildVersionName" "${BUILD_TARGET_ANDROID_VERSION}"
+    # Extract APK file name from apktool.yml dynamically
+    apkFileName=$(grep "apkFileName" "$extracted_dir_path/apktool.yml" | cut -d ':' -f 2 | tr -d ' "')
+    apk_file="${extracted_dir_path}/dist/${apkFileName}"
+
+    # Change compile SDK version before build
+    change_xml_values "compileSdkVersion" "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
+    change_xml_values "platformBuildVersionCode" "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}/AndroidManifest.xml" 
+    change_xml_values "compileSdkVersionCodename" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
+    change_xml_values "platformBuildVersionName" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
     change_yaml_values "minSdkVersion" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
     change_yaml_values "targetSdkVersion" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
     change_yaml_values "version" "${CODENAME_VERSION_REFERENCE_ID}" "${extracted_dir_path}/apktool.yml"
     change_yaml_values "versionName" "${CODENAME}" "${extracted_dir_path}/apktool.yml"
-    change_yaml_values "versionCode" "${CODEVERSION_REFERENCE_YAML}" "${extracted_dir_path}/apktool.yml"
+    change_yaml_values "versionCode" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
 
-    # luna.horizonux.system.settings.nullster-aligned-debugSigned.apk
-    apk_file="$(echo "$extracted_dir_path/dist/*.apk")"
-    if [ -z "$apk_file" ]; then
+    # Build the package
+    mkdir -p "$extracted_dir_path/dist/"
+    if java -jar ./dependencies/bin/apktool.jar build "$extracted_dir_path" &>>"$thisConsoleTempLogFile"; then
+        debugPrint "Successfully built: $apk_file"
+    else
+        abort "Apktool build failed for $extracted_dir_path"
+    fi
+
+    # Ensure built APK exists
+    if [ ! -f "$apk_file" ]; then
         abort "No APK found in $extracted_dir_path/dist/"
     fi
+
+    # Signing the APK
     if [ -z "$MY_KEYSTORE_PATH" ]; then
-        java -jar ./dependencies/bin/signer.jar --apk "$apk_file"
         warns "NOTE: You are using Uber test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
+        java -jar ./dependencies/bin/signer.jar --apk "$apk_file" &>>"$thisConsoleTempLogFile"
     elif [ -f "$MY_KEYSTORE_PATH" ]; then
-        if [ "$MY_KEYSTORE_PATH" == "../test-keys/HorizonUX-testkey.jks" ]; then
-            warns "NOTE: You are using HorizonUX test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
-        fi
+        [ "$MY_KEYSTORE_PATH" == "../test-keys/HorizonUX-testkey.jks" ] && warns "NOTE: You are using HorizonUX test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
         java -jar ./dependencies/bin/signer.jar --apk "$apk_file" \
             --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" \
-            --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD"
+            --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" &>>"$thisConsoleTempLogFile"
     fi
-    rm $apk_file
-    signed_apk="$(echo "$extracted_dir_path/dist/*.apk")"
-    if [ -n "$signed_apk" ]; then
-        mv "$signed_apk" "$app_path/"
-    else
-        abort "No signed APK found in $extracted_dir_path/dist/"
+
+    # Check if the signed APK exists
+    signed_apk=$(find "$extracted_dir_path/dist/" -type f -name "${apk_base_name}*-debugSigned.apk" | head -n 1)
+    if [ ! -f "$signed_apk" ]; then
+        signed_apk=$(find "$extracted_dir_path/dist/" -type f -name "${apk_base_name}*-aligned.apk" | head -n 1)
+        [ ! -f "${signed_apk}" ] && abort "No signed APK found in $extracted_dir_path/dist/"
     fi
+
+    # Move signed APK to target directory
+    mv "$signed_apk" "$app_path/"
+
+    # Cleanup
     rm -rf "$extracted_dir_path/build" "$extracted_dir_path/dist/"
 }
 
@@ -216,45 +240,94 @@ function add_csc_xml_values() {
     # Convert feature_code to uppercase
     feature_code="$(string_format -u "${feature_code}")"
     # check if we have duplicates or not, uf we have anything extra, call the catch_duplicates_in_xml to do the job lol.
-    if [ "$(catch_duplicates_in_xml "${feature_code}" "${TARGET_BUILD_CSC_FEATURE_PATH}")" == "0" ]; then
-        # Create a temporary file to hold the modified content
-        local tmp_file="./tmp_csc"
-        # Read the original file and write to the temporary file
-        {
-        while IFS= read -r line; do
-            echo "${line}"
-            if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
-            echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+    if [ "${TARGET_BUILD_CSC_FEATURE_PATH}" == "USE_LOOP_CONTROL" ]; then
+        for i in "$HORIZON_PRODUCT_DIR/omc/*"; do
+            ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH="$i/conf/cscfeature.xml"
+            if [ -f "$i/conf/cscfeature.xml" ]; then
+                if [ "$(catch_duplicates_in_xml "${feature_code}" "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}")" == "0" ]; then
+                    # Create a temporary file to hold the modified content
+                    local tmp_file="./tmp_csc"
+                    # Read the original file and write to the temporary file
+                    {
+                    while IFS= read -r line; do
+                        echo "${line}"
+                        if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
+                        echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+                        fi
+                    done
+                    } < "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}" > "${tmp_file}"
+                    # write the ending thing cuz this mf is not writing that for some reason.
+                    echo "</SamsungMobileFeature>" >> "${tmp_file}"
+                    # Replace the original file with the modified one
+                    mv "${tmp_file}" "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}"
+                else 
+                    change_xml_values "${feature_code}" "${feature_code_value}" "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}"
+                fi
             fi
         done
-        } < "${TARGET_BUILD_CSC_FEATURE_PATH}" > "${tmp_file}"
-        # write the ending thing cuz this mf is not writing that for some reason.
-        echo "</SamsungMobileFeature>" >> "${tmp_file}"
-        # Replace the original file with the modified one
-        mv "${tmp_file}" "${TARGET_BUILD_CSC_FEATURE_PATH}"
     else
-        change_xml_values "${feature_code}" "${feature_code_value}" "${TARGET_BUILD_CSC_FEATURE_PATH}"
+        if [ "$(catch_duplicates_in_xml "${feature_code}" "${TARGET_BUILD_CSC_FEATURE_PATH}")" == "0" ]; then
+            # Create a temporary file to hold the modified content
+            local tmp_file="./tmp_csc"
+            # Read the original file and write to the temporary file
+            {
+            while IFS= read -r line; do
+                echo "${line}"
+                if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
+                echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+                fi
+            done
+            } < "${TARGET_BUILD_CSC_FEATURE_PATH}" > "${tmp_file}"
+            # write the ending thing cuz this mf is not writing that for some reason.
+            echo "</SamsungMobileFeature>" >> "${tmp_file}"
+            # Replace the original file with the modified one
+            mv "${tmp_file}" "${TARGET_BUILD_CSC_FEATURE_PATH}"
+        else
+            change_xml_values "${feature_code}" "${feature_code_value}" "${TARGET_BUILD_CSC_FEATURE_PATH}"
+        fi
     fi
 }
 
 function tinkerWithCSCFeaturesFile() {
-    if [ "$(echo "$1" | tr '[:upper:]' '[:lower:]')" == "--decode" ]; then
-        if [ ! -f "${TARGET_BUILD_CSC_FEATURE_PATH}" ]; then
-            abort "CSC feature file not found!"
+    local action="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+    local decoder_jar="./dependencies/bin/omc-decoder.jar"
+    local decoded_csc_feature_path="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
+    local original_csc_feature_path="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+    # Ensure decoder exists
+    if [ ! -f "$decoder_jar" ]; then
+        abort "Error: omc-decoder.jar not found!"
+        return 1
+    fi
+    if [ "$action" == "--decode" ]; then
+        if [ ! -f "$original_csc_feature_path" ]; then
+            abort "CSC feature file not found: $original_csc_feature_path"
             return 1
         fi
-        java -jar ../dependencies/bin/omc-decoder.jar -i "${TARGET_BUILD_CSC_FEATURE_PATH}" -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
-        TARGET_BUILD_CSC_FEATURE_PATH="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
-        rm -rf "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
-        export isXmlDecoded=true
-    elif [ "$(echo "$1" | tr '[:upper:]' '[:lower:]')" == "--encode" ]; then
-        if [ "${isXmlDecoded}" == "true" ]; then
-            if [ ! -f "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml" ]; then
-                abort "Decoded CSC feature file not found!"
-                return 1
-            fi
-            java -jar ../dependencies/bin/omc-decoder.jar -e -i "${TARGET_BUILD_CSC_FEATURE_PATH}" -o "$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
+        if [ "$PRODUCT_CSC_NAME" == "USE_LOOP_CONTROL" ]; then
+            for i in "$HORIZON_PRODUCT_DIR/omc/*"; do
+                if [ -f "$i/conf/cscfeature.xml" ]; then
+                    java -jar "$decoder_jar" -i "$i/conf/cscfeature.xml" -o "$i/conf/cscfeature_decoded.xml"
+                fi
+            done
+        else
+            java -jar "$decoder_jar" -i "$original_csc_feature_path" -o "$decoded_csc_feature_path"
         fi
+        # Mark as decoded
+        isXmlDecoded=true
+        debugPrint "CSC feature file successfully decoded."
+
+    elif [ "$action" == "--encode" ]; then
+        if [ "$isXmlDecoded" != "true" ]; then
+            debugPrint "Error: No decoded file found."
+            return 1
+        fi
+        if [ ! -f "$decoded_csc_feature_path" ]; then
+            abort "Error: Decoded CSC feature file not found: $decoded_csc_feature_path"
+            return 1
+        fi
+        # Encode back to original format
+        java -jar "$decoder_jar" -e -i "$decoded_csc_feature_path" -o "$original_csc_feature_path"
+        debugPrint "CSC feature file successfully encoded."
     else
         abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode"
         return 1
@@ -266,21 +339,34 @@ function change_xml_values() {
     local feature_code="$1"
     local feature_code_value="$2"
     local file="$3"
-    # Convert feature_code to lowercase
-    feature_code="$(echo "${feature_code}" | tr '[:upper:]' '[:lower:]')"
+    
+    # DEBUG := TRUE:
+    debugPrint "change_xml_values(): Arguments: $1 $2 $3"
+    
+    # Convert feature_code to uppercase and manifest_attr to lowercase
+    feature_code="$(echo "${feature_code}" | tr '[:lower:]' '[:upper:]')"
+    manifest_attr="$(echo "${feature_code}" | tr '[:upper:]' '[:lower:]')"
+
+    # Check if file is valid
     [ -z "$file" ] && abort "Error: No XML file specified!"
     [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!"
+
     if grep -q "<manifest" "$file"; then
-        if grep -q "${feature_code}=" "$file"; then
-            sed -i "s|\(${feature_code}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
+        # Check if attribute already exists and update it
+        if grep -q "${manifest_attr}=" "$file"; then
+            sed -i "s|\(${manifest_attr}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
         else
-            sed -i "s|<manifest\(.*\)>|<manifest\1 ${feature_code}=\"${feature_code_value}\">|" "$file"
+            # Add attribute **only if it's missing**
+            sed -i "/<manifest/ s|>| ${manifest_attr}=\"${feature_code_value}\">|" "$file"
         fi
     else
+        # Check if <feature_code> element exists
         if grep -qi "<${feature_code}>" "$file"; then
-            sed -i "s|<${feature_code}>.*</${feature_code}>|<${feature_code}>${feature_code}</${feature_code}>|" "$file"
+            # Update existing element value **only if different**
+            sed -i "s|<${feature_code}>[^<]*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|" "$file"
         else
-            sed -i "/<\/config>/i \ \ \ \ <${feature_code}>${feature_code}</${feature_code}>" "$file"
+            # Insert new feature **only if it doesn't exist**
+            sed -i "/<\/config>/i \ \ \ \ <${feature_code}>${feature_code_value}</${feature_code}>" "$file"
         fi
     fi
 }
@@ -326,17 +412,6 @@ function warns_api_limitations() {
     warns "This feature is found on android $adrod_version, report if it doesn't work. thanks!" "TARGET_OUT_OF_BOUNDS"; 
 }
 
-function omc() {
-    local arg="$1"
-    local xml_filename="$2"
-    # bomboclatttttttt 😭😭😭😭😭
-    if [ "${arg}" == "--decode" ]; then
-        java -jar ./dependencies/bin/omc-decoder.jar -i ${xml_filename}.xml -o ${xml_filename}_decoded.xml
-    elif [ "${arg}" == "--encode" ]; then
-        java -jar ./dependencies/bin/omc-decoder.jar -e -i ${xml_filename}_decoded.xml -o ${xml_filename}.xml
-    fi
-}
-
 function ask() {
     local question="$1"
     local answer
@@ -354,8 +429,11 @@ function remove_attributes() {
 
     # log this:
     debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Output File: ${OUTPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
+    touch ${OUTPUT_FILE}
 
 	# Start writing the new XML file
+    [ ! -f "$INPUT_FILE" ] && { debugPrint "Input file wasn't found!"; return 1; }
+    [ -z "$NAME_TO_SKIP" ] && { debugPrint "Attr wasn't provided"; return 1; }
 	{
 		echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 		echo "<manifest version=\"2.0\" type=\"device\" target-level=\"3\">"
@@ -394,8 +472,9 @@ function remove_attributes() {
 	} > "$OUTPUT_FILE"
 
 	# Feedback
-	console_print "Rewritten XML saved to $OUTPUT_FILE, skipping <hal> with name=$NAME_TO_SKIP."
-    debugPrint "remove_attributes(): Rewritten XML saved to $OUTPUT_FILE, skipping <hal> with name=$NAME_TO_SKIP."
+	console_print "Rewritten XML saved to $INPUT_FILE, skipping <hal> with name=$NAME_TO_SKIP."
+    debugPrint "remove_attributes(): Rewritten XML saved to $INPUT_FILE, skipping <hal> with name=$NAME_TO_SKIP."
+    mv ${OUTPUT_FILE} ${INPUT_FILE}
 }
 
 function nuke_stuffs() {
@@ -410,19 +489,19 @@ function nuke_stuffs() {
         "wsm_manifest.xml"
     )
 	local stuffs2nukeininitdir=(
-		"$(absolute_path --vendor)/etc/init/*android.hardware.dumpstate@*.rc"
-		"$(absolute_path --vendor)/etc/init/boringssl_self_test.rc"
-		"$(absolute_path --vendor)/etc/init/cass.rc"
-		"$(absolute_path --vendor)/etc/init/vaultkeeper_common.rc"
-		"$(absolute_path --vendor)/etc/init/pa_daemon_teegris.rc"
-		"$(absolute_path --vendor)/etc/init/wsm-service.rc"
+		"${HORIZON_VENDOR_DIR}/etc/init/*android.hardware.dumpstate@*.rc"
+		"${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc"
+		"${HORIZON_VENDOR_DIR}/etc/init/cass.rc"
+		"${HORIZON_VENDOR_DIR}/etc/init/vaultkeeper_common.rc"
+		"${HORIZON_VENDOR_DIR}/etc/init/pa_daemon_teegris.rc"
+		"${HORIZON_VENDOR_DIR}/etc/init/wsm-service.rc"
 	)
     for service in "security.wsm" "vendor.samsung.hardware.security.proca"; do
         console_print "Removing ${service} service from the system config files..."
-		remove_attributes "${service}"
+		remove_attributes "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml" "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml__" "${service}"
         for line in "${stuffs2nukeinvintf[@]}"; do
-		    if [ -f "$(absolute_path --vendor)/etc/vintf/manifest/${line}" ]; then
-			    rm -f "$(absolute_path --vendor)/etc/vintf/manifest/${line}"
+		    if [ -f "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/${line}" ]; then
+			    rm -f "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/${line}"
 			    console_print "Deleting ${line}..."
 		    fi
 	    done
@@ -433,7 +512,7 @@ function nuke_stuffs() {
 		    fi
 	    done
         # idk man, it feels like it's useless because the vendor has the same codes on a init file.
-        rm -rf "$(absolute_path --vendor)/etc/wlan_common_rc $(absolute_path --vendor)/etc/wlan_vendor_rc"
+        rm -rf "${HORIZON_VENDOR_DIR}/etc/wlan_common_rc ${HORIZON_VENDOR_DIR}/etc/wlan_vendor_rc"
     done
 }
 
@@ -611,25 +690,44 @@ function absolute_path() {
 }
 
 function fetch_rom_arch() {
-    local nvm
-    local jk
-    local arg="$@"
-    for jk in $(absolute_path --system)/build.prop $(absolute_path --system_ext)/build.prop $(absolute_path --product)/build.prop; do
-        cat $jk | grep -q ro.product.cpu.abi && break;
-    done
-    nvm=$(grep_prop $jk)
-    if [[ "$(string_format --lower $nvm)" == "arm64-v8a|armeabi-v7a" ]]; then
-        if [ "$arg" == "--libpath" ]; then
-            case "$(string_format --lower $nvm)" in 
-                arm64-v8a) echo "lib64" ;;
-                armeabi-v7a) echo "lib" ;;
-            esac
-        else 
-            string_format --lower $nvm
+    local arch_file=""
+    local arch=""
+    local arg="$1"
+
+    # Find build.prop file containing architecture info
+    for file in "$HORIZON_SYSTEM_DIR/build.prop" "$HORIZON_SYSTEM_EXT_DIR/build.prop" "$HORIZON_PRODUCT_DIR/build.prop"; do
+        if grep -q "ro.product.cpu.abi" "$file"; then
+            arch_file="$file"
+            break
         fi
-    else
-        abort "Unsupported architecture!!"
+    done
+
+    # Check if no file was found
+    if [ -z "$arch_file" ]; then
+        abort "Error: Could not determine ROM architecture!"
+        return 1
     fi
+
+    # Extract architecture from build.prop
+    arch=$(grep_prop ro.product.cpu.abi "$arch_file" | tr '[:upper:]' '[:lower:]')
+
+    # Check architecture validity
+    case "$arch" in
+        arm64-v8a|armeabi-v7a)
+            if [ "$arg" == "--libpath" ]; then
+                case "$arch" in
+                    arm64-v8a) echo "lib64" ;;
+                    armeabi-v7a) echo "lib" ;;
+                esac
+            else
+                echo "$arch"
+            fi
+            ;;
+        *)
+            abort "Unsupported architecture: $arch"
+            return 1
+            ;;
+    esac
 }
 
 function debugPrint() {

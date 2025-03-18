@@ -140,11 +140,11 @@ debloat_the_crap() {
     for i in "${HORIZON_SYSTEM_DIR}/app/${app[@]}" "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[@]}" \
     "${HORIZON_SYSTEM_EXT_DIR}/priv-app/${system_extra_privilaged_apps[@]}" "${HORIZON_PRODUCT_DIR}/app/${product_apps[@]}" \
     "${HORIZON_PRODUCT_DIR}/priv-app/${product_privilaged_apps[@]}"; do
-    warns "Removing ${i}..." "HorizonDebloater"
+    debugPrint "debloat_the_crap($0): Removing ${i}..."
     if [ -d "${i}" ]; then
-        rm -rf "${i}" 2>./error_ring.log
+        rm -rf "${i}" 2>>./$thisConsoleTempLogFile
     else
-        console_print "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
+        debugPrint "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
     fi
     done
 }
@@ -190,7 +190,7 @@ nuke_or_ignore_these_stuffs() {
         done
         rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/ShareLive"
     fi
-    if ask "Do you want to remove Samsung AR Camera Plugins"
+    if ask "Do you want to remove Samsung AR Camera Plugins"; then
         for ((i = 4; i < 7; i++)); do
             rm -rf "${HORIZON_SYSTEM_DIR}/app/${app[$i]}"
         done
@@ -219,16 +219,23 @@ nuke_or_ignore_these_stuffs() {
     ask "Do you want to nuke Device Care Plugin [performance will be doomed if you let it cook]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[12]}"
     ask "Do you want to nuke Carrier Services such as ESIM and Wifi-Calling" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[14]}"
 }
-
-if [ "${BUILD_TARGET_SDK_VERSION}" == "30|31|32|33|34|35" ]; then
-    console_print "Debloating your rom..."
-    debloat_the_crap
-    nuke_or_ignore_these_stuffs
-elif [ "${BUILD_TARGET_SDK_VERSION}" == "29" ]; then
-    console_print "The list haven't really focused for Android Pie because no one uses it nowadays, sorry.."
-    console_print "Debloating your rom..."
-    debloat_the_crap
-    nuke_or_ignore_these_stuffs
-else
-    console_print "This version of android is not supported, please do a pr if you can, otherwise just report this issue to the bugreporter bot (link can be found in the readme)"
-fi
+case "${BUILD_TARGET_SDK_VERSION}" in
+    30|31|32|33|34|35)
+        console_print "Debloating your ROM..."
+        debloat_the_crap
+        nuke_or_ignore_these_stuffs
+        ;;
+    29)
+        console_print "Debloating your rom..."
+        debloat_the_crap
+        nuke_or_ignore_these_stuffs
+        ;;
+    28)
+        console_print "The list haven't really focused for Android Pie because no one uses it nowadays, sorry.."
+        debloat_the_crap
+        nuke_or_ignore_these_stuffs
+        ;;
+    *)
+        console_print "This version of android is not supported, please do a pr if you can, otherwise just report this issue to the bugreporter bot (link can be found in the readme)"
+        ;;
+esac
