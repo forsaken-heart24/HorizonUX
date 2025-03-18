@@ -16,18 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-new=""
-old=""
-while true; do
-    sleep 0.2
-    old_prop_value=$(getprop | grep 'screen_state' | grep '1')
-    if [ "$old_prop_value" != "1" ]; then
-        if [ -n "$new" ]; then
-            su -c 'echo check_connection > /sys/class/sec/tsp/cmd'
-            new="$old"
+if [ "$(getprop persist.horizonux.brotherboard.touch_fix)" == "available" ]; then
+    while true; do
+        sleep 0.2
+        old_prop_value=$(getprop | grep 'screen_state' | grep '1')
+        if [ "$old_prop_value" != "1" ]; then
+            if [ -n "$new" ]; then
+                su -c 'echo check_connection > /sys/class/sec/tsp/cmd'
+                new="$old"
+            fi
         fi
-    fi
-done &
-echo "$?" > /sdcard/.brotherboard_touch_fix_pid
-echo "$?" > /data/local/tmp/.brotherboard_touch_fix_pid
-cmd notification post -S bigtext -t 'HorizonUX' 'Tag' "Be gone, touch issues! Thanks to brotherboard!"
+    done &
+    echo "$?" > /sdcard/.brotherboard_touch_fix_pid
+    echo "$?" > /data/local/tmp/.brotherboard_touch_fix_pid
+    cmd notification post -S bigtext -t 'HorizonUX' 'Tag' "Be gone, touch issues! Thanks to brotherboard!"
+fi

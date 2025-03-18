@@ -365,12 +365,6 @@ else
 	setprop --system "persist.horizonux.audio.resampler" "unavailable"
 fi
 
-if boolReturn $TARGET_INCLUDE_HORIZON_TOUCH_FIX; then
-	console_print "Adding brotherboard's GSI touch fix..."
-	setprop --system "persist.horizonux.brotherboard.touch_fix" "available"
-	cp -af ./horizon/rom_tweaker_script/brotherboard_touch_fix.sh $HORIZON_SYSTEM_DIR/bin/
-fi
-
 # L, see the dawn makeconfigs.prop file :\
 if boolReturn $TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER_PLUGIN; then
 	for part in $HORIZON_SYSTEM_DIR $HORIZON_VENDOR_DIR; do
@@ -564,6 +558,25 @@ if boolReturn "$BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD"; then
 	add_csc_xml_values "CscFeature_SetupWizard_DisablePrivacyPolicyAgreement" "TRUE"
 fi
 
+# init - ellen + bro board | Courtesy: @BrotherBoard
+if [[ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" || "${TARGET_INCLUDE_HORIZON_TOUCH_FIX}" == "true" ]]; then
+	console_print "Starting to compile bashScriptLoader.."
+	make loader &>>$thisConsoleTempLogFile
+	console_print "bashScriptLoader compiled successfully!"
+	mv ../local_build/binaries/bashScriptLoader $HORIZON_SYSTEM_DIR/bin/ || abort "Failed to move bashScriptLoader to $HORIZON_SYSTEM_DIR/bin/"
+	if [ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" ]; then
+		console_print "HorizonUX Ellen is enabled, please note that this feature is experimental and may cause bootloops, if you face any bootloops, please dm me with the logs."
+		setprop --system "persist.horizonux.ellen" "available"
+		cp -af ./horizon/rom_tweaker_script/horizonux_ellen.sh $HORIZON_SYSTEM_DIR/bin/ || abort "Failed to move horizonux_ellen.sh to $HORIZON_SYSTEM_DIR/bin/"
+	fi
+	if [ "${TARGET_INCLUDE_HORIZON_TOUCH_FIX}" == "true" ]; then
+		console_print "Adding brotherboard's GSI touch fix..."
+		setprop --system "persist.horizonux.brotherboard.touch_fix" "available"
+		cp -af ./horizon/rom_tweaker_script/brotherboard_touch_fix.sh $HORIZON_SYSTEM_DIR/bin/
+	fi
+	cp -af ./horizon/rom_tweaker_script/init.ellen.rc $HORIZON_SYSTEM_DIR/etc/init/
+fi
+
 if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMARTMANAGER_DEVICE"; then
 	console_print "Replacing stock smartmanager and device care with the chinese version..."
 	# mkdir at the temp dir
@@ -654,8 +667,6 @@ change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGE
 setprop --vendor "vendor.audio.offload.buffer.size.kb" "256"
 rm -rf "$HORIZON_SYSTEM_DIR/hidden" "$HORIZON_SYSTEM_DIR/preload" "$HORIZON_SYSTEM_DIR/recovery-from-boot.p" "$HORIZON_SYSTEM_DIR/bin/install-recovery.sh"
 cp -af ./misc/etc/ringtones_and_etc/media/audio/* "$HORIZON_SYSTEM_DIR/media/audio/"
-cat ./horizon/rom_tweaker_script/init.ellen.rc > ../local_build/etc/init.ellen.rc
-cp -af ./horizon/rom_tweaker_script/ellenJoe.sh "$HORIZON_SYSTEM_DIR/bin/"
 change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
 if boolReturn "$TARGET_INCLUDE_CUSTOM_BRAND_NAME"; then
 	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"

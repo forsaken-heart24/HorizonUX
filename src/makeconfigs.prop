@@ -209,6 +209,9 @@ TARGET_REMOVE_SMARTSWITCH_DAEMON=false
 
 # Ellen, a script that spoofs and does some misc jobs if the device is booting.
 TARGET_INCLUDE_HORIZONUX_ELLEN=false
+
+# touch fixes, Thanks to @BrotherBoard
+TARGET_INCLUDE_HORIZON_TOUCH_FIX=false
 ############################################# Exclusive HorizonUX Features #############################################
 
 ############################################# Misc Configs #############################################

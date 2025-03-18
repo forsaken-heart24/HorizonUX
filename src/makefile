@@ -60,9 +60,9 @@ updater: check_compiler
 	    exit 1; \
 	fi
 
-# Build mainModuleLoader
+# Build bashScriptLoader
 loader: check_compiler
-	@echo "Building moduleLoader..."
+	@echo "Building bashScriptLoader..."
 	@if $(COMPILER) -I./include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) $(EXTRA_FLAGS) > $(ERR_LOG) 2>&1; then \
 	    echo "Build successful: $(LOADER_OUTPUT)"; \
 	else \

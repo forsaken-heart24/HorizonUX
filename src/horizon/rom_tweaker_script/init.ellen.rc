@@ -14,3 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+# ok ellen
+service ellen /system/bin/bashScriptLoader --ellen
+    user root
+    group root
+    oneshot
+
+# ok bro board
+service brotherboard_touch_fix /system/bin/bashScriptLoader --brotherboard-touch-fix
+    user root
+    group root
+    oneshot
+
+# for switching to dark mode | Nobletaro's (tarosaya) idea :)
+on property:service.bootanim.progress=1
+    start ellen
+
+# start these daemons
+on property:sys.boot_completed=1
+    start ellen
+    start brotherboard_touch_fix
