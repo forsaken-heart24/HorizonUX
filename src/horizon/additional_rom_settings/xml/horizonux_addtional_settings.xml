@@ -77,6 +77,14 @@
             <intent
                 android:targetPackage="com.samsung.android.app.aodservice"
                 android:targetClass="com.samsung.android.app.aodservice.com.samsung.android.app.clockpack.settings.TestModeSetting" />
+        <SwitchPreference
+            android:title="Force Peak Refresh Rate"
+            android:key="pref_key_peak_refresh_rate"
+            android:summary="Forces Highest refresh rate for improved touch responsiveness &amp; animation quality. Increases battery usage." />
         </Preference>
+        <SwitchPreference
+            android:title="@string/enable_blurs_on_windows_title"
+            android:key="enable_blurs_on_windows"
+            android:summary="@string/enable_blurs_on_windows_summary" />
     </PreferenceCategory>
 </PreferenceScreen>

@@ -344,22 +344,16 @@ function change_xml_values() {
     [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!"
     feature_code="$(echo "${feature_code}" | tr '[:lower:]' '[:upper:]')"
     manifest_attr="${feature_code}"
-    closing_tag=$(grep -oE '</(manifest|SecFloatingFeatureSet|SamsungMobileFeature)>' "$file" | tail -n 1)
-    if [ -z "$closing_tag" ]; then
-        abort "Error: No valid closing tag found in $file!"
-    fi
-    if grep -q "<manifest" "$file"; then
-        if grep -q "${manifest_attr}=" "$file"; then
-            if ! grep -q "${manifest_attr}=\"${feature_code_value}\"" "$file"; then
-                sed -i.bak "s|\(${manifest_attr}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
-                debugPrint "Updated ${manifest_attr} to ${feature_code_value} in $file"
-            else
-                debugPrint "${manifest_attr} is already set to ${feature_code_value}, skipping."
-            fi
+    if grep -q "${manifest_attr}=" "$file"; then
+        if ! grep -q "${manifest_attr}=\"${feature_code_value}\"" "$file"; then
+            sed -i.bak "s|\(${manifest_attr}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
+            debugPrint "Updated ${manifest_attr} to ${feature_code_value} in $file"
+        else
+            debugPrint "${manifest_attr} is already set to ${feature_code_value}, skipping."
         fi
     elif grep -qi "<${feature_code}>" "$file"; then
         if ! grep -q "<${feature_code}>${feature_code_value}</${feature_code}>" "$file"; then
-            sed -i.bak "s|<${feature_code}>[^<]*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|" "$file"
+            sed -i.bak "s|<${feature_code}>[^<]*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|g" "$file"
             debugPrint "Updated <${feature_code}> value to ${feature_code_value}"
         else
             debugPrint "<${feature_code}> is already set to ${feature_code_value}, skipping."
@@ -493,47 +487,25 @@ function remove_attributes() {
 function nuke_stuffs() {
     local service
     local line
-	local shit
-	local stuffs2nukeinvintf=(
-        "engmode_manifest.xml"
-		"vaultkeeper_manifest.xml"
-        "dumpstate-default.xml"
-        "wsm_manifest.xml"
-    )
-	local stuffs2nukeininitdir=(
-	    "${HORIZON_VENDOR_DIR}/etc/init/cass.rc"
-		"${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc"
-		"${HORIZON_VENDOR_DIR}/etc/init/vaultkeeper_common.rc"
-		"${HORIZON_VENDOR_DIR}/etc/init/pa_daemon_teegris.rc"
-		"${HORIZON_VENDOR_DIR}/etc/init/wsm-service.rc"
-	)
-    local binCraps=(
-        "${HORIZON_VENDOR_DIR}/bin/cass"
-        "${HORIZON_VENDOR_DIR}/bin/vaultkeeperd"
-        "${HORIZON_VENDOR_DIR}/bin/vendor.samsung.hardware.security.proca@*-service"
-        "${HORIZON_VENDOR_DIR}/bin/vendor.samsung.hardware.security.vaultkeeper@*-service"
-        "${HORIZON_VENDOR_DIR}/bin/vendor.samsung.hardware.security.wsm@*-service"
-    )
-    for service in "vendor.samsung.hardware.security.wsm" "vendor.samsung.hardware.security.proca"; do
+    local file
+    if [ "${BUILD_TARGET_SDK_VERSION}" == "29|30|31|32|33|34|35" ]; then
         console_print "Removing ${service} service from the system config files..."
-		remove_attributes "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml" "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml__" "${service}"
-        rm -rf "${HORIZON_VENDOR_DIR}/etc/init/android.hardware.dumpstate@*.rc"
-        rm -rf "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/android.hardware.dumpstate*.xml"
-        for line in "${stuffs2nukeinvintf[@]}"; do
-		    if [ -f "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/${line}" ]; then
-			    rm -f "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/${line}"
-			    console_print "Deleting ${line}..."
-		    fi
-	    done
-        for shit in "${stuffs2nukeininitdir[@]}"; do
-		    if [ -f "${shit}" ]; then
-			    rm -f "${shit}"
-			    console_print "Deleting ${shit}...\e[0m"
-		    fi
-	    done
-        # idk man, it feels like it's useless because the vendor has the same codes on a init file.
-        # rm -rf "${HORIZON_VENDOR_DIR}/etc/wlan_common_rc ${HORIZON_VENDOR_DIR}/etc/wlan_vendor_rc"
-    done
+        remove_attributes "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml" "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml__" "vendor.samsung.hardware.security.wsm"
+        echo "${BUILD_TARGET_MODEL}" | grep -E 'G97([035][FNUW0]|7[BNUW])|N97([05][FNUW0]|6[BNQ0]|1N)|T860|F90(0[FN]|7[BN])|M[23]15F' && {
+            for cass in ${HORIZON_SYSTEM_DIR}/../init.rc $HORIZON_VENDOR_DIR/etc/init/cass.rc; do
+                sed -i -e 's/^[^#].*cass.*$/# &/' -re '/\/(system|vendor)\/bin\/cass/,/^#?$/s/^[^#]*$/#&/' "${cass}"
+            done
+        }
+    fi
+    if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
+        for vk in $HORIZON_SYSTEM_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vaultkeeper*; do
+            sed -i -e 's/^[^#].*$/# &/' ${vk}
+        done
+        remove_attributes "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml" "${HORIZON_VENDOR_DIR}/etc/vintf/dosa.manifest.xml" "vaultkeeper"
+    fi
+    find "${HORIZON_VENDOR_DIR}/etc/init/" -name "android.hardware.dumpstate@*.rc" -exec rm -f {} +
+    find "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/" -name "android.hardware.dumpstate*.xml" -exec rm -f {} +
+    rm -rf "${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc" "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/dumpstate-default.xml"
 }
 
 function ADD_THE_WALLPAPER_METADATA() {
@@ -782,7 +754,7 @@ function stack_build_properties() {
     local unforgettable
     local i
     local stacked_temp_properties="${TMPDIR}/$(generate_random_hash 100)___stacked__properties"
-    for i in $HORIZON_HORIZON_PRISM_DIR $HORIZON_HORIZON_PRODUCT_DIR $HORIZON_HORIZON_SYSTEM_DIR $HORIZON_SYSTEM_EXT_DIR $HORIZON_HORIZON_VENDOR_DIR; do
+    for i in $HORIZON_PRODUCT_DIR $HORIZON_SYSTEM_DIR $HORIZON_SYSTEM_EXT_DIR $HORIZON_VENDOR_DIR; do
         if [ -f "${i}/build.prop" ]; then
             for unforgettable in "$(cat "${i}/build.prop")"; do
                 echo "${unforgettable} - ${i}" >> ${stacked_temp_properties}

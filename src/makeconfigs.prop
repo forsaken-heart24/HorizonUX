@@ -55,11 +55,9 @@ CODENAME_VERSION_REFERENCE_ID=0.0
 CODEVERSION_REFERENCE_YAML=0.00001
 
 # Build Target properties..
-BUILD_TARGET_ANDROID_VERSION="$(grep "ro.build.version.release" "$(absolute_path --system)/build.prop" | head -n 1 | cut -c 26-28)"
-BUILD_TARGET_SDK_VERSION="$(grep "ro.build.version.sdk" "$(absolute_path --system)/build.prop" | cut -c 22-23)"
-BUILD_TARGET_MODEL=$(grep "ro.product.system.model" "$(absolute_path --system)/build.prop" | cut -c 25-33)
 BUILD_TARGET_SCREEN_WIDTH=
 BUILD_TARGET_SCREEN_HEIGHT= 
+BUILD_TARGET_USES_DYNAMIC_PARTITIONS=false
 
 # dang
 TARGET_INCLUDE_CUSTOM_BRAND_NAME=false
