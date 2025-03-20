@@ -76,7 +76,7 @@
 ## Miscellaneous 
 - **DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION**: Disables Samsung's ASKS signature verifier, it doesn't have to do anything with the built-in signature verification, only used for samsung applications.
 - **TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES**: Can be used to patch bluetooth libs for weird devices.
-- **TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS**: <a href="https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/rounded_corners_hux_ex.png">Adds rounded corners to the pip window.</a>
+- **TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS**: <a href="https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/rounded_corners_hux_ex.png">Adds rounded corners to the pip window, tap this text to see a example.</a>
 
 ## Advanced, enable or disable these with your own concern
 - **TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER**: This feature removes a file which is necessary for drm / ott platforms, please do note that the widevine level will fallback to L3 which will disable HD playbacks. DRM-protected apps might work after appling this patch but im not sure.
