@@ -225,8 +225,6 @@ function add_float_xml_values() {
             fi
         done
         } < "${TARGET_BUILD_FLOATING_FEATURE_PATH}" > "${tmp_file}"
-        # write the ending thing cuz this mf is not writing that for some reason.
-        echo "</SecFloatingFeatureSet>" >> "${tmp_file}"
         # Replace the original file with the modified one
         mv "${tmp_file}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
     else
@@ -497,15 +495,25 @@ function nuke_stuffs() {
             done
         }
     fi
-    if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
+    if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" != true ]; then
         for vk in $HORIZON_SYSTEM_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vaultkeeper*; do
-            sed -i -e 's/^[^#].*$/# &/' ${vk}
+            [ -f "${vk}" ] && sed -i -e 's/^[^#].*$/# &/' ${vk} && console_print "Disabled VaultKeeper service."
         done
-        remove_attributes "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml" "${HORIZON_VENDOR_DIR}/etc/vintf/dosa.manifest.xml" "vaultkeeper"
+        for proca in $HORIZON_VENDOR_DIR/etc/init/pa_daemon*.rc; do
+            [ -f "${proca}" ] && sed -i -e 's/^[^#]/# &/' ${proca} && console_print "Disabled Proca (Process Authenticator) service."
+        done
     fi
     find "${HORIZON_VENDOR_DIR}/etc/init/" -name "android.hardware.dumpstate@*.rc" -exec rm -f {} +
     find "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/" -name "android.hardware.dumpstate*.xml" -exec rm -f {} +
-    rm -rf "${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc" "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/dumpstate-default.xml"
+    rm -rf "${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc" \
+       "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/dumpstate-default.xml" \
+       "${HORIZON_VENDOR_DIR}/overlay/AccentColorBlack" \
+       "${HORIZON_VENDOR_DIR}/overlay/AccentColorCinnamon" \
+       "${HORIZON_VENDOR_DIR}/overlay/AccentColorGreen" \
+       "${HORIZON_VENDOR_DIR}/overlay/AccentColorOcean" \
+       "${HORIZON_VENDOR_DIR}/overlay/AccentColorOrchid" \
+       "${HORIZON_VENDOR_DIR}/overlay/AccentColorPurple" \
+       "${HORIZON_VENDOR_DIR}/overlay/AccentColorSpace" &> "$thisConsoleTempLogFile"
 }
 
 function ADD_THE_WALLPAPER_METADATA() {
