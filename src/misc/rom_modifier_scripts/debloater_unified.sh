@@ -204,19 +204,13 @@ nuke_or_ignore_these_stuffs() {
         done
         rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[4]}"
     fi
-    console_print "Do you want to remove Device care plugin"
-    if ask "Do you still want to nuke it or let it be in the system"; then
-        for ((i = 4; i < 7; i++)); do
-            rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[$i]}" 2>./error_ring.log
-        done
-    fi
     ask "Do you want to nuke Finder [heavy ram consuption, used to search apps in homescreen]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/Finder"
     if ask "Do you want to nuke Game Launcher and Game Tools [performance will be doomed if you let it cook]"; then
         for ((i = 4; i < 7; i++)); do
             rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[$i]}" 2>./error_ring.log
         done
     fi
-    ask "Do you want to nuke Device Care Plugin [performance will be doomed if you let it cook]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[12]}"
+    ask "Do you want to nuke Device Care Plugin [performance will be doomed if you let it cook]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[7]}"
     ask "Do you want to nuke Carrier Services such as ESIM and Wifi-Calling" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[14]}"
 }
 case "${BUILD_TARGET_SDK_VERSION}" in

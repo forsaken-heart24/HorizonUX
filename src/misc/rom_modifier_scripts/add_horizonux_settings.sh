@@ -24,7 +24,7 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 REFERENCE_ONE='<SecPreference android:icon="@drawable/sec_ic_settings_connections" android:title="@string/tab_category_connections" android:key="top_level_connections" android:summary="@string/summary_placeholder" android:order="-500000" android:fragment="com.samsung.android.settings.connection.ConnectionsSettings" settings:controller="com.samsung.android.settings.homepage.TopLevelConnectionsPreferenceController" settings:keywords="@string/keywords_connections_settings" />'
-NEW_ENTRY='<SecPreferenceScreen android:icon="@drawable/sec_ic_settings_connections" android:title="Horizon Artillery" android:key="horizonux_artillery" android:summary="yet another oneui rom which has some customization things" android:order="-490000" android:fragment="com.focus.Item3" />'
+NEW_ENTRY='<SecPreferenceScreen android:icon="@drawable/sec_ic_settings_connections" android:title="HorizonUX Settings" android:key="horizonux_artillery" android:summary="yet another oneui rom which has some customization things" android:order="-490000" android:fragment="com.focus.Item3" />'
 TEMP_FILE="temp.xml"
 LINES=( $(cat "$XML_FILE") )
 FOUND=0

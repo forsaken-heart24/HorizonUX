@@ -588,20 +588,24 @@ function existance() {
 function download_stuffs() {
     local link="$1"
     local save_path="$2"
-    if [ "$#" -lt 2 ]; then
+    if [ "$#" -lt '2' ]; then
         warns "Arguments are not enough.." "DOWNLOADER"
         return 1
     fi
+    # arg counts
+    debugPrint "download_stuffs(): Arguments: $1 $2"
+    # arg counts
     # Check if the URL is a raw GitHub content
     if [[ "$link" == *"raw.githubusercontent.com"* ]]; then
-        wget -O "$save_path" "$link"
+        wget -O "$save_path" "$link" &>>$thisConsoleTempLogFile
     else
-        curl -L -o "$save_path" "$link"
+        curl -L -o "$save_path" "$link" &>>$thisConsoleTempLogFile
     fi
     # Check if the download failed
     if [ "$?" -ne '0' ]; then
         abort "The download failed..."
     fi
+    return $?
 }
 
 function string_format() {
@@ -655,23 +659,23 @@ function absolute_path() {
     else
         case "$parsed_argument" in
             system)
-                [[ -f "$HORIZON_SYSTEM_DIR/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR" && return
-                [[ -f "$HORIZON_SYSTEM_DIR/system/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR/system" && return
+                [[ -f "$HORIZON_SYSTEM_DIR/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR"
+                [[ -f "$HORIZON_SYSTEM_DIR/system/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR/system"
             ;;
             system_ext)
-                [[ -f "$HORIZON_SYSTEM_DIR/system_ext/etc" ]] && echo "$HORIZON_SYSTEM_DIR/system_ext" && return
+                [[ -f "$HORIZON_SYSTEM_DIR/system_ext/etc" ]] && echo "$HORIZON_SYSTEM_DIR/system_ext"
                 echo "$HORIZON_SYSTEM_EXT_DIR"
             ;;
             vendor)
-                [[ -f "$HORIZON_VENDOR_DIR/build.prop" ]] && echo "$HORIZON_VENDOR_DIR" && return
+                [[ -f "$HORIZON_VENDOR_DIR/build.prop" ]] && echo "$HORIZON_VENDOR_DIR"
                 [[ -f "$HORIZON_VENDOR_DIR/vendor/build.prop" ]] && echo "$HORIZON_VENDOR_DIR/vendor"
             ;;
             product)
-                [[ -f "$HORIZON_PRODUCT_DIR/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR" && return
+                [[ -f "$HORIZON_PRODUCT_DIR/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR"
                 [[ -f "$HORIZON_PRODUCT_DIR/product/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR/product"
             ;;
             prism)
-                [[ -f "$HORIZON_PRISM_DIR/build.prop" ]] && echo "$HORIZON_PRISM_DIR" && return
+                [[ -f "$HORIZON_PRISM_DIR/build.prop" ]] && echo "$HORIZON_PRISM_DIR"
                 [[ -f "$HORIZON_PRISM_DIR/prism/build.prop" ]] && echo "$HORIZON_PRISM_DIR/prism"
             ;;
             *)
@@ -984,10 +988,7 @@ function verify() {
 
 # stupid FUCKING function that i have to FUCKING make it to FUCKING fix my FUCKING code.
 function boolReturn() {
-    local fuckingValue="$@"
-    local fuckThisFuckingValue="$(string_format -l $fuckingValue)"
-    if [[ "$fuckThisFuckingValue" == "true" || "$fuckThisFuckingValue" == "0" ]]; then
-        return 0
-    fi
+    local value="$(string_format -l "$@")"
+    [[ "$value" == "true" || "$value" == "0" ]] && return 0
     return 1
 }
