@@ -3,13 +3,13 @@
 # To compile for arm64:
 ```
 cd HorizonUX/src
-make loader COMP_DEF="arm64"
+make bootloop_saviour COMP_DEF="arm64"
 ```
 
 # To compile for other arch (gcc should be present):
 ```
 cd HorizonUX/src
-make loader
+make bootloop_saviour
 ```
 
 # Build Errors:
@@ -19,5 +19,5 @@ make loader
 - look into the code and mod it in your way, if you find any bugs please do a pull-request. Thanks :D
 
 ## What Does This Do?
-- This binary acts as a shell script loader.
-- Since we can’t directly run shell scripts, I made this as a workaround! >3
+- This init daemon disables all Magisk modules if the Zygote process has a different PID (process id) every 5 seconds
+- Helpful for recovering from bootloops caused by unstable modules.

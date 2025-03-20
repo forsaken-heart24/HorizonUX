@@ -33,6 +33,7 @@ int sendToastMessages(const char *service, const char *message);
 int manageBlocks(const char *infile, const char *outfile, size_t block_size, size_t count);
 void sendNotification(const char *message);
 char *getSystemProperty(const char *filepath, const char *propertyVariableName);
+int getSystemProperty__(const char *filepath, const char *propertyVariableName);
 int maybeSetProp(const char *property, const char *expectedPropertyValue, const char *typeShyt);
 int DoWhenPropisinTheSameForm(const char *property, const char *expectedPropertyValue);
 

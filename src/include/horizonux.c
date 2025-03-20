@@ -168,6 +168,36 @@ char *getSystemProperty(const char *filepath, const char *propertyVariableName) 
     return "KILL.796f7572.73656c660a";
 }
 
+int getSystemProperty__(const char *filepath, const char *propertyVariableName) {
+    char buildProperty[256];  
+    FILE *file = fopen(filepath, "r");
+    if(!file) {
+        snprintf(buildProperty, sizeof(buildProperty), "getprop %s", propertyVariableName);
+        FILE *cmd = popen(buildProperty, "r");
+        if(cmd) {
+            if(fgets(buildProperty, sizeof(buildProperty), cmd)) {
+                buildProperty[strcspn(buildProperty, "\r\n")] = 0;
+            }
+            pclose(cmd);
+            return buildProperty[0] ? atoi(buildProperty) : -1;
+        }
+        return -1;
+    }
+    char line[256];
+    size_t propertyLen = strlen(propertyVariableName);
+    while(fgets(line, sizeof(line), file)) {
+        if(strncmp(line, propertyVariableName, propertyLen) == 0 && line[propertyLen] == '=') {
+            strncpy(buildProperty, line + propertyLen + 1, sizeof(buildProperty) - 1);
+            buildProperty[sizeof(buildProperty) - 1] = '\0';
+            buildProperty[strcspn(buildProperty, "\r\n")] = 0;
+            fclose(file);
+            return atoi(buildProperty);
+        }
+    }
+    fclose(file);
+    return -1;
+}
+
 int maybeSetProp(const char *property, const char *expectedPropertyValue, const char *typeShyt) {
     if(strcmp(getSystemProperty("ok", property), expectedPropertyValue) == 0) {
         return executeCommands(combineShyt("resetprop", typeShyt), false);

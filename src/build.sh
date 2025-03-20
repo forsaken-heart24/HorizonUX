@@ -72,7 +72,7 @@ console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%
 console_print "The Current Username : $BUILD_USERNAME"
 console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
 console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
-console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')"
+console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 console_print "Do you want to mount super image and proceed?"
@@ -117,9 +117,15 @@ elif [ "$BATTLEMAGE_BUILD" == "true" ]; then
 fi
 
 # Locate build.prop files
-HORIZON_PRODUCT_PROPERTY_FILE=${HORIZON_PRODUCT_DIR}/build.prop
+HORIZON_PRODUCT_PROPERTY_FILE=$(
+	[ -f "${HORIZON_PRODUCT_DIR}/build.prop" ] && echo ${HORIZON_PRODUCT_DIR}/build.prop
+	echo ${HORIZON_PRODUCT_DIR}/etc/build.prop
+)
 HORIZON_SYSTEM_PROPERTY_FILE=${HORIZON_SYSTEM_DIR}/build.prop
-HORIZON_SYSTEM_EXT_PROPERTY_FILE=${HORIZON_SYSTEM_EXT_DIR}/build.prop
+HORIZON_SYSTEM_EXT_PROPERTY_FILE=$(
+	[ -f "${HORIZON_SYSTEM_EXT_DIR}/build.prop" ] && echo ${HORIZON_SYSTEM_EXT_DIR}/build.prop
+	echo ${HORIZON_SYSTEM_EXT_DIR}/etc/build.prop
+)
 HORIZON_VENDOR_PROPERTY_FILE=${HORIZON_VENDOR_DIR}/build.prop
 
 # Locate overlay paths
@@ -671,7 +677,7 @@ change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "
 if boolReturn "$TARGET_INCLUDE_CUSTOM_BRAND_NAME"; then
 	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
 fi
-existance "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" && touch "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so"
+[ -f "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" ] && touch "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so"
 for i in "logcat.live disable" "sys.dropdump.on Off" "profiler.force_disable_err_rpt 1" "profiler.force_disable_ulog 1" \
 		 "sys.lpdumpd 0" "persist.device_config.global_settings.sys_traced 0" "persist.traced.enable 0" "persist.sys.lmk.reportkills false" \
 		 "log.tag.ConnectivityManager S" "log.tag.ConnectivityService S" "log.tag.NetworkLogger S" \
@@ -679,11 +685,6 @@ for i in "logcat.live disable" "sys.dropdump.on Off" "profiler.force_disable_err
 		# use echo to null-terminate the var value.
 		setprop --system "$(echo "${i}" | awk '{printf $1}')" "$(echo "${i}" | awk '{printf $2}')"
 done
-if existance "./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/"; then
-	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsungloop.qmg "$HORIZON_SYSTEM_DIR/media/"
-	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/bootsamsung.qmg "$HORIZON_SYSTEM_DIR/media/"
-	cp -af ./horizon/bootanimations/${BUILD_TARGET_SCREEN_WIDTH}x${BUILD_TARGET_SCREEN_HEIGHT}/shutdown.qmg "$HORIZON_SYSTEM_DIR/media/"
-fi
 case "${BUILD_TARGET_SDK_VERSION}" in
     28)
         apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[4]}"

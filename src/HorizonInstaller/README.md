@@ -37,4 +37,7 @@ make updater
 - **tarballPassword**: Tar file password, the installation will be suspended if the password is not shipped or it's wrong.
 - **shippedAs**: This variable can be: tarProtected (password protected tar), tar, sparse, and raw (which is the raw image factor)
 
+## What Does This Do?
+- This binary is used for installing Horizon builds in recovery mode
+
 ## Please do note that you shouldn't change any variables that are not mentioned here unless yk anything about it.

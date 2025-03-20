@@ -10,6 +10,7 @@
 **PRODUCT_DIR**: Put your extracted product folder path there.
 **TARGET_BUILD_FLOATING_FEATURE_PATH**: Floating features exact dir.
 **BUILD_TARGET_USES_DYNAMIC_PARTITIONS**: Set this to true if you have a device with Dynamic Partition Scheme
+**PRODUCT_CSC_NAME**: The csc code of your product image, don't put random string there.
 
 ## Device Name & Setup
 - **TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES**: Enables custom welcome message during setup.
@@ -97,9 +98,6 @@
 - **BUILD_TARGET_SHUTDOWN_ANIMATION_FPS**: Same applies for this variable
 - **RECOVERY_IMAGE_PATH**: To be filled by the builder if they want to patch their device's recovery.
 - **TARGET_INCLUDE_HORIZONUX_ELLEN**: Ellen, a script that spoofs and does some misc jobs when the device is booting. (kinda like a "tweaker" but it doesn't do anything to performance)
-
-## Fill these to prevent build errors.
-- **PRODUCT_CSC_NAME**: The csc code of your product image, don't put random string there.
 
 ---
 
