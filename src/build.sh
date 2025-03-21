@@ -660,6 +660,10 @@ fi
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 debugPrint "End of the script, running misc stuffs.."
 console_print "Running misc jobs..."
+setprop --vendor ro.config.ringtone whatever.ogg
+setprop --vendor ro.config.ringtone_2 whatever.ogg
+setprop --vendor ro.config.notification_sound Twitch.ogg
+setprop --vendor ro.config.notification_sound_2 Bling.ogg
 add_csc_xml_values "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Settings_GOTA" "TRUE"

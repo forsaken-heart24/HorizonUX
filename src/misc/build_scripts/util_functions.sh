@@ -46,6 +46,11 @@ function setprop() {
         propFile=$(check_build_prop "${HORIZON_SYSTEM_EXT_DIR}")
     elif string_format --lower "$1" | grep -q "vendor"; then
         propFile=$(check_build_prop "${HORIZON_VENDOR_DIR}")
+    # setprop --custom "/vendor/odm/etc/build.prop" "ro.is_siam" "true"
+    elif string_format --lower "$1" | grep -q "custom"; then
+        propVariableName="$3"
+        propValue="$4"
+        propFile=$(if [ -f "$2" ]; then echo "$2"; else echo "$HORIZON_VENDOR_PROPERTY_FILE"; fi)
     fi
     awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
     mv ${propFile}.tmp ${propFile}
