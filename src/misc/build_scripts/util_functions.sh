@@ -488,37 +488,40 @@ function remove_attributes() {
 }
 
 function nuke_stuffs() {
-    local service
-    local line
-    local file
-    if [ "${BUILD_TARGET_SDK_VERSION}" == "29|30|31|32|33|34|35" ]; then
-        console_print "Removing ${service} service from the system config files..."
-        remove_attributes "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml" "${HORIZON_VENDOR_DIR}/etc/vintf/manifest.xml__" "vendor.samsung.hardware.security.wsm"
-        echo "${BUILD_TARGET_MODEL}" | grep -E 'G97([035][FNUW0]|7[BNUW])|N97([05][FNUW0]|6[BNQ0]|1N)|T860|F90(0[FN]|7[BN])|M[23]15F' && {
+    if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 29 && "${BUILD_TARGET_SDK_VERSION}" -le 34 ]]; then
+        console_print "Removing some services from the system config files..."
+        grep_prop "ro.product.vendor.model" "${HORIZON_VENDOR_PROPERTY_FILE}" | grep -E 'G97([035][FNUW0]|7[BNUW])|N97([05][FNUW0]|6[BNQ0]|1N)|T860|F90(0[FN]|7[BN])|M[23]15F' && {
             for cass in ${HORIZON_SYSTEM_DIR}/../init.rc $HORIZON_VENDOR_DIR/etc/init/cass.rc; do
                 sed -i -e 's/^[^#].*cass.*$/# &/' -re '/\/(system|vendor)\/bin\/cass/,/^#?$/s/^[^#]*$/#&/' "${cass}"
             done
         }
+        if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
+            for useless_service_def in $HORIZON_VENDOR_DIR/etc/vintf/manifest.xml $HORIZON_SYSTEM_DIR/etc/vintf/compatibility_matrix.device.xml $HORIZON_VENDOR_DIR/etc/vintf/manifest/vaultkeeper_manifest.xml; do
+                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.vaultkeeper"
+                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.proca"
+                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.wsm"
+            done
+            for vk in $HORIZON_SYSTEM_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vaultkeeper*.rc; do
+                [ -f "${vk}" ] && sed -i -e 's/^[^#].*$/# &/' ${vk} && console_print "Disabled VaultKeeper service."
+            done
+            for proca in $HORIZON_VENDOR_DIR/etc/init/pa_daemon*.rc; do
+                [ -f "${proca}" ] && sed -i -e 's/^[^#]/# &/' ${proca} && console_print "Disabled Proca (Process Authenticator) service."
+            done
+        fi
+        rm -rf "${HORIZON_VENDOR_DIR}/overlay/AccentColorBlack" \
+        "${HORIZON_VENDOR_DIR}/overlay/AccentColorCinnamon" \
+        "${HORIZON_VENDOR_DIR}/overlay/AccentColorGreen" \
+        "${HORIZON_VENDOR_DIR}/overlay/AccentColorOcean" \
+        "${HORIZON_VENDOR_DIR}/overlay/AccentColorOrchid" \
+        "${HORIZON_VENDOR_DIR}/overlay/AccentColorPurple" \
+        "${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc"
+        "${HORIZON_VENDOR_DIR}/overlay/AccentColorSpace" &> "$thisConsoleTempLogFile"
+        if [ "${TARGET_DISABLE_FILE_BASED_ENCRYPTION}" == "true" ]; then
+            for fstab__ in $HORIZON_VENDOR_DIR/etc/fstab.*; do
+                sed -i -e 's/^\([^#].*\)fileencryption=[^,]*\(.*\)$/# &\n\1encryptable\2/g' ${fstab__}
+            done
+        fi
     fi
-    if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" != true ]; then
-        for vk in $HORIZON_SYSTEM_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vaultkeeper*; do
-            [ -f "${vk}" ] && sed -i -e 's/^[^#].*$/# &/' ${vk} && console_print "Disabled VaultKeeper service."
-        done
-        for proca in $HORIZON_VENDOR_DIR/etc/init/pa_daemon*.rc; do
-            [ -f "${proca}" ] && sed -i -e 's/^[^#]/# &/' ${proca} && console_print "Disabled Proca (Process Authenticator) service."
-        done
-    fi
-    find "${HORIZON_VENDOR_DIR}/etc/init/" -name "android.hardware.dumpstate@*.rc" -exec rm -f {} +
-    find "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/" -name "android.hardware.dumpstate*.xml" -exec rm -f {} +
-    rm -rf "${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc" \
-       "${HORIZON_VENDOR_DIR}/etc/vintf/manifest/dumpstate-default.xml" \
-       "${HORIZON_VENDOR_DIR}/overlay/AccentColorBlack" \
-       "${HORIZON_VENDOR_DIR}/overlay/AccentColorCinnamon" \
-       "${HORIZON_VENDOR_DIR}/overlay/AccentColorGreen" \
-       "${HORIZON_VENDOR_DIR}/overlay/AccentColorOcean" \
-       "${HORIZON_VENDOR_DIR}/overlay/AccentColorOrchid" \
-       "${HORIZON_VENDOR_DIR}/overlay/AccentColorPurple" \
-       "${HORIZON_VENDOR_DIR}/overlay/AccentColorSpace" &> "$thisConsoleTempLogFile"
 }
 
 function ADD_THE_WALLPAPER_METADATA() {

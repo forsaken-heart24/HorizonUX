@@ -138,6 +138,9 @@ TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS=false
 TARGET_ADD_EXTRA_ANIMATION_SCALES=false
 TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS=false
 
+# Disables fbe (file based encryption) on internal storage
+TARGET_DISABLE_FILE_BASED_ENCRYPTION=false
+
 # bring fastboot mode on samsung launched with android 10.
 TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED=false
 
