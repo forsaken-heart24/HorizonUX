@@ -58,7 +58,6 @@ char *getPreviousSystemBuildID(const char *filepath);
 void extractThisFileFromMe(const char *fileToExtract, bool skipErrors);
 void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath);
 bool copyIncrementalFiles(const char *partitionPath, char *partition);
-int consoleLog(char *text, char *extr_factor);
 bool verifyMD5Hashes(const char *file__, const char *expected_hash__);
 bool installLowLevelImages(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___);
 char *getSystemProperty(const char *filepath, const char *propertyVariableName);

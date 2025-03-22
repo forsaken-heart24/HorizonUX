@@ -275,15 +275,6 @@ bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     return true;
 }
 
-// logs to console
-int consoleLog(char *text, char *extr_factor) {
-    FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
-    if(!log4horizon) return 1;
-    fprintf(log4horizon, "%s %s\n", text, extr_factor);
-    fclose(log4horizon);
-    return 0;
-}
-
 bool verifyMD5Hashes(const char *file__, const char *expected_hash__) {
     char combine[128];
     char md5sum[80];

@@ -193,3 +193,12 @@ char *combineShyt(const char *command, const char *value) {
     snprintf(buffer, 128, "%s %s", command, value);
     return buffer;
 }
+
+// logs to console
+int consoleLog(char *text, char *extr_factor) {
+    FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
+    if(!log4horizon) return 1;
+    fprintf(log4horizon, "%s %s\n", text, extr_factor);
+    fclose(log4horizon);
+    return 0;
+}

@@ -29,6 +29,7 @@ void disableMagiskModules() {
         }
     }
     closedir(dirptr);
+    executeCommands("rm -rf /cache/.system_booting /data/unencrypted/.system_booting /metadata/.system_booting /persist/.system_booting /mnt/vendor/persist/.system_booting", false);
     executeCommands("reboot", false);
 }
 
@@ -39,13 +40,17 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     int zygote_pid = getSystemProperty__("hi", "init.svc_debug_pid.zygote");
+    consoleLog("First Zygote PID:", zygote_pid);
+    consoleLog("Sleeping for 5s to get the new or old zygote pid....", " ");
     sleep(5);
     int zygote_pid2 = getSystemProperty__("hi", "init.svc_debug_pid.zygote");
+    consoleLog("Second Zygote PID:", zygote_pid2);
+    consoleLog("Sleeping for 5s to get the new or old zygote pid....", " ");
     sleep(5);
     int zygote_pid3 = getSystemProperty__("hi", "init.svc_debug_pid.zygote");
+    consoleLog("Third Zygote PID:", zygote_pid3);
     if(zygote_pid <= 1) {
         disableMagiskModules();
-        executeCommands("rm -rf /cache/.system_booting /data/unencrypted/.system_booting /metadata/.system_booting /persist/.system_booting /mnt/vendor/persist/.system_booting", false);
     }
     if(zygote_pid != zygote_pid2 || zygote_pid2 != zygote_pid3) {
         sleep(15);

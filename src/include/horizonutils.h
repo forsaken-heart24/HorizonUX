@@ -42,5 +42,6 @@ int searchBlockListedStrings(const char *__filename, const char *__search_str);
 int verifyScriptStatusUsingShell(const char *__filename);
 int checkBlocklistedStringsNChar(const char *__haystack);
 char *combineShyt(const char *command, const char *value);
+int consoleLog(char *text, char *extr_factor);
 
 #endif
