@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "horizonutils.h"
+#include <horizonutils.h>
 
 void error_print(const char *Message) {
     if(WRITE_DEBUG_MESSAGES_TO_CONSOLE == true) {
@@ -33,9 +33,20 @@ void error_print(const char *Message) {
 }
 
 void error_print_extended(const char *message, const char *additional_args) {
-    char premigga[200];
-    snprintf(premigga, sizeof(premigga), "%s %s", message, additional_args);
-    error_print(premigga);
+    if(!message) {
+        error_print("error_print_extended(): Message cannot be NULL!");
+        return;
+    }
+    const char *safe_args = additional_args ? additional_args : "";
+    size_t kimikimi_ = strlen(message) + strlen(safe_args) + 2;
+    char *kimikimi = malloc(kimikimi_);
+    if(!kimikimi) {
+        error_print("error_print_extended(): Failed to allocate memory.");
+        return;
+    }
+    snprintf(kimikimi, kimikimi_, "%s %s", message, safe_args);
+    free(kimikimi);
+    error_print(kimikimi);
 }
 
 bool erase_file_content(const char *__file) {
@@ -53,7 +64,7 @@ int executeCommands(const char *command, bool requiresOutput) {
         exit(1);
     }
     char *command__ = malloc(strlen(command) + 1);
-    if(command__ == NULL) {
+    if(!command__) {
         error_print("executeCommands(): Failed to allocate memory.");
         return 1;
     }
@@ -73,7 +84,7 @@ int executeCommands(const char *command, bool requiresOutput) {
     }
     int __exit_status = pclose(fp);
     if(__exit_status == -1) {
-        error_print("executeCommands(): Failed to close process.");
+        error_print("executeCommands(): Failed to close the dawn file for some dawn reason.");
         return 1;
     }
     return (WIFEXITED(__exit_status)) ? WEXITSTATUS(__exit_status) : 1;
@@ -86,14 +97,14 @@ int executeScripts(const char *__script__file, const char *__args, bool requires
     }
     size_t sizeOfTheDawn = strlen(__script__file) + strlen(__args) + 5;
     char *commandAlloc = malloc(sizeOfTheDawn);
-    if(commandAlloc == NULL) {
+    if(!commandAlloc) {
         error_print("executeScripts(): Failed to allocate memory.");
         return 1;
     }
     snprintf(commandAlloc, sizeOfTheDawn, "'%s' %s", __script__file, __args ? __args : "");
     FILE *scriptWithArguments  = popen(commandAlloc, "r");
     free(commandAlloc);
-    if(scriptWithArguments == NULL) {
+    if(!scriptWithArguments) {
         error_print("executeScripts(): Failed to execute script.");
         return 1;
     }
@@ -118,7 +129,7 @@ int executeScripts(const char *__script__file, const char *__args, bool requires
 int searchBlockListedStrings(const char *__filename, const char *__search_str) {
     size_t sizeOfTheseCraps = sizeof(__filename) + sizeof(__search_str) + 3;
     char *command = malloc(sizeOfTheseCraps);
-    if(command == NULL) {
+    if(!command) {
         error_print("searchBlockListedStrings(): Failed to allocate memory.");
         return 1;
     }
@@ -209,9 +220,13 @@ int checkBlocklistedStringsNChar(const char *__haystack) {
 }
 
 char *combineShyt(const char *command, const char *value) {
-    char *buffer = malloc(128);
-    if (!buffer) return NULL;  // Handle memory allocation failure
-    snprintf(buffer, 128, "%s %s", command, value);
+    size_t nom_nom = strlen(command) + strlen(value) + 2;
+    char *buffer = (char *)malloc(nom_nom);
+    if (!buffer) {
+        error_print("combineShyt(): Failed to allocate memory.");
+        return NULL;
+    }
+    snprintf(buffer, nom_nom, "%s %s", command, value);
     return buffer;
 }
 

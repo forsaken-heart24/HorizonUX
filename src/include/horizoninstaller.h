@@ -43,6 +43,11 @@ extern char *whatisOTAType;
 extern char OUTFD[256];
 extern char *ZIPFILE;
 
+// special extern variables, no need to change these.
+extern char *systemDir;
+extern char *systemBuildProp;
+extern char *systemHostsFilePath;
+
 // functions
 bool verifyInstallationType(const char *requiredType, const char *zipPackage);
 bool checkInternalStorageStatus();

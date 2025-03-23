@@ -15,9 +15,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "horizonux.h"
-#include "horizonutils.h"
-#include "horizoninstaller.h"
+#include <horizonux.h>
+#include <horizonutils.h>
+#include <horizoninstaller.h>
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
 // debugging shits ig
@@ -41,7 +41,7 @@ bool tarballHasPasswordProtection = false;
 
 //char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto___horizonROMInstaller.log";
 char *LOG4HORIZONFILE = "/sdcard/Horizon/logs/teto___horizonROMInstaller.log";
-const char *thisPatchBuildID = "";
+char *thisPatchBuildID = "";
 
 // wanana BANG!
 char *whatisOTAType = "Incremental"; // This string can be: "Incremental" or "Reinstall". The name suggests it all.
@@ -58,22 +58,22 @@ char OUTFD[256] = {0};
 
 // low level partition flashing, ex boot, recovery xbl_config and etc
 char *lowLevelPartitionFlashables[] = {"mizuki", "hideo"};
-char *lowLevelPartitionBlockPaths[] = {"mizuki", "hideo"};
+char *lowLevelPartitionBlockPaths[] = {"/dev/block/by-name/mizuki", "/dev/block/by-name/hideo"};
 char *lowLevelPartitionFlashablesMD5SUM[] = {"64e282071257bec90215eccf413dfc8e", "64e7bbe8e51a6c2698c1e542e5c4b9e1"};
 
 // high level partition flashing, ex system / super...
 char *partitionFlashables[] = {"mizuki", "hideo"};
-char *partitionBlockPaths[] = {"mizuki", "hideo"};
+char *partitionBlockPaths[] = {"/dev/block/by-name/mizuki", "/dev/block/by-name/hideo"};
 char *partitionFlashablesMD5SUM[] = {"64e282071257bec90215eccf413dfc8e", "64e7bbe8e51a6c2698c1e542e5c4b9e1"};
 
 // device codename here, ex: ellen (first device) | joe (second device)
 char supportedDevicesList[] = "beyond0 | beyond0lte";
 
 // mountables, ig
-char *rrrrrrrrrrrr[] = {"system", "vendor", "product", "prism"};
+char *rrrrrrrrrrrr[] = {"system", "vendor", "product"};
 
 // generic partition mount paths
-char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product", "/prism"};
+char *genericPartitionPaths[] = {"/system", "/system_root", "/vendor", "/product"};
 
 // rom (files) path identifier, don't change anything!
 char *systemDir = "/system/system";
@@ -93,12 +93,10 @@ bool createSnapshot = false;
 
 int main(int argc, const char *argv[]) {
     // for testing this bin
-    if(strcmp((char *)argv[1], "--test") == 0) {
+    if(strcmp(argv[1], "--test") == 0) {
         printf("main(): HorizonInstaller works!\n");
         return 0;
     }
-    // for closing terminal after testing stdin aka OUTFD
-    throwMessagesToConsole(" ", " ", false);
     if(argc < 5) {
         abort__("- Not enough arguments provided!", " ");
     }
@@ -106,6 +104,8 @@ int main(int argc, const char *argv[]) {
     extractThisFileFromMe("rom.prop", false);
     ZIPFILE = strdup(argv[4]);
     snprintf(OUTFD, sizeof(OUTFD), "/proc/self/fd/%s", argv[3]);
+    // for closing terminal after testing stdin aka OUTFD
+    throwMessagesToConsole(" ", " ", false);
     // mkdir syntax: mkdir("/some/directory", 0700);
     if(checkInternalStorageStatus()) {
         mkdir("/sdcard/Horizon", 0777);
@@ -157,12 +157,12 @@ int main(int argc, const char *argv[]) {
     throwMessagesToConsole("Version   :", version, false);
     throwMessagesToConsole("Codename  :", codename, false);
     throwMessagesToConsole("Present ROM Build ID  :", getPreviousSystemBuildID(systemBuildProp), false);
-    throwMessagesToConsole("This ROM Build ID  :", (char *)thisPatchBuildID, false);
+    throwMessagesToConsole("This ROM Build ID  :", thisPatchBuildID, false);
     throwMessagesToConsole("###############################################", " ", false);
     backupHostsFileFromCurrentSystem("backup", systemHostsFilePath);
     throwMessagesToConsole("- Installing packages...", " ", false);
     throwMessagesToConsole("  please wait, it might take longer than usual..", " ", false);
-    if((strcmp(whatisOTAType, "Incremental") == 0 && isHotFixAndShouldBeSkipped) || (strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0)) {
+    if((strcmp(whatisOTAType, "Incremental") == 0 && isHotFixAndShouldBeSkipped) || (strcmp(thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0)) {
         for(int i = 0; i < ARRAY_SIZE(genericPartitionPaths); i++) {
             isThisPartitionMounted(genericPartitionPaths[i], true);
         }
@@ -180,7 +180,7 @@ int main(int argc, const char *argv[]) {
             }
         }        
     }
-    else if(strcmp(whatisOTAType, "Reinstall") == 0 && isHotFixAndShouldBeSkipped || strcmp((char *)thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
+    else if(strcmp(whatisOTAType, "Reinstall") == 0 && isHotFixAndShouldBeSkipped || strcmp(thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
         for(int i = 0; i < ARRAY_SIZE(partitionFlashables); i++) {
             installGivenDiskImageFile(INSTALLER_PATH, partitionBlockPaths[i], partitionFlashables[i], partitionFlashablesMD5SUM[i]);
         }

@@ -38,7 +38,7 @@ SAVIOUR_MAIN = ./bootloopSaviour/main.c
 ERR_LOG = ../local_build/logs/compiler__errors
 
 # Default: Build both
-all: updater loader
+all: updater loader bootloop_saviour
 
 # Check if the compiler exists
 check_compiler:

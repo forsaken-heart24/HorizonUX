@@ -37,16 +37,18 @@ bool checkInternalStorageStatus() {
 // throws the installation messages.
 void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog) {
     if (!text || !extr_factor) return;
-    char combine[1028];
-    snprintf(combine, sizeof(combine), "%s %s\n", text, extr_factor);
+    size_t purina = strlen(text) + strlen(extr_factor) + 2;
+    char *kasane = malloc(purina);
+    snprintf(kasane, purina, "%s %s\n", text, extr_factor);
     FILE *OUTFD__ = fopen(OUTFD, "w");
     if(!OUTFD__) {
         consoleLog("throwMessagesToConsole(): Unable to open OUTFD, closing the console!", " ");
         exit(1);
     }
-    fprintf(OUTFD__, "%s", combine);
-    fclose(OUTFD__);   
-    if(putThisinLog) consoleLog(combine, " ");
+    fprintf(OUTFD__, "%s", kasane);
+    fclose(OUTFD__);
+    free(kasane);
+    if(putThisinLog) consoleLog(kasane, " ");
 }
 
 // throws installation messages and stops installation
@@ -72,7 +74,7 @@ void setupRecoveryCommandFile() {
 
 // checks if partition is mounted
 bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMountit) {
-    if(!baselinePartitionName) return false;
+    if (!baselinePartitionName) return false;
     FILE *mounts = fopen("/proc/mounts", "r");
     if(!mounts) {
         abort__("Failed to open /proc/mounts", " ");
@@ -86,43 +88,29 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
             break;
         }
     }
-    fclose(mounts);
     if(!partitionIsMounted) {
-        consoleLog("Partition is not mounted:", (char *)baselinePartitionName);
+        fclose(mounts);
+        consoleLog("Partition is not mounted:", baselinePartitionName);
         return false;
     }
+    fclose(mounts);
     if(DoiNeedToMountit) {
-        char mountCommand[128];
-        snprintf(mountCommand, sizeof(mountCommand), "mount -o rw,remount %s", baselinePartitionName);
-        if(executeCommands(mountCommand, false) != 0) {
+        size_t tetoris = 21 + strlen(baselinePartitionName) + 2;
+        char *teteteteteto = malloc(tetoris);
+        if(!teteteteteto) {
+            error_print("isThisPartitionMounted(): Failed to dynamically allocate memory for the requested operation!");
+            return false;
+        }
+        snprintf(teteteteteto, tetoris, "mount -o rw,remount %s", baselinePartitionName);
+        if(executeCommands(teteteteteto, false) != 0) {
+            free(teteteteteto);
             abort__("- Failed to re-mount partition", " ");
             return false;
         }
-        return isThisPartitionMounted(baselinePartitionName, false);
-    }   
-    consoleLog("Partition is already mounted:", (char *)baselinePartitionName);
+        free(teteteteteto);
+        consoleLog("Anyways bro, this partition is mounted:", baselinePartitionName);
+    }
     return true;
-}
-
-// checks ROM properties
-bool getRomProperties(char *requiredProperty, char *requiredPropertyValue) {
-    char content[200];
-    char combinedBullshit[200];
-    FILE *romPropertyFile = fopen("/dev/tmp/install/rom.prop", "r");
-    if(!romPropertyFile) {
-        consoleLog("getRomProperties(): Failed to open ROM config file", "(/dev/tmp/install/rom.prop)");
-        return false;
-    }
-    snprintf(combinedBullshit, sizeof(combinedBullshit), "%s=%s", requiredProperty, requiredPropertyValue);
-    while(fgets(content, sizeof(content), romPropertyFile) != NULL) {
-        content[strcspn(content, "\n")] = '\0';
-        if(strcmp(combinedBullshit, content) == 0) {
-            fclose(romPropertyFile);
-            return true;
-        }
-    }
-    fclose(romPropertyFile);
-    return false;
 }
 
 // bruhh
@@ -139,33 +127,41 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
             abort__("- Checksum verification failed", "");
         }
     }
-    char defoq[256];
+    size_t teteteteteto = 256;
+    char *defoq = malloc(teteteteteto);
+    if(!defoq) {
+        error_print("installGivenDiskImageFile(): Failed to allocate memory for the installation!");
+        abort__("installGivenDiskImageFile(): Failed to allocate memory for the installation, please try again!", false);
+    }
     if(tarballHasPasswordProtection && strcmp(shippedAs, "tarProtected") == 0) {
-        snprintf(defoq, sizeof(defoq), "tar --password=\"%s\" -xf %s -C %s", tarballPassword, imagePath, blockPath);
+        snprintf(defoq, teteteteteto, "tar --password=\"%s\" -xf %s -C %s", tarballPassword, imagePath, blockPath);
     } 
     else if(strcmp(shippedAs, "tar") == 0) {
-        snprintf(defoq, sizeof(defoq), "tar -xf %s -C %s", imagePath, blockPath);
+        snprintf(defoq, teteteteteto, "tar -xf %s -C %s", imagePath, blockPath);
     } 
     else if(strcmp(shippedAs, "sparse") == 0) {
-        snprintf(defoq, sizeof(defoq), "simg2img %s/%s %s", INSTALLER_PATH, imageName, blockPath);
+        snprintf(defoq, teteteteteto, "simg2img %s/%s %s", INSTALLER_PATH, imageName, blockPath);
     } 
     else if(strcmp(shippedAs, "raw") == 0) {
-        snprintf(defoq, sizeof(defoq), "unzip -o %s %s -d %s", ZIPFILE, imageName, blockPath);
+        snprintf(defoq, teteteteteto, "unzip -o %s %s -d %s", ZIPFILE, imageName, blockPath);
     } 
     else {
+        free(defoq);
         abort__("- Unsupported image type detected:", (char *)shippedAs);
     }
     if(executeCommands(defoq, false) != 0) {
+        free(defoq);
         abort__("- Failed to install the image file", "");
     }
+    free(defoq);
     return true;
 }
 
 // changes string case
 char *stringCase(const char *option, const char *input) {
     if (!option || !input) return NULL;
-    size_t len = strlen(input);
-    char *output = (char *)malloc(len + 1);
+    size_t len = strlen(input) + 2;
+    char *output = malloc(len);
     if(!output) {
         consoleLog("stringCase(): Memory allocation failed", " ");
         return NULL;
@@ -222,56 +218,80 @@ char *getPreviousSystemBuildID(const char *filepath) {
 // unzip -o "$ZIPFILE" "$file" -d "${INSTALLER}/"
 void extractThisFileFromMe(const char *fileToExtract, bool skipErrors) {    
     if(!fileToExtract) return;
-    char ykitsnotthesameasitwas[250];
-    snprintf(ykitsnotthesameasitwas, sizeof(ykitsnotthesameasitwas), "unzip -o \"%s\" \"%s\" -d \"%s\"", ZIPFILE, fileToExtract, INSTALLER_PATH);    
-    if(!skipErrors && executeCommands(ykitsnotthesameasitwas) != 0) {
+    size_t ykitsnotthesameasitwas = strlen(ZIPFILE) + strlen(fileToExtract) + strlen(INSTALLER_PATH) + 32;
+    char *asitwas = malloc(ykitsnotthesameasitwas);
+    if(!asitwas) {
+        abort__("extractThisFileFromMe(): Failed to allocate enough memory for the operation, please try again!", " ");
+    }
+    snprintf(asitwas, ykitsnotthesameasitwas, "unzip -o \"%s\" \"%s\" -d \"%s\"", ZIPFILE, fileToExtract, INSTALLER_PATH);
+    if(!skipErrors && executeCommands(asitwas) != 0) {
+        free(asitwas);
         abort__("- Failed to extract requested file from the zipfile, please try again...", " ");
     }
+    free(asitwas);
 }
 
 // backs up previous rom's hosts file.
 void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath) {
     isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true);
     if(hostsAreBackedUp || strcmp(arg, "backup") == 0) {
-        consoleLog("backupHostsFileFromCurrentSystem(): Backing up the host file from", (char *)linuxHostsAndroidPath);
+        consoleLog("backupHostsFileFromCurrentSystem(): Backing up the host file from", linuxHostsAndroidPath);
         if(cp(linuxHostsAndroidPath, INSTALLER_PATH) == 1) {
             throwMessagesToConsole("backupHostsFileFromCurrentSystem(): Failed to backup the host file, if you have any issues on connecting to the internet, please do a wipe data", " ", true);
         }
-
     }
     else if(hostsAreBackedUp && strcmp(arg, "restore") == 0) {
-        consoleLog("backupHostsFileFromCurrentSystem(): Restoring the previously backed up host file to", (char *)linuxHostsAndroidPath);
-        char hostsPath[256];
-        snprintf(hostsPath, sizeof(hostsPath), "%s/hosts", INSTALLER_PATH);
+        consoleLog("backupHostsFileFromCurrentSystem(): Restoring the previously backed up host file to", linuxHostsAndroidPath);
+        size_t magnetic = strlen("/hosts") + strlen(INSTALLER_PATH) + 2;
+        char *hostsPath = malloc(magnetic);
+        if(!hostsPath) {
+            abort__("backupHostsFileFromCurrentSystem(): Failed to allocate memory for the operation, please try again!", " ");
+        }
+        snprintf(hostsPath, magnetic, "%s/hosts", INSTALLER_PATH);
         if(cp(hostsPath, linuxHostsAndroidPath) == 1) {
             throwMessagesToConsole("backupHostsFileFromCurrentSystem(): Failed to restore the host file, if you have any issues on connecting to the internet, please do a wipe data", " ", true);
         }
+        free(hostsPath);
     }
 }
 
 bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     throwMessagesToConsole("- Installing incremental patches to", partition, false);
-    char content[450];
+    size_t omg = 0;
+    char *content = NULL;
     if(strcmp(partition, "system") == 0) {
-        snprintf(content, sizeof(content), "%s/system/system/", INSTALLER_PATH);
+        omg = strlen(systemDir) + strlen(INSTALLER_PATH) + 3;
+        content = malloc(omg);
+        if(!content) {
+            abort__("copyIncrementalFiles(): Failed to allocate memory for the installation process..", " ");
+        }
+        snprintf(content, omg, "%s/%s", systemDir, INSTALLER_PATH);
     }
     else if(strcmp(partition, "vendor") == 0) {
-        snprintf(content, sizeof(content), "%s/vendor", INSTALLER_PATH);
+        omg = strlen("/vendor") + strlen(INSTALLER_PATH) + 3;
+        content = malloc(omg);
+        if(!content) {
+            abort__("copyIncrementalFiles(): Failed to allocate memory for the installation process..", " ");
+        }
+        snprintf(content, omg, "%s/vendor", INSTALLER_PATH);
     }
     else if(strcmp(partition, "product") == 0) {
-        snprintf(content, sizeof(content), "%s/product", INSTALLER_PATH);
-    }
-    else if(strcmp(partition, "prism") == 0) {
-        snprintf(content, sizeof(content), "%s/product", INSTALLER_PATH);
+        omg = strlen("/product") + strlen(INSTALLER_PATH) + 3;
+        content = malloc(omg);
+        if(!content) {
+            abort__("copyIncrementalFiles(): Failed to allocate memory for the installation process..", " ");
+        }
+        snprintf(content, omg, "%s/product", INSTALLER_PATH);
     }
     else {
-        // unknown incremental path.
-        abort__("  Unknown incremental path, please contact the dev.", " ");
+        abort__("Unknown incremental path, please contact the dev.", " ");
     }
     if(cp(content, partitionPath) == 1) {
+        free(content);
         abort__("Failed to apply Incremental patches, please try again or report this to the maintainer of this device", " ");
     }
-    throwMessagesToConsole("  Finished installing incremental patches to", partition, false);
+    free(content);
+    throwMessagesToConsole("Finished installing incremental patches to", partition, false);
     return true;
 }
 
