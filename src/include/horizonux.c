@@ -24,7 +24,7 @@ bool isTheDeviceBootCompleted() {
         error_print("isTheDeviceBootCompleted(): Failed to execute command.");
         return false;
     }
-    char content[4] = {0};
+    char content[4];
     if(fgets(content, sizeof(content), getprop) == NULL) {
         pclose(getprop);
         return false;
@@ -40,7 +40,7 @@ bool isBootAnimationExited() {
         error_print("isTheDeviceBootCompleted(): Failed to execute command.");
         return false;
     }
-    char content[4] = {0};
+    char content[4];
     if(fgets(content, sizeof(content), getprop) == NULL) {
         pclose(getprop);
         return false;
@@ -56,7 +56,7 @@ bool isTheDeviceisTurnedOn() {
         error_print("isTheDeviceisTurnedOn(): Failed to execute command.");
         return false;
     }
-    char buffer[4] = {0};
+    char buffer[4];
     fgets(buffer, sizeof(buffer), fp);
     pclose(fp);
     return (strstr(buffer, "OFF") == NULL);
@@ -139,11 +139,17 @@ void sendNotification(const char *message) {
 }
 
 char *getSystemProperty(const char *filepath, const char *propertyVariableName) {
-    static char buildProperty[256];  
     FILE *file = fopen(filepath, "r");
+    size_t propertyLen = strlen(propertyVariableName);
+    char *buildProperty = malloc(propertyLen);
+    if(buildProperty == NULL) {
+        error_print("getSystemProperty(): Failed to allocate memory for the requested operation.");
+        return "KILL.796f7572.73656c660a";
+    }
     if(!file) {
-        snprintf(buildProperty, sizeof(buildProperty), "getprop %s", propertyVariableName);
+        snprintf(buildProperty, propertyLen, "getprop %s", propertyVariableName);
         FILE *cmd = popen(buildProperty, "r");
+        free(buildProperty);
         if(cmd) {
             if(fgets(buildProperty, sizeof(buildProperty), cmd)) {
                 buildProperty[strcspn(buildProperty, "\r\n")] = 0;
@@ -154,11 +160,10 @@ char *getSystemProperty(const char *filepath, const char *propertyVariableName) 
         return "KILL.796f7572.73656c660a";
     }
     char line[256];
-    size_t propertyLen = strlen(propertyVariableName);
     while(fgets(line, sizeof(line), file)) {
         if(strncmp(line, propertyVariableName, propertyLen) == 0 && line[propertyLen] == '=') {
-            strncpy(buildProperty, line + propertyLen + 1, sizeof(buildProperty) - 1);
-            buildProperty[sizeof(buildProperty) - 1] = '\0';
+            strncpy(buildProperty, line + propertyLen + 1, propertyLen - 1);
+            buildProperty[propertyLen - 1] = '\0';
             buildProperty[strcspn(buildProperty, "\r\n")] = 0;
             fclose(file);
             return buildProperty;
@@ -169,13 +174,18 @@ char *getSystemProperty(const char *filepath, const char *propertyVariableName) 
 }
 
 int getSystemProperty__(const char *filepath, const char *propertyVariableName) {
-    char buildProperty[256];  
     FILE *file = fopen(filepath, "r");
+    size_t propertyLen = strlen(propertyVariableName);
+    char *buildProperty = malloc(propertyLen);
     if(!file) {
-        snprintf(buildProperty, sizeof(buildProperty), "getprop %s", propertyVariableName);
+        if(buildProperty == NULL) {
+            error_print("getSystemProperty__(): Failed to allocate memory for the requested operation.");
+            return 1;
+        }
+        snprintf(buildProperty, propertyLen, "getprop %s", propertyVariableName);
         FILE *cmd = popen(buildProperty, "r");
         if(cmd) {
-            if(fgets(buildProperty, sizeof(buildProperty), cmd)) {
+            if(fgets(buildProperty, propertyLen, cmd)) {
                 buildProperty[strcspn(buildProperty, "\r\n")] = 0;
             }
             pclose(cmd);
@@ -184,16 +194,16 @@ int getSystemProperty__(const char *filepath, const char *propertyVariableName) 
         return -1;
     }
     char line[256];
-    size_t propertyLen = strlen(propertyVariableName);
     while(fgets(line, sizeof(line), file)) {
         if(strncmp(line, propertyVariableName, propertyLen) == 0 && line[propertyLen] == '=') {
-            strncpy(buildProperty, line + propertyLen + 1, sizeof(buildProperty) - 1);
-            buildProperty[sizeof(buildProperty) - 1] = '\0';
+            strncpy(buildProperty, line + propertyLen + 1, propertyLen - 1);
+            buildProperty[propertyLen - 1] = '\0';
             buildProperty[strcspn(buildProperty, "\r\n")] = 0;
             fclose(file);
             return atoi(buildProperty);
         }
     }
+    free(buildProperty);
     fclose(file);
     return -1;
 }

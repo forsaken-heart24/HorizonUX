@@ -52,7 +52,14 @@ int executeCommands(const char *command, bool requiresOutput) {
         error_print("executeScripts(): Nice try diddy!");
         exit(1);
     }
-    FILE *fp = popen(command, "r");
+    char *command__ = malloc(strlen(command) + 1);
+    if(command__ == NULL) {
+        error_print("executeCommands(): Failed to allocate memory.");
+        return 1;
+    }
+    strcpy(command__, command);
+    FILE *fp = popen(command__, "r");
+    free(command__);
     if(!fp) {
         error_print("executeCommands(): Failed to execute command.");
         return 1;
@@ -77,10 +84,16 @@ int executeScripts(const char *__script__file, const char *__args, bool requires
         error_print("executeScripts(): Nice try diddy.");
         exit(1);
     }
-    char command[512];
-    snprintf(command, sizeof(command), "'%s' %s", __script__file, __args ? __args : "");
-    FILE *scriptWithArguments  = popen(command, "r");
-    if(!scriptWithArguments) {
+    size_t sizeOfTheDawn = strlen(__script__file) + strlen(__args) + 5;
+    char *commandAlloc = malloc(sizeOfTheDawn);
+    if(commandAlloc == NULL) {
+        error_print("executeScripts(): Failed to allocate memory.");
+        return 1;
+    }
+    snprintf(commandAlloc, sizeOfTheDawn, "'%s' %s", __script__file, __args ? __args : "");
+    FILE *scriptWithArguments  = popen(commandAlloc, "r");
+    free(commandAlloc);
+    if(scriptWithArguments == NULL) {
         error_print("executeScripts(): Failed to execute script.");
         return 1;
     }
@@ -103,12 +116,20 @@ int executeScripts(const char *__script__file, const char *__args, bool requires
 // this searches some sensitive strings to ensure that the script is safe
 // please verify your scripts before running it PLEASE 🙏
 int searchBlockListedStrings(const char *__filename, const char *__search_str) {
-    char haystack[1028];
-    FILE *file = fopen(__filename, "r");
+    size_t sizeOfTheseCraps = sizeof(__filename) + sizeof(__search_str) + 3;
+    char *command = malloc(sizeOfTheseCraps);
+    if(command == NULL) {
+        error_print("searchBlockListedStrings(): Failed to allocate memory.");
+        return 1;
+    }
+    snprintf(command, sizeOfTheseCraps, "grep -q '%s' '%s'", __search_str, __filename);
+    FILE *file = popen(command, "r");
+    free(command);
     if(!file) {
         error_print("searchBlockListedStrings(): Failed to open file.");
         return 1;
     }
+    char haystack[1028];
     while(fgets(haystack, sizeof(haystack), file) != NULL) {
         haystack[strcspn(haystack, "\n")] = '\0';
         if(strstr(haystack, __search_str) != NULL) {
