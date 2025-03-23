@@ -60,10 +60,6 @@ function abort() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
     sleep 0.5
-    if [ "${BATTLEMAGE_BUILD}" == "true" ]; then
-        umount $HASH_KEY_FOR_SUPER_BLOCK_PATH &>/dev/null
-        rmdir $HASH_KEY_FOR_SUPER_BLOCK_PATH &>/dev/null
-    fi
     exit 1
 }
 
@@ -655,50 +651,38 @@ function generate_random_hash() {
 # for compatibility vro
 function execute_scripts() {
     local script="$1"
-    $BATTLEMAGE_BUILD && { . $script --battlemage 2>> ../local_build/logs/hux_build.log; } || { . $script --non-battlemage 2>> ../local_build/logs/hux_build.log; }
+    . $script 2>> ../local_build/logs/hux_build.log;
 }
 
 function absolute_path() {
     local parsed_argument
     parsed_argument="$(string_format -l "$1")"
     parsed_argument="${parsed_argument:2}"
-    if [[ "$BATTLEMAGE_BUILD" == "true" ]]; then
-        if [[ -d "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument" ]]; then
-            if [[ -f "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument/etc" ]]; then
-                echo "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument"
-            elif [[ -f "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument/$parsed_argument/etc" ]]; then
-                echo "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$parsed_argument/$parsed_argument"
-            fi
-        else
-            abort "No way, this can't be happening..."
-        fi
-    else
-        case "$parsed_argument" in
-            system)
-                [[ -f "$HORIZON_SYSTEM_DIR/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR"
-                [[ -f "$HORIZON_SYSTEM_DIR/system/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR/system"
-            ;;
-            system_ext)
-                [[ -f "$HORIZON_SYSTEM_DIR/system_ext/etc" ]] && echo "$HORIZON_SYSTEM_DIR/system_ext"
-                echo "$HORIZON_SYSTEM_EXT_DIR"
-            ;;
-            vendor)
-                [[ -f "$HORIZON_VENDOR_DIR/build.prop" ]] && echo "$HORIZON_VENDOR_DIR"
-                [[ -f "$HORIZON_VENDOR_DIR/vendor/build.prop" ]] && echo "$HORIZON_VENDOR_DIR/vendor"
-            ;;
-            product)
-                [[ -f "$HORIZON_PRODUCT_DIR/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR"
-                [[ -f "$HORIZON_PRODUCT_DIR/product/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR/product"
-            ;;
-            prism)
-                [[ -f "$HORIZON_PRISM_DIR/build.prop" ]] && echo "$HORIZON_PRISM_DIR"
-                [[ -f "$HORIZON_PRISM_DIR/prism/build.prop" ]] && echo "$HORIZON_PRISM_DIR/prism"
-            ;;
-            *)
-                abort "Invalid partition argument: $parsed_argument"
-            ;;
-        esac
-    fi
+    case "$parsed_argument" in
+        system)
+            [[ -f "$HORIZON_SYSTEM_DIR/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR"
+            [[ -f "$HORIZON_SYSTEM_DIR/system/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR/system"
+        ;;
+        system_ext)
+            [[ -f "$HORIZON_SYSTEM_DIR/system_ext/etc" ]] && echo "$HORIZON_SYSTEM_DIR/system_ext"
+            echo "$HORIZON_SYSTEM_EXT_DIR"
+        ;;
+        vendor)
+            [[ -f "$HORIZON_VENDOR_DIR/build.prop" ]] && echo "$HORIZON_VENDOR_DIR"
+            [[ -f "$HORIZON_VENDOR_DIR/vendor/build.prop" ]] && echo "$HORIZON_VENDOR_DIR/vendor"
+        ;;
+        product)
+            [[ -f "$HORIZON_PRODUCT_DIR/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR"
+            [[ -f "$HORIZON_PRODUCT_DIR/product/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR/product"
+        ;;
+        prism)
+            [[ -f "$HORIZON_PRISM_DIR/build.prop" ]] && echo "$HORIZON_PRISM_DIR"
+            [[ -f "$HORIZON_PRISM_DIR/prism/build.prop" ]] && echo "$HORIZON_PRISM_DIR/prism"
+        ;;
+        *)
+            abort "Invalid partition argument: $parsed_argument"
+        ;;
+    esac
 }
 
 function fetch_rom_arch() {
@@ -826,25 +810,16 @@ function find_partition_property_file() {
 function kang_dir() {
     local dir
     local WhySoSerious=$(string_format --lower "$1")
-    if "${BATTLEMAGE_BUILD}"; then
-        dir="$katarenai/$1"
-        if [ -f "$dir/etc" ]; then
-            echo "$dir"
-        elif [ -f "$dir/$1/etc" ]; then
-            echo "$dir/$1"
-        fi
-    else
-        if [ "$WhySoSerious1" == "prism" ]; then
-            dir="$HORIZON_PRISM_DIR"
-        elif [ "$WhySoSerious1" == "product" ]; then
-            dir="$HORIZON_PRODUCT_DIR"
-        elif [ "$WhySoSerious1" == "system" ]; then
-            dir="$HORIZON_SYSTEM_DIR"
-        elif [ "$WhySoSerious" == "system_ext" ]; then
-            dir="$HORIZON_SYSTEM_EXT_DIR"
-        elif [ "$WhySoSerious1" == "vendor" ]; then
-            dir="$HORIZON_VENDOR_DIR"
-        fi
+    if [ "$WhySoSerious1" == "prism" ]; then
+        dir="$HORIZON_PRISM_DIR"
+    elif [ "$WhySoSerious1" == "product" ]; then
+        dir="$HORIZON_PRODUCT_DIR"
+    elif [ "$WhySoSerious1" == "system" ]; then
+        dir="$HORIZON_SYSTEM_DIR"
+    elif [ "$WhySoSerious" == "system_ext" ]; then
+        dir="$HORIZON_SYSTEM_EXT_DIR"
+    elif [ "$WhySoSerious1" == "vendor" ]; then
+        dir="$HORIZON_VENDOR_DIR"
     fi
     if [ -f "$dir/etc" ]; then
         echo "$dir"

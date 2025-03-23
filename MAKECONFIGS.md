@@ -3,7 +3,6 @@
 # Build Configuration Variables
 
 ## TODO: To be filled by the builder
-- Don't fill these if you have a super raw image file laying around your storage medium, just enter the path to it if the script asks it.
 **SYSTEM_DIR**: Put your extracted system folder path there.
 **SYSTEM_EXT_DIR**: Put your extracted system_ext folder path there.
 **VENDOR_DIR**: Put your extracted vendor folder path there.

@@ -76,45 +76,19 @@ console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 console_print "Do you want to mount super image and proceed?"
-if ask "Type \"y\" to mount the super image..."; then
-    printf "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m Please enter the path to the super.img file: \e[0;37m"
-    read super_image_path
-    if [ ! -f "$super_image_path" ]; then
-        abort "Invalid image path: $super_image_path. Ensure the correct path is provided."
-    fi
-    if ! mount_super_image "$super_image_path"; then
-        abort "Failed to mount super.img."
-    fi
-	debugPrint "BATTLEMAGE_BUILD variable value is set to true"
-    BATTLEMAGE_BUILD=true
-else
-    BATTLEMAGE_BUILD=false
-	debugPrint "BATTLEMAGE_BUILD variable value is set to false"
-fi
 
 # Cache partitions
-if [ "$BATTLEMAGE_BUILD" != "true" ]; then
-    [ ! -f "${SYSTEM_DIR}/build.prop" ] && abort "The system partition is not found."
-    [ ! -d "${SYSTEM_EXT_DIR}/etc" ] && abort "The system_ext partition is not found."
-    [ ! -d "${VENDOR_DIR}" ] && abort "The vendor partition is not found."
-    [ ! -d "${PRODUCT_DIR}" ] && abort "The product partition is not found."
-    HORIZON_PRODUCT_DIR=$PRODUCT_DIR
-    HORIZON_SYSTEM_DIR=$SYSTEM_DIR
-    HORIZON_SYSTEM_EXT_DIR=$SYSTEM_EXT_DIR
-    HORIZON_VENDOR_DIR=$VENDOR_DIR
-elif [ "$BATTLEMAGE_BUILD" == "true" ]; then
-    for partition in system vendor product; do
-        if echo "$katarenai" | grep -q "$partition"; then
-            if check_build_prop "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$partition"; then
-                set_partition_flag "$partition"
-            fi
+for partition in system vendor product; do
+    if echo "$katarenai" | grep -q "$partition"; then
+        if check_build_prop "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$partition"; then
+            set_partition_flag "$partition"
         fi
-    done
-    HORIZON_PRODUCT_DIR=$(kang_dir "product")
-    HORIZON_SYSTEM_DIR=$(kang_dir "system")
-    HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")
-    HORIZON_VENDOR_DIR=$(kang_dir "vendor")
-fi
+    fi
+done
+HORIZON_PRODUCT_DIR=$(kang_dir "product")
+HORIZON_SYSTEM_DIR=$(kang_dir "system")
+HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")
+HORIZON_VENDOR_DIR=$(kang_dir "vendor")
 
 # Locate build.prop files
 HORIZON_PRODUCT_PROPERTY_FILE=$(
@@ -720,11 +694,6 @@ fi
 if ask "Do you want to add a stub app for missing activities?"; then
 	mkdir -p "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
 	build_and_sign "./horizon/packages/HorizonStub" "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
-fi
-if boolReturn "$BATTLEMAGE_BUILD"; then
-	console_print "Please review the image for the changes..."
-	umount "$HASH_KEY_FOR_SUPER_BLOCK_PATH"
-	rmdir "$HASH_KEY_FOR_SUPER_BLOCK_PATH"
 fi
 tinkerWithCSCFeaturesFile --encode
 rm -rf "$TMPDIR" "${TARGET_BUILD_FLOATING_FEATURE_PATH}.bak"
