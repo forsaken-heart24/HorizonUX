@@ -49,22 +49,24 @@ extern char *systemBuildProp;
 extern char *systemHostsFilePath;
 
 // functions
+int takeBackupOfTheGivenImage(const char *blockPath);
+int cp(const char *source, const char *destination);
+char *stringCase(const char *option, const char *input);
+char *getSystemProperty(const char *filepath, const char *propertyVariableName);
+char *getPreviousSystemBuildID(const char *filepath);
+bool copyIncrementalFiles(const char *partitionPath, char *partition);
 bool verifyInstallationType(const char *requiredType, const char *zipPackage);
 bool checkInternalStorageStatus();
-void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog);
-void abort__(char *text, char *extr_factor);
-void setupRecoveryCommandFile();
 bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMountit);
 bool getRomProperties(char *requiredProperty, char *requiredPropertyValue);
 bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___);
-char *stringCase(const char *option, const char *input);
-int cp(const char *source, const char *destination);
-char *getPreviousSystemBuildID(const char *filepath);
-void extractThisFileFromMe(const char *fileToExtract, bool skipErrors);
-void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath);
-bool copyIncrementalFiles(const char *partitionPath, char *partition);
 bool verifyMD5Hashes(const char *file__, const char *expected_hash__);
 bool installLowLevelImages(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___);
-char *getSystemProperty(const char *filepath, const char *propertyVariableName);
+void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog);
+void abort__(char *text, char *extr_factor);
+void setupRecoveryCommandFile();
+void extractThisFileFromMe(const char *fileToExtract, bool skipErrors);
+void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath);
+void markInstallTypeAndBlock(const char *imageName, const char *blockPath);
 
 #endif

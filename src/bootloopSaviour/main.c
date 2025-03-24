@@ -11,12 +11,6 @@
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
 char *LOG4HORIZONFILE = "/sdcard/Horizon/logs/horizon_bootloopSaviour.log";
 
-// ok
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-
 void disableMagiskModules() {
     DIR *dirptr = opendir("/tmp/data/adb/modules/");
     if(!dirptr) {

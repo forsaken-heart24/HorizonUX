@@ -100,12 +100,12 @@ int main(int argc, const char *argv[]) {
     if(argc < 5) {
         abort__("- Not enough arguments provided!", " ");
     }
-    // forgor to extract rom.prop from the archive.
-    extractThisFileFromMe("rom.prop", false);
     ZIPFILE = strdup(argv[4]);
     snprintf(OUTFD, sizeof(OUTFD), "/proc/self/fd/%s", argv[3]);
     // for closing terminal after testing stdin aka OUTFD
     throwMessagesToConsole(" ", " ", false);
+    // extract ts from the archive:
+    extractThisFileFromMe("manage-firmware.sh", true);
     // mkdir syntax: mkdir("/some/directory", 0700);
     if(checkInternalStorageStatus()) {
         mkdir("/sdcard/Horizon", 0777);
@@ -116,6 +116,7 @@ int main(int argc, const char *argv[]) {
         mkdir("/dev/tmp/", 0777);
         mkdir("/dev/tmp/Horizon", 0777);
         mkdir("/dev/tmp/Horizon/logs", 0777);
+        mkdir("/dev/tmp/install/low-level-backups", 0777);
         LOG4HORIZONFILE = "/dev/tmp/Horizon/logs/teto___horizonROMInstaller.log";
     }
     bool systemMounted = isThisPartitionMounted("/system", true) || isThisPartitionMounted("/system_root", true);

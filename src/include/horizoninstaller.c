@@ -123,23 +123,27 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
         abort__("- Unsupported image format. Could not determine which format factor is shipped with.", "");
     }
     if(!iDontWantChecksumChecks) {
-        if(!verifyMD5Hashes(imagePath, expected_image_hash___)) {
-            abort__("- Checksum verification failed", "");
+        if(verifyMD5Hashes(imagePath, expected_image_hash___) == false) {
+            abort__("- Checksum verification failed", " ");
         }
     }
-    size_t teteteteteto = 256;
+    markInstallTypeAndBlock(imageName, blockPath);
+    size_t teteteteteto = 500;
     char *defoq = malloc(teteteteteto);
     if(!defoq) {
         error_print("installGivenDiskImageFile(): Failed to allocate memory for the installation!");
         abort__("installGivenDiskImageFile(): Failed to allocate memory for the installation, please try again!", false);
     }
     if(tarballHasPasswordProtection && strcmp(shippedAs, "tarProtected") == 0) {
-        snprintf(defoq, teteteteteto, "tar --password=\"%s\" -xf %s -C %s", tarballPassword, imagePath, blockPath);
+        extractThisFileFromMe(imageName, true);
+        snprintf(defoq, teteteteteto, "tar --password=\"%s\" -xf %s/%s -C %s", tarballPassword, INSTALLER_PATH, imagePath, blockPath);
     } 
     else if(strcmp(shippedAs, "tar") == 0) {
-        snprintf(defoq, teteteteteto, "tar -xf %s -C %s", imagePath, blockPath);
+        extractThisFileFromMe(imageName, true);
+        snprintf(defoq, teteteteteto, "tar -xf %s/%s -C %s", INSTALLER_PATH, imagePath, blockPath);
     } 
     else if(strcmp(shippedAs, "sparse") == 0) {
+        extractThisFileFromMe(imageName, true);
         snprintf(defoq, teteteteteto, "simg2img %s/%s %s", INSTALLER_PATH, imageName, blockPath);
     } 
     else if(strcmp(shippedAs, "raw") == 0) {
@@ -224,7 +228,7 @@ void extractThisFileFromMe(const char *fileToExtract, bool skipErrors) {
         abort__("extractThisFileFromMe(): Failed to allocate enough memory for the operation, please try again!", " ");
     }
     snprintf(asitwas, ykitsnotthesameasitwas, "unzip -o \"%s\" \"%s\" -d \"%s\"", ZIPFILE, fileToExtract, INSTALLER_PATH);
-    if(!skipErrors && executeCommands(asitwas) != 0) {
+    if(skipErrors == false && executeCommands(asitwas) != 0) {
         free(asitwas);
         abort__("- Failed to extract requested file from the zipfile, please try again...", " ");
     }
@@ -284,6 +288,7 @@ bool copyIncrementalFiles(const char *partitionPath, char *partition) {
         snprintf(content, omg, "%s/product", INSTALLER_PATH);
     }
     else {
+        free(content);
         abort__("Unknown incremental path, please contact the dev.", " ");
     }
     if(cp(content, partitionPath) == 1) {
@@ -296,46 +301,97 @@ bool copyIncrementalFiles(const char *partitionPath, char *partition) {
 }
 
 bool verifyMD5Hashes(const char *file__, const char *expected_hash__) {
-    char combine[128];
     char md5sum[80];
-    snprintf(combine, sizeof(combine), "md5sum \"%s\" | awk '{print $1}'", file__);
+    size_t combineArgSize = strlen("md5sum ") + strlen(file__) + strlen("| awk '{print $1}'") + 2;
+    char *combine = malloc(combineArgSize);
+    if(!combine) {
+        abort__("verifyMD5Hashes(): Failed to allocate enough memory for the operation...", " ");
+    }
+    snprintf(combine, combineArgSize, "md5sum \"%s\" | awk '{print $1}'", file__);
     FILE *commandOutputPointer = popen(combine, "r");
     if(!commandOutputPointer) {
-        abort__("- Failed to get file md5 hash to verify the file in the zip...", " ");
+        free(combine);
+        abort__("verifyMD5Hashes(): Failed to get file md5 hash to verify the file in the zip...", " ");
     }
     if(fgets(md5sum, sizeof(md5sum), commandOutputPointer) != NULL) {
         // Remove newline
         md5sum[strcspn(md5sum, "\n")] = 0;
         if(strcmp(expected_hash__, md5sum) == 0) {
+            free(combine);
             pclose(commandOutputPointer);
             return true;
         }
     }
+    free(combine);
     pclose(commandOutputPointer);
     consoleLog("verifyMD5Hashes(): Affected file:", (char *)file__);
     abort__("  The hashes don't match the expected values from the installer. Please re-download the package or report this to the developer.", " ");
     return false;
 }
 
+void markInstallTypeAndBlock(const char *imageName, const char *blockPath) {
+    FILE *ok_alip = fopen("/dev/tmp/install/daridaridaridari", "w");
+    if(!ok_alip) {
+        abort__("markInstallTypeAndBlock(): Failed to open \"/dev/tmp/install/daridaridaridari\" in write mode...", " ");
+    }
+    fprintf(ok_alip, "Currently Installing: %s To Requested Block: %s | shippedAs: %s | OUTFD Constucted Path: %s", imageName, blockPath, shippedAs, OUTFD);
+    fclose(ok_alip);
+}
+
+int takeBackupOfTheGivenImage(const char *blockPath) {
+    size_t paper_flower = strlen("cp") + strlen(blockPath) + strlen("/dev/tmp/install/") + 5;
+    char *infinity = malloc(paper_flower);
+    if(!infinity) {
+        abort__("takeBackupOfTheGivenImage(): Failed to allocate memory for the backup operation...", " ");
+    }
+    snprintf(infinity, paper_flower, "cp %s /dev/tmp/install/low-level-backups/", blockPath);
+    int exit_status__ = executeCommands(infinity, false);
+    free(infinity);
+    return exit_status__;
+}
+
 bool installLowLevelImages(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___) {
-    if(!imagePath || !blockPath) {
+    if(!imagePath || !blockPath || !imageName || !expected_image_hash___) {
         throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", " ", true);
-        abort__("  Error code: 0x7265616c5f626c6f636b206e6f7420736574", " ");
+        abort__("installLowLevelImages():  Error code: 0x7265616c5f626c6f636b206e6f7420736574", " ");
     }
-    char defoq[256];
-    snprintf(defoq, sizeof(defoq), " dd if=\"%s\" of=\"%s/%s\" ", blockPath, INSTALLER_PATH, blockPath);
+    markInstallTypeAndBlock(imageName, blockPath);
+    executeScripts("/dev/tmp/install/manage-firmware.sh --backup", false);
+    extractThisFileFromMe(imageName, true);
+    size_t teteteteteto = 500;
+    char *defoq = malloc(teteteteteto);
+    if(tarballHasPasswordProtection && strcmp(shippedAs, "tarProtected") == 0) {
+        snprintf(defoq, teteteteteto, "tar --password=\"%s\" -xf %s -C %s", tarballPassword, INSTALLER_PATH, imageName, blockPath);
+    }
+    else if(strcmp(shippedAs, "tar") == 0) {
+        snprintf(defoq, teteteteteto, "tar -xf %s -C %s", INSTALLER_PATH, imageName, blockPath);
+    } 
+    else if(strcmp(shippedAs, "sparse") == 0) {
+        snprintf(defoq, teteteteteto, "simg2img %s/%s %s", INSTALLER_PATH, imageName, blockPath);
+    } 
+    else if(strcmp(shippedAs, "raw") == 0) {
+        snprintf(defoq, teteteteteto, "unzip -o %s %s -d %s", ZIPFILE, imageName, blockPath);
+    } 
+    else {
+        free(defoq);
+        abort__("- Unsupported image type detected:", (char *)shippedAs);
+    }
+    size_t ok_alip = strlen(imageName) + strlen(INSTALLER_PATH) + 3;
+    char *thisTimeiWantYOU = malloc(ok_alip);
+    if(!thisTimeiWantYOU) {
+        free(defoq);
+        abort__("installLowLevelImages(): Failed to allocation enough memory for the operation!!", " ");
+    }
+    snprintf(thisTimeiWantYOU, ok_alip, "%s/%s", INSTALLER_PATH, imageName);
+    if(verifyMD5Hashes(thisTimeiWantYOU, expected_image_hash___) == false) {
+        free(defoq);
+        free(thisTimeiWantYOU);
+        abort__("installLowLevelImages(): Failed to verify hashes, please download this package again or contact the support chat!", " ");
+    }
+    free(thisTimeiWantYOU);
     if(executeCommands(defoq, false) != 0) {
-        abort__("- Failed to take a backup of some low-level partitions, contact the dev if the ROM didn't boot.", " ");
+        free(defoq);
+        throwMessagesToConsole("installLowLevelImages(): Failed to update low level images, using fallback scripts to restore previous firmware...", "", false);
+        executeScripts("/dev/tmp/install/manage-firmware.sh --restore", false);
     }
-    verifyMD5Hashes(imagePath, expected_image_hash___);
-    snprintf(defoq, sizeof(defoq), "unzip -o \"%s\" \"%s\" -d \"%s\"", ZIPFILE, imageName, blockPath);
-    if(executeCommands(defoq, false) != 0) {
-        abort__("- Sorry to tell you this, your phone might end up bricked. Please wait while I restore old partitions..", " ");
-        snprintf(defoq, sizeof(defoq), "cat \"%s/%s\" > \"%s\"", INSTALLER_PATH, blockPath, blockPath);
-        if(executeCommands(defoq, false) != 0) {
-            consoleLog("installLowLevelImages(): Affected partition: ", (char *)blockPath);
-            abort__("- Failed to restore backup of a low-level partition. Boot the device at your own risk!", " ");
-        }
-    }
-    return true;
 }
