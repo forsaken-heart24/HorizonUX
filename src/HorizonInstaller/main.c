@@ -45,7 +45,7 @@ char *thisPatchBuildID = "";
 
 // wanana BANG!
 char *whatisOTAType = "Incremental"; // This string can be: "Incremental" or "Reinstall". The name suggests it all.
-char *INSTALLER_PATH = "/dev/tmp/install"; // WARNING! you might have to edit some lines in header file if you change the path, because 1-2 stuffs are hardcoded.
+char *INSTALLER_PATH = "/dev/tmp/install"; // WARNING! you might have to edit some lines in the source files if you change the path, because some stuffs are hardcoded.
 
 // no need to explain bro
 char *maintainer = "Luna";
@@ -160,6 +160,23 @@ int main(int argc, const char *argv[]) {
     throwMessagesToConsole("Present ROM Build ID  :", getPreviousSystemBuildID(systemBuildProp), false);
     throwMessagesToConsole("This ROM Build ID  :", thisPatchBuildID, false);
     throwMessagesToConsole("###############################################", " ", false);
+    if(verifyInstallationType("restore-snap", ZIPFILE) == true) {
+        throwMessagesToConsole("Restoring snapshots from the backup....", " ", true);
+        executeScripts("/dev/tmp/install/manage-firmware.sh", "--snapshot_restore", false);
+    }
+    if(createSnapshot == true) {
+        throwMessagesToConsole("Taking a snapshot of the current system partitions...", " ", true);
+        for(int i = 0; i < ARRAY_SIZE(partitionFlashables); i++) {
+            markInstallTypeAndBlock(partitionFlashables, partitionBlockPaths);
+            executeScripts("/dev/tmp/install/manage-firmware.sh", "--snapshot", false);
+        }
+        if(installationHasLowLevelDiskImages == true) {
+            for(int i = 0; i < ARRAY_SIZE(lowLevelPartitionFlashables); i++) {
+                markInstallTypeAndBlock(lowLevelPartitionFlashables, (char *)lowLevelPartitionBlockPaths);
+                executeScripts("/dev/tmp/install/manage-firmware.sh", "--snapshot", false);
+            }
+        }
+    }
     backupHostsFileFromCurrentSystem("backup", systemHostsFilePath);
     throwMessagesToConsole("- Installing packages...", " ", false);
     throwMessagesToConsole("  please wait, it might take longer than usual..", " ", false);
@@ -179,7 +196,7 @@ int main(int argc, const char *argv[]) {
                 int index = (i < ARRAY_SIZE(genericPartitionPaths)) ? i : (i % ARRAY_SIZE(genericPartitionPaths));
                 copyIncrementalFiles(genericPartitionPaths[index], rrrrrrrrrrrr[i]);
             }
-        }        
+        }
     }
     else if(strcmp(whatisOTAType, "Reinstall") == 0 && isHotFixAndShouldBeSkipped || strcmp(thisPatchBuildID, getPreviousSystemBuildID(systemBuildProp)) == 0) {
         for(int i = 0; i < ARRAY_SIZE(partitionFlashables); i++) {
@@ -187,7 +204,7 @@ int main(int argc, const char *argv[]) {
         }
     }
     else {
-        throwMessagesToConsole("- Can't determine whether to flash the whole ROM or just patch necessary things, skipping installation.", " ", false);
+        throwMessagesToConsole("- Can't determine whether to flash the whole ROM or just patch necessary things, skipping installation...", " ", false);
         exit(0);
     }
     if(installationHasLowLevelDiskImages) {
@@ -201,4 +218,5 @@ int main(int argc, const char *argv[]) {
         ZIPFILE = NULL;
     }    
     throwMessagesToConsole("- Successfully installed Horizon on your device, reboot to use the device now!", " ", true);
+    setupRecoveryCommandFile();
 }

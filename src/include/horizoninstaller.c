@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "HorizonInstaller.h"
+#include <HorizonInstaller.h>
 
 // returns bool acc. to the requested type.
 bool verifyInstallationType(const char *requiredType, const char *zipPackage) {
@@ -34,7 +34,7 @@ bool checkInternalStorageStatus() {
     return true;
 }
 
-// throws the installation messages.
+// throws the installation messages to OUTFD to display those messages.
 void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog) {
     if (!text || !extr_factor) return;
     size_t purina = strlen(text) + strlen(extr_factor) + 2;
@@ -68,11 +68,11 @@ void setupRecoveryCommandFile() {
         error_print("setupRecoveryCommandFile(): Failed to open recovery command file.");
         return;
     }
-    fputs(hostsAreBackedUp ? "--delete_apn_changes" : "--data_resizing", rcmFile);
+    fputs("--delete_apn_changes", rcmFile);
     fclose(rcmFile);
 }
 
-// checks if partition is mounted
+// checks if a partition is mounted
 bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMountit) {
     if (!baselinePartitionName) return false;
     FILE *mounts = fopen("/proc/mounts", "r");
@@ -113,7 +113,7 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
     return true;
 }
 
-// bruhh
+// the name suggests it all
 bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___) {
     if(!imagePath || !blockPath || !imageName || !expected_image_hash___) {
         throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", "", true);
@@ -218,8 +218,7 @@ char *getPreviousSystemBuildID(const char *filepath) {
     return "KILL.796f7572.73656c660a";
 }
 
-// extracts sh from the zip file.
-// unzip -o "$ZIPFILE" "$file" -d "${INSTALLER}/"
+// extracts requested stuffs from the zip file.
 void extractThisFileFromMe(const char *fileToExtract, bool skipErrors) {    
     if(!fileToExtract) return;
     size_t ykitsnotthesameasitwas = strlen(ZIPFILE) + strlen(fileToExtract) + strlen(INSTALLER_PATH) + 32;
@@ -259,6 +258,8 @@ void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPa
     }
 }
 
+
+// the name suggests it all
 bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     throwMessagesToConsole("- Installing incremental patches to", partition, false);
     size_t omg = 0;
@@ -300,6 +301,7 @@ bool copyIncrementalFiles(const char *partitionPath, char *partition) {
     return true;
 }
 
+// checks the hash against the file
 bool verifyMD5Hashes(const char *file__, const char *expected_hash__) {
     char md5sum[80];
     size_t combineArgSize = strlen("md5sum ") + strlen(file__) + strlen("| awk '{print $1}'") + 2;
@@ -329,15 +331,17 @@ bool verifyMD5Hashes(const char *file__, const char *expected_hash__) {
     return false;
 }
 
+// ts writes misc stuffs that are needed for manage-firmware.sh
 void markInstallTypeAndBlock(const char *imageName, const char *blockPath) {
     FILE *ok_alip = fopen("/dev/tmp/install/daridaridaridari", "w");
     if(!ok_alip) {
         abort__("markInstallTypeAndBlock(): Failed to open \"/dev/tmp/install/daridaridaridari\" in write mode...", " ");
     }
-    fprintf(ok_alip, "Currently Installing: %s To Requested Block: %s | shippedAs: %s | OUTFD Constucted Path: %s", imageName, blockPath, shippedAs, OUTFD);
+    fprintf(ok_alip, "Currently Installing: %s To Requested Block: %s | shippedAs: %s | OUTFD Constucted Path: %s | Zip File Path: %s", imageName, blockPath, shippedAs, OUTFD, ZIPFILE);
     fclose(ok_alip);
 }
 
+// takes backup of the given image
 int takeBackupOfTheGivenImage(const char *blockPath) {
     size_t paper_flower = strlen("cp") + strlen(blockPath) + strlen("/dev/tmp/install/") + 5;
     char *infinity = malloc(paper_flower);
@@ -350,6 +354,7 @@ int takeBackupOfTheGivenImage(const char *blockPath) {
     return exit_status__;
 }
 
+// installs low level images with addtional checks and stuffs.
 bool installLowLevelImages(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___) {
     if(!imagePath || !blockPath || !imageName || !expected_image_hash___) {
         throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", " ", true);

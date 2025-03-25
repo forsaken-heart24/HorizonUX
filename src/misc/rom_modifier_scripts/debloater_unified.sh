@@ -50,9 +50,7 @@ debloat_the_crap() {
         "PhotoTable"
         "PartnerBookmarksProvider"
         "PlayAutoInstallConfig"
-        "SBrowser*"
         "SamsungOne"
-        "SamsungTTS*"
         "SecFactoryPhoneTest"
         "SilentLog"
         "SmartSwitchAgent"
@@ -68,7 +66,6 @@ debloat_the_crap() {
         "ATTAPNWidget_ATT"
         "AttTvMode"
         "AppUpdateCenter"
-        "BixbyVisionFramework*"
         "DeviceBasedServiceConsent"
         "DeviceQualityAgent"
         "DeviceTest"
@@ -80,8 +77,6 @@ debloat_the_crap() {
         "Fast"
         "Fmm"
         "FotaAgent"
-        "GalaxyAppsWidget*"
-        "GalaxyApps*"
         "GooglePartnerSetup"
         "GoogleRestore"
         "HuxPlatform"
@@ -93,7 +88,6 @@ debloat_the_crap() {
         "MemorySaver_O_Refresh"
         "NSDSWebApp"
         "NetworkDiagnostic"
-        "OneDrive*"
         "PreloadInstaller"
         "PhoneErrService"
         "SNP"
@@ -101,7 +95,6 @@ debloat_the_crap() {
         "SPPPushClient"
         "SamsungSmartSuggestions"
         "SamsungCoreServices-Stub"
-        "SecCalculator*"
         "SettingsBixby"
         "SetupWizard_USA"
         "SmartSwitchAssistant"
@@ -113,7 +106,6 @@ debloat_the_crap() {
         "TADownloader"
         "Velvet"
         "UserDictionaryProvider"
-        "UltraDataSaving*"
         "YourPhone_Stub"
         "VzCloud"
     )
@@ -140,49 +132,51 @@ debloat_the_crap() {
     for i in "${HORIZON_SYSTEM_DIR}/app/${app[@]}" "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[@]}" \
     "${HORIZON_SYSTEM_EXT_DIR}/priv-app/${system_extra_privilaged_apps[@]}" "${HORIZON_PRODUCT_DIR}/app/${product_apps[@]}" \
     "${HORIZON_PRODUCT_DIR}/priv-app/${product_privilaged_apps[@]}"; do
-    debugPrint "debloat_the_crap($0): Removing ${i}..."
+    debugPrint "debloat_the_crap(): Removing ${i}..."
     if [ -d "${i}" ]; then
         rm -rf "${i}" 2>>./$thisConsoleTempLogFile
     else
         debugPrint "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
     fi
     done
+    for unknown in ${HORIZON_SYSTEM_DIR}/app/SBrowser* ${HORIZON_SYSTEM_DIR}/app/SamsungTTS* ${HORIZON_SYSTEM_DIR}/priv-app/BixbyVisionFramework* \
+    ${HORIZON_SYSTEM_DIR}/priv-app/GalaxyAppsWidget* ${HORIZON_SYSTEM_DIR}/priv-app/GalaxyApps* ${HORIZON_SYSTEM_DIR}/priv-app/OneDrive* \
+    ${HORIZON_SYSTEM_DIR}/priv-app/SecCalculator* ${HORIZON_SYSTEM_DIR}/priv-app/UltraDataSaving*; do
+        debugPrint "debloat_the_crap(): Removing ${unknown}..."
+        [ -d "${unknown}" ] && rm -rf ${unknown} 2>>./$thisConsoleTempLogFile
+    done
 }
 
 nuke_or_ignore_these_stuffs() {
     local app=(
-        "AASAservice"
-        "AllShareAware"
-        "AllshareFileShare"
-        "AllshareMediaShare"     
-        "ARCore"
-        "ARZone"
-        "StickerCenter"
-        "PrintSpooler"
-        "GooglePrintRecommendationService"
+        "AASAservice" # 0
+        "AllShareAware" # 1
+        "AllshareFileShare" # 2
+        "AllshareMediaShare" # 3
+        "ARCore" # 4
+        "ARZone" # 5
+        "StickerCenter" # 6
+        "PrintSpooler" # 7
+        "GooglePrintRecommendationService" # 8
     )
 
     local privilaged_apps=(
-        "AREmoji" 
-        "AREmojiEditor" 
-        "sticker"
-        "ThemeCenter"
-        "BuiltInPrintService" 
-        "Finder" 
-        "GameHome" 
-        "GameOptimizingService" 
-        "GameTools*" 
-        "LiveStickers"
-        "StickerFaceARAvatar"
-        "SecureFolder"
-        "SamsungDeviceHealthManagerService"
-        "ShareLive"
-        "Turbo"
+        "AREmoji" # 0
+        "AREmojiEditor" # 1
+        "sticker" # 2
+        "ThemeCenter" # 3
+        "BuiltInPrintService" # 4
+        "LiveStickers" # 5
+        "StickerFaceARAvatar" # 6
+        "SecureFolder" # 7
+        "SamsungDeviceHealthManagerService" # 8
+        "ShareLive" # 9
+        "Turbo" # 10
     )
 
     console_print "[WARNING] - These apps will potentially hurt device performance"
-    console_print "            Type \'y\' to NUKE IT"
-    console_print "            Type \'n\' to LET IT COOK!"
+    console_print "            Type \'y\' to remove"
+    console_print "            Type \'n\' to keep them"
     ask "Do you want to remove Samsung Weather app" && rm -rf "${HORIZON_SYSTEM_DIR}/app/SamsungWeather" 2>./error_ring.log 
     if ask "Do you want to remove Samsung Sharing tools"; then
         for ((i = 0; i < 4; i++)); do
@@ -194,7 +188,7 @@ nuke_or_ignore_these_stuffs() {
         for ((i = 4; i < 7; i++)); do
             rm -rf "${HORIZON_SYSTEM_DIR}/app/${app[$i]}"
         done
-        for ((i = 4; i < 7; i++)); do
+        for ((i = 5; i < 7; i++)); do
             rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[$i]}"
         done
     fi
@@ -206,12 +200,12 @@ nuke_or_ignore_these_stuffs() {
     fi
     ask "Do you want to nuke Finder [heavy ram consuption, used to search apps in homescreen]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/Finder"
     if ask "Do you want to nuke Game Launcher and Game Tools [performance will be doomed if you let it cook]"; then
-        for ((i = 4; i < 7; i++)); do
-            rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[$i]}" 2>./error_ring.log
-        done
+        rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/GameHome" 2>./error_ring.log
+        rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/GameOptimizingService" 2>./error_ring.log
+        rm -rf ${HORIZON_SYSTEM_DIR}/priv-app/GameTools* 2>./error_ring.log
     fi
-    ask "Do you want to nuke Device Care Plugin [performance will be doomed if you let it cook]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[7]}"
-    ask "Do you want to nuke Carrier Services such as ESIM and Wifi-Calling" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[14]}"
+    ask "Do you want to nuke Device Care Plugin [performance will be doomed if you let it cook]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[8]}"
+    ask "Do you want to nuke Carrier Services such as ESIM and Wifi-Calling" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[10]}"
 }
 case "${BUILD_TARGET_SDK_VERSION}" in
     30|31|32|33|34|35)
