@@ -23,25 +23,25 @@ void disableMagiskModules() {
             if(strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, ".") == 0) {
                 continue;
             }
-            size_t tanananananae = strlen("/tmp/data/adb/modules/") + strlen(entry->d_name) + strlen("/disable") + 2;
-            char *boneka_ambalalu = malloc(tanananananae);
-            if(!boneka_ambalalu) {
+            size_t trulimero_trulichina = strlen("/tmp/data/adb/modules/") + strlen(entry->d_name) + strlen("/disable") + 2;
+            char *boneka_ambalabu = malloc(trulimero_trulichina);
+            if(!boneka_ambalabu) {
                 error_print("disableMagiskModules(): Failed to allocate memory, skipping...");
                 continue;
             }
-            if(snprintf(boneka_ambalalu, tanananananae, "/tmp/data/adb/modules/%s/disable", entry->d_name) >= tanananananae) {
+            if(snprintf(boneka_ambalabu, trulimero_trulichina, "/tmp/data/adb/modules/%s/disable", entry->d_name) >= trulimero_trulichina) {
                 error_print("disableMagiskModules(): Truncated path, skipping...");
-                free(boneka_ambalalu);
+                free(boneka_ambalabu);
                 continue;
             }
-            FILE *file = fopen(boneka_ambalalu, "w");
+            FILE *file = fopen(boneka_ambalabu, "w");
             if(!file) {
                 error_print("disableMagiskModules(): Failed to create disable file!");
             }
             else {
                 fclose(file);
             }            
-            free(boneka_ambalalu);
+            free(boneka_ambalabu);
         }
     }
     closedir(dirptr);

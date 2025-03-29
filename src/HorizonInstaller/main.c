@@ -218,5 +218,4 @@ int main(int argc, const char *argv[]) {
         ZIPFILE = NULL;
     }    
     throwMessagesToConsole("- Successfully installed Horizon on your device, reboot to use the device now!", " ", true);
-    setupRecoveryCommandFile();
 }

@@ -83,10 +83,10 @@ BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET=true
 # BUILD_TARGET_BRING_NEWGEN_ASSISTANT=true
 
 # for android <= 11, try this at own risk
-BUILD_TARGET_DISABLE_KNOX_PROPERTIES=false
+BUILD_TARGET_DISABLE_KNOX_PROPERTIES=true
 
 # Brings mobile data toggle on the power menu context.
-BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU=true
+BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU=false
 
 # Forces the network icon to show 5 bars
 BUILD_TARGET_FORCE_FIVE_BAR_NETICON=true
@@ -95,7 +95,7 @@ BUILD_TARGET_FORCE_FIVE_BAR_NETICON=true
 BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING=true
 
 # force enable Call Recording in the Samsung Dialer App
-BUILD_TARGET_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER=false
+BUILD_TARGET_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER=true
 
 # disables wifi calling if it set to true, otherwise (true), it enables it if disabled.
 BUILD_TARGET_DISABLE_WIFI_CALLING=true
@@ -107,7 +107,7 @@ BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK=true
 BUILD_TARGET_SKIP_SETUP_JUNKS=true
 
 # forces the system to not close the camera app while calling
-BUILD_TARGET_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING=true
+BUILD_TARGET_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING=false
 
 # forces the Media Player to play a video during an call.
 BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL=false
@@ -151,7 +151,7 @@ TARGET_INCLUDE_SAMSUNG_THEMING_MODULES=false
 
 # misc properties..
 RECOVERY_IMAGE_PATH=
-PRODUCT_CSC_NAME=BTB
+PRODUCT_CSC_NAME=
 SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD=false
 NEW_DEFAULT_LANGUAGE_ON_PRODUCT=ja
 NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT=JP
@@ -164,7 +164,7 @@ TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON=false
 
 # This thing is used to adjust the animation type of the device
 # This can be : LowEnd , LowestEnd , LowEndFast , Mass (mid-rangers, not available after 3.1) , HighEnd , CHNHighEND & HighEnd_Tablet
-TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE=HighEnd
+TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE=Mass
 
 # The dawn battery health level thing, like the one from iPhone thnx to UN1CA!
 TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS=false
@@ -198,17 +198,17 @@ TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES=true
 
 ############################################# Exclusive HorizonUX Features #############################################
 # this feature includes an prop level workaround that is used to avoid smoky distortion specifically to those LDAC Bluetooth earphones and DAC's under $30 (probably), this sets special re-sampling tweaks in the system level.
-TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER=false
+TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER=true
 
 # this feature removes a file which is necessary for drm / ott platforms, please do note that the widevine level will fallback to L3
 # which will disable HD playbacks. DRM-protected apps might work after appling this patch but im not sure....
-TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER=true
+TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER=false
 
 # removes a smart switch listener port from the init shell.
 TARGET_REMOVE_SMARTSWITCH_DAEMON=true
 
 # Ellen, a script that spoofs and does some misc jobs if the device is booting.
-TARGET_INCLUDE_HORIZONUX_ELLEN=false
+TARGET_INCLUDE_HORIZONUX_ELLEN=true
 ############################################# Exclusive HorizonUX Features #############################################
 
 ############################################# Misc Configs #############################################
@@ -223,7 +223,7 @@ DISABLE_DISPLAY_REFRESH_RATE_OVERRIDE=false
 
 # Dynamic range compression (DRC) is a process that reduces the difference between the loudest and quietest parts of an audio signal.
 # almost works on every OneUI version.
-DISABLE_DYNAMIC_RANGE_COMPRESSION=false
+DISABLE_DYNAMIC_RANGE_COMPRESSION=true
 
 # ASKS works as an another layer in the signature verification which checks if the public key certificate from the SEC-INF (present in the samsung apps) matches the actual application signature
 # this doesn't disable the google's app signature verification

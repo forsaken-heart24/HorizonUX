@@ -36,13 +36,17 @@ bool checkInternalStorageStatus() {
 
 // throws the installation messages to OUTFD to display those messages.
 void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog) {
-    if (!text || !extr_factor) return;
+    if(!text) return;
     size_t purina = strlen(text) + strlen(extr_factor) + 2;
     char *kasane = malloc(purina);
+    if(kasane == NULL) {
+        printf("throwMessagesToConsole(): Failed to allocate memory to send messages to the recovery Console!\n");
+        exit(1);
+    }
     snprintf(kasane, purina, "%s %s\n", text, extr_factor);
-    FILE *OUTFD__ = fopen(OUTFD, "w");
-    if(!OUTFD__) {
-        consoleLog("throwMessagesToConsole(): Unable to open OUTFD, closing the console!", " ");
+    FILE *OUTFD__ = fopen(OUTFD, "a");
+    if(OUTFD__ == NULL) {
+        printf("throwMessagesToConsole(): Unable to open OUTFD, closing the console!\n");
         exit(1);
     }
     fprintf(OUTFD__, "%s", kasane);
@@ -54,31 +58,16 @@ void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog) {
 // throws installation messages and stops installation
 void abort__(char *text, char *extr_factor) {
     throwMessagesToConsole(text, extr_factor, true);
-    executeCommands("rm -rf /dev/tmp", false);
-    if(ZIPFILE) {
-        free(ZIPFILE);
-    }    
+    free(ZIPFILE);
     exit(1);
-}
-
-// sets up recovery command file
-void setupRecoveryCommandFile() {
-    FILE *rcmFile = fopen("/cache/recovery/command", "w");
-    if(!rcmFile) {
-        error_print("setupRecoveryCommandFile(): Failed to open recovery command file.");
-        return;
-    }
-    fputs("--delete_apn_changes", rcmFile);
-    fclose(rcmFile);
 }
 
 // checks if a partition is mounted
 bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMountit) {
-    if (!baselinePartitionName) return false;
+    if(!baselinePartitionName) return false;
     FILE *mounts = fopen("/proc/mounts", "r");
     if(!mounts) {
         abort__("Failed to open /proc/mounts", " ");
-        return false;
     }
     char content[1028];
     bool partitionIsMounted = false;
@@ -98,14 +87,12 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
         size_t tetoris = 21 + strlen(baselinePartitionName) + 2;
         char *teteteteteto = malloc(tetoris);
         if(!teteteteteto) {
-            error_print("isThisPartitionMounted(): Failed to dynamically allocate memory for the requested operation!");
-            return false;
+            abort__("isThisPartitionMounted(): Failed to dynamically allocate memory for the requested operation!", " ");
         }
         snprintf(teteteteteto, tetoris, "mount -o rw,remount %s", baselinePartitionName);
         if(executeCommands(teteteteteto, false) != 0) {
             free(teteteteteto);
             abort__("- Failed to re-mount partition", " ");
-            return false;
         }
         free(teteteteteto);
         consoleLog("Anyways bro, this partition is mounted:", baselinePartitionName);
@@ -163,7 +150,7 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
 
 // changes string case
 char *stringCase(const char *option, const char *input) {
-    if (!option || !input) return NULL;
+    if(!option || !input) return NULL;
     size_t len = strlen(input) + 2;
     char *output = malloc(len);
     if(!output) {
@@ -257,7 +244,6 @@ void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPa
         free(hostsPath);
     }
 }
-
 
 // the name suggests it all
 bool copyIncrementalFiles(const char *partitionPath, char *partition) {

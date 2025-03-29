@@ -64,7 +64,6 @@ bool verifyMD5Hashes(const char *file__, const char *expected_hash__);
 bool installLowLevelImages(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___);
 void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog);
 void abort__(char *text, char *extr_factor);
-void setupRecoveryCommandFile();
 void extractThisFileFromMe(const char *fileToExtract, bool skipErrors);
 void backupHostsFileFromCurrentSystem(char *arg, const char *linuxHostsAndroidPath);
 void markInstallTypeAndBlock(const char *imageName, const char *blockPath);
