@@ -4,12 +4,11 @@
 
 ## Current List of Supported Devices
 - **Samsung Galaxy A30**  
-    **Maintainer:** [forsaken-heart24](https://github.com/forsaken-heart24)
+    **Maintainer:** [Luna](https://github.com/forsaken-heart24)
 
 ## Notes:
 - This list is subject to change as new devices are added or deprecated.
-- If you wish to see your device supported, consider contributing or reaching out to the maintainers.
-- For detailed instructions on becoming a maintainer.
+- If you wish to see your device supported, consider contributing or reaching out to me.
 
 # How to Become a Device Maintainer
 ## Requirements:
@@ -35,4 +34,4 @@
      Respect privacy by not sharing private chats, test builds, or unreleased features.
 
 ## Ready to Join?
-Reach out to me to express your interest and start contributing!
+Fill this <a href="https://forms.gle/A1YKmf77vzLJx4HZ9">Maintainer Form</a> to express your interest and start contributing!

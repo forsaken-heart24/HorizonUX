@@ -9,7 +9,7 @@
 - **PRODUCT_DIR**: Put your extracted product folder path there.
 - **PRISM_DIR**: Put your extracted product folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
 - **PRODUCT_CSC_NAME**: The csc code of your product image, don't put random string there.
-- **TARGET_BUILD_PRODUCT_NAME**: Ensure ro.product.system.device (from /system/build.prop) matches in all caps. Fallback to genericTargetProperties.conf if device blobs are missing.
+- **TARGET_BUILD_PRODUCT_NAME**: Ensure ro.product.system.device (from /system/build.prop) matches in all. Fallback to genericTargetProperties.conf if device blobs are missing.
 
 ## Device Name & Setup
 - **TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES**: Enables custom welcome message during setup.

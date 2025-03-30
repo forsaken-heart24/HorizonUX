@@ -24,6 +24,10 @@ Give these awesome contributors some love:
 Let us know through our bot:  
 📢 [**Luna's Project Bugreporter Bot**](https://t.me/luna_project_bugreporter_bot)
 
+💖 **Want to check if your device is maintained or not?**
+Check out this README:
+🔗 [**Supported Devices**](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/SUPPORTED_DEVICES.md)
+
 ✅ **Can I use this for my personal or for commercial use cases?**  
-You are requested to open-source your project if you use anything from this project.  
+You are requested to open-source and give credits if you use anything from this project.  
 Failure to do so may violate the **GNU General Public License v3 (GPL-3.0)**.

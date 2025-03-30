@@ -52,6 +52,10 @@ function setprop() {
         propValue="$4"
         propFile=$(if [ -f "$2" ]; then echo "$2"; else echo "$HORIZON_VENDOR_PROPERTY_FILE"; fi)
     fi
+    if cat ${stacked_temp_properties} | grep "${propVariableName}" | grep -q =${propValue}; then
+        console_print "Skipping ${propVariableName} because it already has the requested value set in somewhere."
+        return 0;
+    fi
     awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
     mv ${propFile}.tmp ${propFile}
 }
@@ -757,7 +761,7 @@ function apply_diff_patches() {
 function stack_build_properties() {
     local unforgettable
     local i
-    local stacked_temp_properties="${TMPDIR}/$(generate_random_hash 100)___stacked__properties"
+    local stacked_temp_properties="${TMPDIR}/$(generate_random_hash 20)___stacked__properties"
     for i in $HORIZON_PRODUCT_DIR $HORIZON_SYSTEM_DIR $HORIZON_SYSTEM_EXT_DIR $HORIZON_VENDOR_DIR; do
         if [ -f "${i}/build.prop" ]; then
             for unforgettable in "$(cat "${i}/build.prop")"; do
@@ -811,19 +815,19 @@ function kang_dir() {
     local dir
     local WhySoSerious=$(string_format --lower "$1")
     if [ "$WhySoSerious1" == "prism" ]; then
-        dir="$HORIZON_PRISM_DIR"
+        dir="$PRISM_DIR"
     elif [ "$WhySoSerious1" == "product" ]; then
-        dir="$HORIZON_PRODUCT_DIR"
+        dir="$PRODUCT_DIR"
     elif [ "$WhySoSerious1" == "system" ]; then
-        dir="$HORIZON_SYSTEM_DIR"
+        dir="$SYSTEM_DIR"
     elif [ "$WhySoSerious" == "system_ext" ]; then
-        dir="$HORIZON_SYSTEM_EXT_DIR"
+        dir="$SYSTEM_EXT_DIR"
     elif [ "$WhySoSerious1" == "vendor" ]; then
-        dir="$HORIZON_VENDOR_DIR"
+        dir="$VENDOR_DIR"
     fi
-    if [ -f "$dir/etc" ]; then
+    if [ -d "$dir/etc" ]; then
         echo "$dir"
-    elif [ -f "$dir/$1/etc" ]; then
+    elif [ -d "$dir/$1/etc" ]; then
         echo "$dir/$1"
     fi
 }

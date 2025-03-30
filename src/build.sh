@@ -86,30 +86,18 @@ console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 console_print "Do you want to mount super image and proceed?"
 
-# Cache partitions
-for partition in system vendor product; do
-    if echo "$katarenai" | grep -q "$partition"; then
-        if check_build_prop "$HASH_KEY_FOR_SUPER_BLOCK_PATH/$partition"; then
-            set_partition_flag "$partition"
-        fi
-    fi
-done
+# TODO:
 HORIZON_PRODUCT_DIR=$(kang_dir "product")
+HORIZON_PRISM_DIR=$(kang_dir "prism")
 HORIZON_SYSTEM_DIR=$(kang_dir "system")
 HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")
 HORIZON_VENDOR_DIR=$(kang_dir "vendor")
 
 # Locate build.prop files
-HORIZON_PRODUCT_PROPERTY_FILE=$(
-	[ -f "${HORIZON_PRODUCT_DIR}/build.prop" ] && echo ${HORIZON_PRODUCT_DIR}/build.prop
-	echo ${HORIZON_PRODUCT_DIR}/etc/build.prop
-)
-HORIZON_SYSTEM_PROPERTY_FILE=${HORIZON_SYSTEM_DIR}/build.prop
-HORIZON_SYSTEM_EXT_PROPERTY_FILE=$(
-	[ -f "${HORIZON_SYSTEM_EXT_DIR}/build.prop" ] && echo ${HORIZON_SYSTEM_EXT_DIR}/build.prop
-	echo ${HORIZON_SYSTEM_EXT_DIR}/etc/build.prop
-)
-HORIZON_VENDOR_PROPERTY_FILE=${HORIZON_VENDOR_DIR}/build.prop
+HORIZON_PRODUCT_PROPERTY_FILE=$(check_build_prop "${HORIZON_PRODUCT_DIR}")
+HORIZON_SYSTEM_PROPERTY_FILE=$(check_build_prop "${HORIZON_SYSTEM_DIR}")
+HORIZON_SYSTEM_EXT_PROPERTY_FILE=$(check_build_prop "${HORIZON_SYSTEM_EXT_DIR}")
+HORIZON_VENDOR_PROPERTY_FILE=$(check_build_prop "${HORIZON_VENDOR_DIR}")
 
 # Locate overlay paths
 HORIZON_PRODUCT_OVERLAY=""
