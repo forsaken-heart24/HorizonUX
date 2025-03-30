@@ -15,22 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-###########################
-##              N O T E
-
-# change values to your needs and run the script.
-
-# true means it's enabled, false means it's disabled.
-
-# fill-up those blank variables to prevent build errors.
-
-# Thank you for using HorizonUX, please provide your feedback in our official chat!
-
-##              N O T E
-#########################
-
 # 12:35AM - 30-10-2024 @Luna : fuck no, i dont want to have an another version for testing purposes lmao.
 testEnv=false
+
+# must be the same from (ro.product.system.device in /system/build.prop) but should be in caps.
+# and also, this will switch the config file to genericTargetProperties.conf if the device blobs weren't available in the source.
+TARGET_BUILD_PRODUCT_NAME=
 
 # signature key configs, please proceed with caution before playing with this
 # be sure to fill if you are going to use your own key to sign app packages
@@ -45,80 +35,25 @@ SYSTEM_DIR=
 SYSTEM_EXT_DIR=
 VENDOR_DIR=
 PRODUCT_DIR=
-
-# floating features exact dir, to be set by the builder
-TARGET_BUILD_FLOATING_FEATURE_PATH=
+PRISM_DIR=
 
 # Horizon codename and etc..
 CODENAME="Birds"
 CODENAME_VERSION_REFERENCE_ID=0.0
 CODEVERSION_REFERENCE_YAML=0.00001
 
-# Build Target properties..
-BUILD_TARGET_SCREEN_WIDTH=
-BUILD_TARGET_SCREEN_HEIGHT= 
-BUILD_TARGET_USES_DYNAMIC_PARTITIONS=false
-
-# dang
+# just changes the brand name in the settings app, ig
 TARGET_INCLUDE_CUSTOM_BRAND_NAME=false
-BUILD_TARGET_CUSTOM_BRAND_NAME="HorizonUX - ${CODENAME} (v${CODENAME_VERSION_REFERENCE_ID})"
 
 # custom setup wizard welcome text.
 TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES=false
 CUSTOM_SETUP_WELCOME_MESSAGE="helno, please put your own typa rizzy drizzy shiiii here :D"
 
-#  60 or 90 or 120 maybe 144 if it exists (lmao it doesnt ik it) - put a single value, dont put multiple values here lol
-BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE=60
-BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES=false
-
-# removes unnecessary logging stuffs
-BUILD_TARGET_REMOVE_SYSTEM_LOGGING=false
-
-# brings back network speed in some regions
-BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET=false
-
-# for android <= 11, brings assistant 2.0
-# BUILD_TARGET_BRING_NEWGEN_ASSISTANT=false
-
-# for android <= 11, try this at own risk
-BUILD_TARGET_DISABLE_KNOX_PROPERTIES=false
-
-# Brings mobile data toggle on the power menu context.
-BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU=true
-
-# Forces the network icon to show 5 bars
-BUILD_TARGET_FORCE_FIVE_BAR_NETICON=true
-
-# Forces the system to play song(s) / music(s) while recording a video
-BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING=true
-
-# force enable Call Recording in the Samsung Dialer App
-BUILD_TARGET_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER=false
-
-# disables wifi calling if it set to true, otherwise (true), it enables it if disabled.
-BUILD_TARGET_DISABLE_WIFI_CALLING=false
-
 # Disables annoying sounds while calls.
 BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK=true
 
-# force skips junks like wifi setup and etc in the setup wizard
-BUILD_TARGET_SKIP_SETUP_JUNKS=false
-
-# forces the system to not close the camera app while calling
-BUILD_TARGET_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING=true
-
-# forces the Media Player to play a video during an call.
-BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL=false
-
 # Force enables Popup player on Samsung Video Player
 FORCE_ENABLE_POP_UP_PLAYER_ON_SVP=true
-
-# Disables Setup Wizard, i'm not responsible for legal actions against you!
-BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD=false
-
-# forces shutdown and bootanimation fps, use this if you have a video/gif like moving stuffs in your bootanimation
-BUILD_TARGET_BOOT_ANIMATION_FPS=
-BUILD_TARGET_SHUTDOWN_ANIMATION_FPS=
 
 # Brings Chinese version of Smartmanager and Device Care, thnx @saadelasfur
 BRINGUP_CN_SMARTMANAGER_DEVICE=false
@@ -126,9 +61,6 @@ BRINGUP_CN_SMARTMANAGER_DEVICE=false
 # Target properties.
 # this variable will enable some debugging features and this thing will make your phone overheat and hang alot, do with pre-caution!s
 TARGET_BUILD_IS_FOR_DEBUGGING=false
-
-# applies patches to bluetooth library if the bluetooth doesnt work properly.
-TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES=false
 
 # you know these :
 TARGET_REMOVE_NONE_SECURITY_OPTION=false
@@ -141,9 +73,6 @@ TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS=false
 # Disables fbe (file based encryption) on internal storage
 TARGET_DISABLE_FILE_BASED_ENCRYPTION=false
 
-# bring fastboot mode on samsung launched with android 10.
-TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED=false
-
 # this brings unlimited pictures backup.
 TARGET_INCLUDE_UNLIMITED_BACKUP=false
 
@@ -153,9 +82,45 @@ TARGET_INCLUDE_SAMSUNG_THEMING_MODULES=false
 # misc properties..
 RECOVERY_IMAGE_PATH=
 PRODUCT_CSC_NAME=BTE
-SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD=false
-NEW_DEFAULT_LANGUAGE_ON_PRODUCT=ja
-NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT=JP
+SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD=true
+NEW_DEFAULT_LANGUAGE_ON_PRODUCT=en
+NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT=GB
+
+# Disables Setup Wizard
+TARGET_BUILD_FORCE_DISABLE_SETUP_WIZARD=false
+
+# force skips junks like wifi setup and etc in the setup wizard
+TARGET_BUILD_SKIP_SETUP_JUNKS=false
+
+# forces the system to not close the camera app while calling
+TARGET_BUILD_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING=true
+
+# forces the Media Player to play a video during an call.
+TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL=false
+
+# removes unnecessary logging stuffs, don't disable logs on private / test builds.
+TARGET_BUILD_REMOVE_SYSTEM_LOGGING=false
+
+# brings back network speed in some regions
+TARGET_BUILD_ADD_NETWORK_SPEED_WIDGET=false
+
+# for android <= 11, brings assistant 2.0
+TARGET_BUILD_BRING_NEWGEN_ASSISTANT=false
+
+# Brings mobile data toggle on the power menu context.
+TARGET_BUILD_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU=true
+
+# Forces the network icon to show 5 bars
+TARGET_BUILD_FORCE_FIVE_BAR_NETICON=true
+
+# Forces the system to play song(s) / music(s) while recording a video
+TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING=true
+
+# force enable Call Recording in the Samsung Dialer App
+TARGET_BUILD_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER=false
+
+# disables wifi calling if it set to true, otherwise (true), it enables it if disabled.
+TARGET_BUILD_DISABLE_WIFI_CALLING=false
 
 # floating feature configs. THANKS Furiousdroid for the suggestion!
 TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN=false
@@ -184,9 +149,6 @@ TARGET_FLOATING_FEATURE_DISABLE_BLUR_EFFECTS=false
 # + Basic
 # + Vivid
 TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES=false
-
-# Bring wireless power sharing, enable this flag if your device supports this lol.
-TARGET_FLOATING_FEATURE_SUPPORTS_WIRELESS_POWER_SHARING=false
 
 # ultra power saving, this thing is useless but yeah if you want it then take it.
 TARGET_FLOATING_FEATURE_ENABLE_ULTRA_POWER_SAVING=false

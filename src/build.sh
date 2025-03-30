@@ -29,6 +29,15 @@ for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika
     fi
 done
 
+# device specific customization:
+if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
+	debugPrint "- Device specific config and blobs are found, customizing the rom...."
+	. "./target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf"
+else
+	debugPrint "- Using genericTargetProperties.conf for configs..."
+	. "./genericTargetProperties.conf"
+fi
+
 # mako mako mako mako those who know💀
 for i in system/product/priv-app system/product/etc system/product/overlay \
          system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
@@ -42,7 +51,7 @@ BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut 
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 rm -rf ../local_build/logs/*
 TMPDIR="../local_build/tmp/hux"
-TMPFILE="../local_build/logs/hux_build.log"
+TMPFILE="$(mktemp)"
 
 # Check dependencies
 if [ "$testEnv" != "true" ]; then
@@ -174,13 +183,13 @@ if boolReturn $TARGET_INCLUDE_UNLIMITED_BACKUP; then
 	. ${SCRIPTS[0]}
 fi
 
-if boolReturn $TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES; then
+if boolReturn $BUILD_TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES; then
 	console_print "Patching bluetooth...."
 	[ -f "$HORIZON_SYSTEM_DIR/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found, copy and put them in a random directory and try again.."
 	HEX_PATCH "$HORIZON_SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052"
 fi
 
-if boolReturn $TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED; then
+if boolReturn $BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED; then
 	console_print "Patching recovery image..."
 	. ${SCRIPTS[2]}
 fi
@@ -306,11 +315,11 @@ if boolReturn $TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES; then
 	done
 fi
 
-if boolReturn $TARGET_FLOATING_FEATURE_SUPPORTS_WIRELESS_POWER_SHARING; then
+if boolReturn $BUILD_TARGET_SUPPORTS_WIRELESS_POWER_SHARING; then
 	console_print "Enabling Wireless powershare...."
-	for wireless_power_sharing_lore in SEC_FLOATING_FEATURE_BATTERY_SUPPORT_HV SEC_FLOATING_FEATURE_BATTERY_SUPPORT_WIRELESS_HV SEC_FLOATING_FEATURE_BATTERY_SUPPORT_WIRELESS_NIGHT_MODE \
+	for wireless_power_sharing_core in SEC_FLOATING_FEATURE_BATTERY_SUPPORT_HV SEC_FLOATING_FEATURE_BATTERY_SUPPORT_WIRELESS_HV SEC_FLOATING_FEATURE_BATTERY_SUPPORT_WIRELESS_NIGHT_MODE \
 		SEC_FLOATING_FEATURE_BATTERY_SUPPORT_WIRELESS_TX; do
-		add_float_xml_values "${wireless_power_sharing_lore}" "TRUE"
+		add_float_xml_values "${wireless_power_sharing_core}" "TRUE"
 	done
 fi
 
@@ -403,7 +412,7 @@ if boolReturn $FORCE_HARDWARE_ACCELERATION; then
 	done
 fi
 
-if boolReturn "$BUILD_TARGET_REMOVE_SYSTEM_LOGGING"; then
+if boolReturn "$TARGET_BUILD_REMOVE_SYSTEM_LOGGING"; then
 	console_print "Disabling unnecessary logging stuffs in android..."
 	add_float_xml_values "SEC_FLOATING_FEATURE_SYSTEM_CONFIG_SYSINT_DQA_LOGLEVEL" '3'
 	setprop --system "logcat.live" "disable"
@@ -441,38 +450,38 @@ if boolReturn "$BUILD_TARGET_REMOVE_SYSTEM_LOGGING"; then
 	fi
 fi
 
-if boolReturn "$BUILD_TARGET_BRING_NEWGEN_ASSISTANT"; then
+if boolReturn "$TARGET_BUILD_BRING_NEWGEN_ASSISTANT"; then
 	console_print "Enabling New Gen Google Assistant..."
 	setprop --system "ro.opa.eligible_device" "true"
 fi
 
-if boolReturn "$BUILD_TARGET_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU"; then
+if boolReturn "$TARGET_BUILD_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU"; then
 	console_print "Enabling Mobile data toggle in the power menu.."
 	add_csc_xml_values "CscFeature_Framework_SupportDataModeSwitchGlobalAction" "TRUE"
 fi
 
-if boolReturn "$BUILD_TARGET_FORCE_FIVE_BAR_NETICON"; then
+if boolReturn "$TARGET_BUILD_FORCE_FIVE_BAR_NETICON"; then
 	console_print "Enabling 5 network bars..."
 	add_csc_xml_values "CscFeature_SystemUI_ConfigMaxRssiLevel" "5"
 fi
 
-if boolReturn "$BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING"; then
+if boolReturn "$TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING"; then
 	console_print "Forcing the system to not close music apps while recording a video..."
 	add_csc_xml_values "CscFeature_Camera_CamcorderDoNotPauseMusic" "TRUE"
 fi
 
-if boolReturn "$BUILD_TARGET_ADD_NETWORK_SPEED_WIDGET"; then
+if boolReturn "$TARGET_BUILD_ADD_NETWORK_SPEED_WIDGET"; then
 	console_print "Enabling network speed bar in qs.."
 	add_csc_xml_values "CscFeature_Setting_SupportRealTimeNetworkSpeed" "TRUE"
 	[ "$BUILD_TARGET_SDK_VERSION" -ge "34" ] && add_csc_xml_values "CscFeature_Common_SupportZProjectFunctionInGlobal" "TRUE"
 fi
 
-if boolReturn "$BUILD_TARGET_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING"; then
+if boolReturn "$TARGET_BUILD_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING"; then
 	console_print "Forcing system to not close the camera app while calling..."
 	add_csc_xml_values "CscFeature_Camera_EnableCameraDuringCall" "TRUE"
 fi
 
-if boolReturn "$BUILD_TARGET_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER"; then
+if boolReturn "$TARGET_BUILD_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER"; then
 	console_print "Adding call recording feature in samsung dialler, please note that im not responsible for legal actions against you!"
 	add_csc_xml_values "CscFeature_VoiceCall_ConfigRecording" "RecordingAllowedByMenu"
 fi
@@ -502,7 +511,7 @@ if boolReturn "$BUILD_TARGET_DISABLE_KNOX_PROPERTIES"; then
 	add_csc_xml_values "CscFeature_Knox_SupportKnoxGuard" "FALSE"
 fi
 
-if boolReturn "$BUILD_TARGET_DISABLE_WIFI_CALLING"; then
+if boolReturn "$TARGET_BUILD_DISABLE_WIFI_CALLING"; then
 	console_print "Disabling Wifi calling.."
 	add_csc_xml_values "CscFeature_Setting_SupportWifiCall" "FALSE"
 	add_csc_xml_values "CscFeature_Setting_SupportWiFiCallingMenu" "FALSE"
@@ -512,7 +521,7 @@ else
 	add_csc_xml_values "CscFeature_Setting_SupportWiFiCallingMenu" "TRUE"
 fi
 
-if boolReturn "$BUILD_TARGET_SKIP_SETUP_JUNKS"; then
+if boolReturn "$TARGET_BUILD_SKIP_SETUP_JUNKS"; then
 	console_print "Disabling junks on setup...."
 	add_csc_xml_values "CscFeature_Setting_SkipWifiActvDuringSetupWizard" "FALSE"
 	add_csc_xml_values "CscFeature_Setting_SkipStepsDuringSamsungSetupWizard" "TRUE"
@@ -523,7 +532,7 @@ if boolReturn "$BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK"; then
 	add_csc_xml_values "CscFeature_Video_BlockNotiSoundDuringStreaming" "TRUE"
 fi
 
-if boolReturn "$BUILD_TARGET_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL"; then
+if boolReturn "$TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL"; then
 	add_csc_xml_values "CscFeature_Video_SupportPlayDuringCall" "TRUE"
 	console_print "Forced the system to play media while call..."
 fi
@@ -533,7 +542,7 @@ if boolReturn "$FORCE_ENABLE_POP_UP_PLAYER_ON_SVP"; then
 	console_print "Forced samsung video player to work on pop-up window..."
 fi
 
-if boolReturn "$BUILD_TARGET_FORCE_DISABLE_SETUP_WIZARD"; then
+if boolReturn "$TARGET_BUILD_FORCE_DISABLE_SETUP_WIZARD"; then
 	console_print "Disabling Setup Wizard...."
 	add_csc_xml_values "CscFeature_SetupWizard_DisablePrivacyPolicyAgreement" "TRUE"
 fi

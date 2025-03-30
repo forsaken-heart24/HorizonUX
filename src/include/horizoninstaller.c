@@ -77,11 +77,6 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
             break;
         }
     }
-    if(!partitionIsMounted) {
-        fclose(mounts);
-        consoleLog("Partition is not mounted:", baselinePartitionName);
-        return false;
-    }
     fclose(mounts);
     if(DoiNeedToMountit) {
         size_t tetoris = 21 + strlen(baselinePartitionName) + 2;
@@ -97,17 +92,24 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
         free(teteteteteto);
         consoleLog("Anyways bro, this partition is mounted:", baselinePartitionName);
     }
-    return true;
+    else {
+        if(!partitionIsMounted) {
+            consoleLog("Partition is not mounted:", baselinePartitionName);
+            return false;
+        }
+        else {
+            consoleLog("The requested partition: ", baselinePartitionName);
+            consoleLog("was mounted without errors!", " ");
+            return true;
+        }
+    }
 }
 
 // the name suggests it all
 bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___) {
     if(!imagePath || !blockPath || !imageName || !expected_image_hash___) {
-        throwMessagesToConsole("- Insufficient Information. The zip might be corrupted", "", true);
+        throwMessagesToConsole("- Insufficient Information.", "", true);
         abort__("  Error code: 0x7265616c5f626c6f636b206e6f7420736574", "");
-    }
-    if(!shippedAs) {
-        abort__("- Unsupported image format. Could not determine which format factor is shipped with.", "");
     }
     if(!iDontWantChecksumChecks) {
         if(verifyMD5Hashes(imagePath, expected_image_hash___) == false) {
@@ -118,7 +120,7 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
     size_t teteteteteto = 500;
     char *defoq = malloc(teteteteteto);
     if(!defoq) {
-        error_print("installGivenDiskImageFile(): Failed to allocate memory for the installation!");
+        consoleLog("installGivenDiskImageFile(): Failed to allocate memory for the installation!", " ");
         abort__("installGivenDiskImageFile(): Failed to allocate memory for the installation, please try again!", false);
     }
     if(tarballHasPasswordProtection && strcmp(shippedAs, "tarProtected") == 0) {
@@ -138,11 +140,11 @@ bool installGivenDiskImageFile(const char *imagePath, const char *blockPath, con
     } 
     else {
         free(defoq);
-        abort__("- Unsupported image type detected:", (char *)shippedAs);
+        abort__("- Unsupported image format. Could not determine which format factor is shipped with, the specified factor is:", (char *)shippedAs);
     }
     if(executeCommands(defoq, false) != 0) {
         free(defoq);
-        abort__("- Failed to install the image file", "");
+        abort__("- Failed to install the image file", " ");
     }
     free(defoq);
     return true;
@@ -323,7 +325,7 @@ void markInstallTypeAndBlock(const char *imageName, const char *blockPath) {
     if(!ok_alip) {
         abort__("markInstallTypeAndBlock(): Failed to open \"/dev/tmp/install/daridaridaridari\" in write mode...", " ");
     }
-    fprintf(ok_alip, "Currently Installing: %s To Requested Block: %s | shippedAs: %s | OUTFD Constucted Path: %s | Zip File Path: %s", imageName, blockPath, shippedAs, OUTFD, ZIPFILE);
+    fprintf(ok_alip, "Currently Installing: %s To Requested Block: %s | shippedAs: %s | OUTFD Constucted Path: %s | Zip File Path: %s | WRITE_DEBUG_MESSAGES_TO_CONSOLE: %d | createSnapshot: %d", imageName, blockPath, shippedAs, OUTFD, ZIPFILE, WRITE_DEBUG_MESSAGES_TO_CONSOLE, createSnapshot);
     fclose(ok_alip);
 }
 

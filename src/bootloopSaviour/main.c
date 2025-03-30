@@ -9,6 +9,7 @@
 
 // ok
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
+//char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/horizon_bootloopSaviour.log";
 char *LOG4HORIZONFILE = "/sdcard/Horizon/logs/horizon_bootloopSaviour.log";
 
 void disableMagiskModules() {
