@@ -50,7 +50,7 @@ done
 BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut -c 2-200)"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 rm -rf ../local_build/logs/*
-TMPDIR="../local_build/tmp/hux"
+TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
 
 # Check dependencies
@@ -628,6 +628,9 @@ if boolReturn "$TINKER_MAX_REFRESH_RATE"; then
 	fi
 fi
 
+# device customization script bro
+[ -f "./target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh" ] && ./target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh
+
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 debugPrint "End of the script, running misc stuffs.."
 console_print "Running misc jobs..."
@@ -639,6 +642,8 @@ add_csc_xml_values "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Settings_GOTA" "TRUE"
 add_csc_xml_values "CscFeature_Settings_FOTA" "FALSE"
+setprop --system ro.config.iccc_version "iccc_disabled"
+setprop --system ro.config.dmverity "false"
 if [[ -n "${BUILD_TARGET_BOOT_ANIMATION_FPS}" && "${BUILD_TARGET_BOOT_ANIMATION_FPS}" -le "60" && -n "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" && "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" -le "60" ]]; then
 	setprop --system "boot.fps" "${BUILD_TARGET_BOOT_ANIMATION_FPS}"
 	setprop --system "shutdown.fps" "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}"

@@ -8,8 +8,7 @@
     platformBuildVersionName="11">
     <application
         android:extractNativeLibs="false" 
-        android:usesNonSdkApi="true">
-    </application>
+        android:usesNonSdkApi="true"/>
     <overlay 
         android:isStatic="true" 
         android:priority="0" 

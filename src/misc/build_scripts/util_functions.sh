@@ -37,15 +37,15 @@ function setprop() {
     local propVariableName="$2"
     local propValue="$3"
     if string_format --lower "$1" | grep -q "prism"; then
-        propFile=$(check_build_prop "${HORIZON_PRISM_DIR}")
+        propFile=${HORIZON_PRISM_PROPERTY_FILE}
     elif string_format --lower "$1" | grep -q "product"; then
-        propFile=$(check_build_prop "${HORIZON_PRODUCT_DIR}")
+        propFile=${HORIZON_PRODUCT_PROPERTY_FILE}
     elif string_format --lower "$1" | grep -q "system"; then
-        propFile=$(check_build_prop "${HORIZON_SYSTEM_DIR}")
+        propFile=${HORIZON_SYSTEM_PROPERTY_FILE}
     elif string_format --lower "$1" | grep -q "system_ext"; then
-        propFile=$(check_build_prop "${HORIZON_SYSTEM_EXT_DIR}")
+        propFile=${HORIZON_SYSTEM_EXT_PROPERTY_FILE}
     elif string_format --lower "$1" | grep -q "vendor"; then
-        propFile=$(check_build_prop "${HORIZON_VENDOR_DIR}")
+        propFile=${HORIZON_VENDOR_PROPERTY_FILE}
     # setprop --custom "/vendor/odm/etc/build.prop" "ro.is_siam" "true"
     elif string_format --lower "$1" | grep -q "custom"; then
         propVariableName="$3"
@@ -64,6 +64,8 @@ function abort() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
     sleep 0.5
+    tinkerWithCSCFeaturesFile --encode
+    rm -rf "$TMPDIR" "${TARGET_BUILD_FLOATING_FEATURE_PATH}.bak"
     exit 1
 }
 
@@ -124,7 +126,7 @@ function default_language_configuration() {
 function custom_setup_finished_messsage() {
     [ -z "${CUSTOM_SETUP_WELCOME_MESSAGE}" ] && CUSTOM_SETUP_WELCOME_MESSAGE="Welcome to HorizonUX"
     [ "${CUSTOM_SETUP_WELCOME_MESSAGE}" == "xxx" ] && CUSTOM_SETUP_WELCOME_MESSAGE="Welcome to HorizonUX"
-    sed -i 's|<string name="outro_title">.*</string>|<string name="outro_title">&quot;${CUSTOM_SETUP_WELCOME_MESSAGE}&quot;</string>|' ./packages/sec_setup_wizard_horizonux_overlay/res/values/strings.xml
+    sed -i 's|<string name="outro_title">.*</string>|<string name="outro_title">&quot;${CUSTOM_SETUP_WELCOME_MESSAGE}&quot;</string>|' ./horizon/overlay_packages/sec_setup_wizard_horizonux_overlay/res/values/strings.xml
 }
 
 function build_and_sign() {
@@ -223,12 +225,10 @@ function add_float_xml_values() {
         local tmp_file="./tmp_feature"
         # Read the original file and write to the temporary file
         {
-        while IFS= read -r line; do
-            echo "${line}"
-            if [ "${line}" == "<SecFloatingFeatureSet>" ]; then
-            echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
-            fi
-        done
+            while IFS= read -r line; do
+                echo "${line}"
+                [ "${line}" == "<SecFloatingFeatureSet>" ] && echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+            done
         } < "${TARGET_BUILD_FLOATING_FEATURE_PATH}" > "${tmp_file}"
         # Replace the original file with the modified one
         mv "${tmp_file}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
@@ -252,12 +252,12 @@ function add_csc_xml_values() {
                     local tmp_file="./tmp_csc"
                     # Read the original file and write to the temporary file
                     {
-                    while IFS= read -r line; do
-                        echo "${line}"
-                        if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
-                        echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
-                        fi
-                    done
+                        while IFS= read -r line; do
+                            echo "${line}"
+                            if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
+                            echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+                            fi
+                        done
                     } < "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}" > "${tmp_file}"
                     # write the ending thing cuz this mf is not writing that for some reason.
                     echo "</SamsungMobileFeature>" >> "${tmp_file}"
@@ -274,12 +274,12 @@ function add_csc_xml_values() {
             local tmp_file="./tmp_csc"
             # Read the original file and write to the temporary file
             {
-            while IFS= read -r line; do
-                echo "${line}"
-                if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
-                echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
-                fi
-            done
+                while IFS= read -r line; do
+                    echo "${line}"
+                    if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
+                    echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+                    fi
+                done
             } < "${TARGET_BUILD_CSC_FEATURE_PATH}" > "${tmp_file}"
             # write the ending thing cuz this mf is not writing that for some reason.
             echo "</SamsungMobileFeature>" >> "${tmp_file}"
@@ -316,14 +316,9 @@ function tinkerWithCSCFeaturesFile() {
             java -jar "$decoder_jar" -i "$original_csc_feature_path" -o "$decoded_csc_feature_path"
         fi
         # Mark as decoded
-        isXmlDecoded=true
         debugPrint "CSC feature file successfully decoded."
 
     elif [ "$action" == "--encode" ]; then
-        if [ "$isXmlDecoded" != "true" ]; then
-            debugPrint "Error: No decoded file found."
-            return 1
-        fi
         if [ ! -f "$decoded_csc_feature_path" ]; then
             abort "Error: Decoded CSC feature file not found: $decoded_csc_feature_path"
             return 1
@@ -401,7 +396,7 @@ function bool() {
 }
 # these things are intended for those " pro " programmers 
 
-# deprecated cuz useless.
+# useless.
 function warns_api_limitations() {
     local adrod_version=$1
     warns "This feature is found on android $adrod_version, report if it doesn't work. thanks!" "TARGET_OUT_OF_BOUNDS"; 
@@ -421,7 +416,7 @@ function remove_attributes() {
     local INPUT_FILE="$1"
     local OUTPUT_FILE="$2"
     local NAME_TO_SKIP="$3"
-    local MODIFIED=false  # Track if changes were made
+    local MODIFIED=false
 
     # Log start
     debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Output File: ${OUTPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
@@ -587,17 +582,14 @@ HEX_PATCH() {
 	# hmm, understandable :/
     console_print "Patching the bluetooth system file..."
     xxd -p "$FILE" | tr -d \\n | tr -d " " | sed "s/$FROM/$TO/" | xxd -r -p > "$FILE.tmp"
-	  mkdir -p ./patched_resources/system/lib64/
-  	mv "$FILE.tmp" "./patched_resources/system/lib64/libbluetooth_jni.so"
-    console_print "Patched successfully, the file was moved to \"patched_resources/system/lib64/libbluetooth_jni.so\" folder.."
+  	mv "$FILE.tmp" "${HORIZON_SYSTEM_DIR}/lib64/libbluetooth_jni.so" && console_print "Patched successfully, the file was moved to \"patched_resources/system/lib64/libbluetooth_jni.so\" folder.."
+    abort "Failed to patch the bluetooth lib, please try again.."
 }
 
 function existance() {
     local file="$1"
     # grrrrrrrrrrrrrr
-    if [ -e "$file" ]; then
-        return 0
-    fi
+    [ -e "$file" ] && return 0
     return 1
 }
 
@@ -645,7 +637,6 @@ function generate_random_hash() {
     local how_much
     how_much=$(echo "$1")
     if [ ! "$#" == "1" ]; then
-        warns "Don't you want me like i want you baby?" "arguments"
         abort "Not enough arguments..."
     fi
     debugPrint "generate_random_hash(): Requested random seed: ${how_much}"
@@ -655,7 +646,7 @@ function generate_random_hash() {
 # for compatibility vro
 function execute_scripts() {
     local script="$1"
-    . $script 2>> ../local_build/logs/hux_build.log;
+    . $script 2>> $thisConsoleTempLogFile;
 }
 
 function absolute_path() {
@@ -734,7 +725,7 @@ function debugPrint() {
     if [ ! -z "${DEBUG_SCRIPT}" ]; then
         console_print "$@"
     else
-        echo "$@" >> ../local_build/logs/hux_build.log
+        echo "$@" >> ${thisConsoleTempLogFile}
     fi
 }
 
@@ -747,12 +738,11 @@ function apply_diff_patches() {
     if [ ! -f "$DiffPatchFile" ]; then
         debugPrint "apply_diff_patches(): Patch file '$DiffPatchFile' not found."
         abort "Error: Patch file '${DiffPatchFile}' not found."
-    fi
-    if [ ! -f "$TheFileToPatch" ]; then
+    elif [ ! -f "$TheFileToPatch" ]; then
         debugPrint "apply_diff_patches(): Target file '$TheFileToPatch' not found."
         abort "Error: Target file '${TheFileToPatch}' not found."
     fi
-    if ! patch "$TheFileToPatch" < "$DiffPatchFile" 2>&1 | tee /tmp/patch_error.log; then
+    if ! patch "$TheFileToPatch" < "$DiffPatchFile" 2>&1; then
         debugPrint "apply_diff_patches(): Patch failed: ${DiffPatchFile} → ${TheFileToPatch}"
         warns "Patch failed! Check /tmp/patch_error.log for details." "DIFF_PATCHER"
     fi
@@ -762,16 +752,10 @@ function stack_build_properties() {
     local unforgettable
     local i
     local stacked_temp_properties="${TMPDIR}/$(generate_random_hash 20)___stacked__properties"
-    for i in $HORIZON_PRODUCT_DIR $HORIZON_SYSTEM_DIR $HORIZON_SYSTEM_EXT_DIR $HORIZON_VENDOR_DIR; do
-        if [ -f "${i}/build.prop" ]; then
-            for unforgettable in "$(cat "${i}/build.prop")"; do
-                echo "${unforgettable} - ${i}" >> ${stacked_temp_properties}
-            done
-        else
-            for unforgettable in "$(cat "${i}/etc/build.prop")"; do
-                echo "${unforgettable} - ${i}/etc/build.prop" >> ${stacked_temp_properties}
-            done
-        fi
+    for i in $HORIZON_PRODUCT_PROPERTY_FILE $HORIZON_SYSTEM_PROPERTY_FILE $HORIZON_SYSTEM_EXT_PROPERTY_FILE $HORIZON_VENDOR_PROPERTY_FILE; do
+        for unforgettable in "$(cat "${i}")"; do
+            echo "${unforgettable} - ${i}" >> ${stacked_temp_properties}
+        done
     done
 }
 
@@ -780,8 +764,7 @@ function check_existence_of_property() {
     local stacked_properties_file
     stacked_properties_file=$(ls ${TMPDIR} | grep ___stacked__properties)
     if [ -z "$stacked_properties_file" ]; then
-        echo "Error: No stacked properties file found in TMPDIR."
-        return 1
+        abort "Error: No stacked properties file found in TMPDIR."
     fi
     if grep -q "$property" "${TMPDIR}/$stacked_properties_file"; then
         if grep -q "system/" <<< "$property"; then
@@ -797,18 +780,6 @@ function check_existence_of_property() {
         fi
     fi
     return 1
-}
-
-function find_partition_property_file() {
-    local i
-    local thatthang=$1
-    if [ "$thatthang" == "system|product|prism|vendor|system_ext" ]; then
-        if [ -f "$(kang_dir "$thatthang")/build.prop" ]; then
-            echo "$(kang_dir "$thatthang")/build.prop"
-        elif [ -f "$(kang_dir "$thatthang")/etc/build.prop" ]; then
-            echo "$(kang_dir "$thatthang")/etc/build.prop"
-        fi
-    fi
 }
 
 function kang_dir() {
@@ -840,22 +811,6 @@ function check_build_prop() {
         echo "$dir/etc/build.prop"
     fi
     return 1
-}
-
-function set_partition_flag() {
-    local partition="$1"
-    debugPrint "set_partition_flag(): Set flag to ${partition}"
-    bool BATTLEMAGE_HAS_$(string_format --upper $partition) true
-}
-
-function mount_super_image() {
-    local super_image="$1"
-    HASH_KEY_FOR_SUPER_BLOCK_PATH=./tmp/$(generate_random_hash 100)
-    mkdir -p "$HASH_KEY_FOR_SUPER_BLOCK_PATH"
-    sudo mount -o rw "$super_image" "$HASH_KEY_FOR_SUPER_BLOCK_PATH" || abort "Failed to mount $super_image."
-    console_print "The image was mounted on: ${HASH_KEY_FOR_SUPER_BLOCK_PATH}"
-    console_print "The given image path: ${super_image}"
-    katarenai="$HASH_KEY_FOR_SUPER_BLOCK_PATH"
 }
 
 function download_glmodules() {
@@ -947,7 +902,7 @@ function download_glmodules() {
 function check_internet_connection() {
     local idkman="$@"
     if ! ping -w 3 google.com &>/dev/null; then
-        warns "Please connect the computer to a wifi or an ethernet connection to download good look modules." "$(string_format -u ${idkman})"
+        warns "Please connect the computer to a wifi or an ethernet connection to access online facilities." "$(string_format -u ${idkman})"
     fi
 }
 
@@ -958,19 +913,14 @@ function fetch_file_arch() {
     if [[ "${fileArch}" == "64" || "${fileArch}" == "32" ]]; then
         case "$argument" in
             --binary-path)
-                if [[ "${fileArch}" == "64" ]]; then
-                    echo "64"
-                elif [[ "${fileArch}" == "32" ]]; then
-                    echo ""
-                fi
+                [ "${fileArch}" == "64" ] && echo "64"
             ;;
             --yap-whos-that-pokemon)
                 echo "$fileArch"
             ;;
         esac
-        return 0
     else
-        warns "This binary file is not supported because it's not either 32 or 64 bits, please contact the developer for assistance." "UNSTAGED_BINARY_ARCHITECTURE"
+        warns "This binary file is not supported because it's not either 32 or 64 bits, please contact the developer for assistance." "UNDEFINED_BINARY_ARCHITECTURE"
         return 1
     fi
 }
@@ -986,4 +936,41 @@ function boolReturn() {
     local value="$(string_format -l "$@")"
     [[ "$value" == "true" || "$value" == "0" ]] && return 0
     return 1
+}
+
+# needs fix actually.
+function manageCameraFeatures() {
+    local arg="$1"
+    local featureName="$2"
+    local extvalues="$3"
+    local afterThisAttribute="$4"
+    local XMLFile
+    if [ "${arg}" == "--add" ]; then
+        XMLFile="$5"
+        # fixes confilcts
+        manageCameraFeatures --remove "${featureName}" "${XMLFile}"
+        {
+            while IFS= read -r line; do
+                if echo "${line}" | awk '{print $2}' | grep -q ${afterThisAttribute}; then
+                    echo -e "\t    <local name=${featureName} ${extvalues}/>"
+                else
+                    echo -e "\t${line}"
+                fi
+            done
+            echo -e "\t</resources>"
+        } < "${XMLFile}" > ${XMLFile}_tmp
+    elif [ "${arg}" == "--remove" ]; then
+        XMLFile="$3"
+        {
+            while IFS= read -r line; do
+                if echo "${line}" | grep -q ${featureName}; then
+                    continue
+                else
+                    echo -e "\t${line}"
+                fi
+            done
+            echo -e "\t</resources>"
+        } < "${XMLFile}" > ${XMLFile}_tmp
+    fi
+    mv  ${XMLFile}_tmp ${XMLFile}
 }
