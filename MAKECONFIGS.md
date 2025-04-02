@@ -7,8 +7,8 @@
 - **SYSTEM_EXT_DIR**: Put your extracted system_ext folder path there.
 - **VENDOR_DIR**: Put your extracted vendor folder path there.
 - **PRODUCT_DIR**: Put your extracted product folder path there.
-- **PRISM_DIR**: Put your extracted product folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
-- **PRODUCT_CSC_NAME**: The csc code of your product image, don't put random string there.
+- **PRISM_DIR**: Put your extracted prism folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
+- **OPTICS_DIR**: Put your extracted optics folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
 - **TARGET_BUILD_PRODUCT_NAME**: Ensure ro.product.system.device (from /system/build.prop) matches in all. Fallback to genericTargetProperties.conf if device blobs are missing.
 
 ## Device Name & Setup

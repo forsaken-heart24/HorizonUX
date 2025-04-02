@@ -92,6 +92,7 @@ HORIZON_PRISM_DIR=$(kang_dir "prism")
 HORIZON_SYSTEM_DIR=$(kang_dir "system")
 HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")
 HORIZON_VENDOR_DIR=$(kang_dir "vendor")
+HORIZON_OPTICS_DIR=$(kang_dir "optics")
 
 # Locate build.prop files
 HORIZON_PRODUCT_PROPERTY_FILE=$(check_build_prop "${HORIZON_PRODUCT_DIR}")
@@ -100,7 +101,6 @@ HORIZON_SYSTEM_EXT_PROPERTY_FILE=$(check_build_prop "${HORIZON_SYSTEM_EXT_DIR}")
 HORIZON_VENDOR_PROPERTY_FILE=$(check_build_prop "${HORIZON_VENDOR_DIR}")
 
 # Locate overlay paths
-HORIZON_PRODUCT_OVERLAY=""
 if [ -d "$HORIZON_PRODUCT_DIR/overlay" ]; then
     HORIZON_PRODUCT_OVERLAY="$HORIZON_PRODUCT_DIR/overlay"
 elif [ -d "$HORIZON_SYSTEM_DIR/product/overlay" ]; then
@@ -109,20 +109,6 @@ fi
 HORIZON_VENDOR_OVERLAY="$HORIZON_VENDOR_DIR/overlay"
 HORIZON_FALLBACK_OVERLAY_PATH="${HORIZON_VENDOR_OVERLAY}"
 
-#################### FIX: Product CSC File is not found, please change the "PRODUCT_CSC_NAME" (in makeconfigs.prop) according to the one in your product image
-# Locate feature files
-if [[ "${PRODUCT_CSC_NAME}" == "USE_LOOP_CONTROL" ]]; then
-	debugPrint "File is not defined, dw!"
-else
-	TARGET_BUILD_CSC_FEATURE_PATH="${HORIZON_PRODUCT_DIR}/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
-	if [ ! -f "${TARGET_BUILD_CSC_FEATURE_PATH}" ]; then
-		debugPrint "Assign file path to the \"TARGET_BUILD_CSC_FEATURE_PATH\" variable..."
-		abort "Product CSC File is not found, please change the \"PRODUCT_CSC_NAME\" (in makeconfigs.prop) according to the one in your product image"
-	else
-		file "${TARGET_BUILD_CSC_FEATURE_PATH}" | grep -q "data" && tinkerWithCSCFeaturesFile --decode
-	fi
-fi
-
 # fix: "grep: /build.prop: No such file or directory" moved to build.sh to fix that error.
 BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
@@ -130,7 +116,7 @@ BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROP
 
 ################ boom
 if boolReturn $TARGET_BUILD_IS_FOR_DEBUGGING; then
-	debugPrint "Bro thinks he's him ahh, debug flag is enabled lmao"
+	debugPrint "Bro thinks he's him ahh, debug flags are getting enabled"
     for i in "logcat.live enable" "sys.lpdumpd 1" "persist.debug.atrace.boottrace 1" "persist.device_config.global_settings.sys_traced 1" \
 		"persist.traced.enable 1" "log.tag.ConnectivityManager V" "log.tag.ConnectivityService V" "log.tag.NetworkLogger V" "log.tag.IptablesRestoreController V" \
 		"log.tag.ClatdController V" "persist.sys.lmk.reportkills false" "security.dsmsd.enable true" "persist.log.ewlogd 1" \
@@ -214,18 +200,18 @@ fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN; then
 	console_print "Enabling Game Launcher..."
-	change_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "TRUE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
 	warns "Disabling Game Launcher..." "TARGET_FEATURE_CONFIGURATION"
-	change_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "FALSE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
 if boolReturn $BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES; then
 	console_print "Switching the default refresh rate to ${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}Hz..."
-	change_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
 	warns "Switching the default refresh rate to 60Hz (due to the BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES variable being set to false)." "TARGET_FEATURE_CONFIGURATION"
-	change_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "60" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "60" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM; then
@@ -241,24 +227,24 @@ fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON; then
 	console_print "Disabling the live clock icon from the launcher, great move!"
-	change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "TRUE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
 	console_print "Enabling the live clock icon from the launcher, bad move!"
-	change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "FALSE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_INCLUDE_EASY_MODE; then
 	console_print "Enabling Easy Mode..."
-	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "TRUE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
 	console_print "Disabling Easy Mode..."
-	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "FALSE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_DISABLE_BLUR_EFFECTS; then
     console_print "Disabling blur effects..."
     for blur_effects in SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_PARTIAL_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_CAPTURED_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG; do
-        change_xml_values "$blur_effects" "FALSE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+        change_xml_values "$blur_effects" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     done
 else
 	if [ "$BUILD_TARGET_SDK_VERSION" == "32|33|34|35" ]; then
@@ -266,7 +252,7 @@ else
 	elif [ "$BUILD_TARGET_SDK_VERSION" == "28|28|30|31|32|33|34|35" ]; then
 		console_print "Enabling blur effects..."
 		for blur_effects in SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_PARTIAL_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_CAPTURED_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG; do
-			change_xml_values "$blur_effects" "TRUE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+			change_xml_values "$blur_effects" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 		done
 		for props in "ro.surface_flinger.supports_background_blur 1" "persist.sys.sf.disable_blurs 0" "ro.sf.blurs_are_expensive 1"; do
 			setprop --system "$(echo "$props" | awk '{print $1}')" "$(echo "$props" | awk '{print $2}')"
@@ -292,14 +278,14 @@ fi
 if boolReturn $TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING; then
 	console_print "Enabling Enhanced Processing.."
 	for enhanced_gaming in SEC_FLOATING_FEATURE_SYSTEM_SUPPORT_LOW_HEAT_MODE SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE SEC_FLOATING_FEATURE_SYSTEM_SUPPORT_ENHANCED_CPU_RESPONSIVENESS; do
-		change_xml_values "$enhanced_gaming" "TRUE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+		change_xml_values "$enhanced_gaming" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	done
 fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES; then
 	console_print "Adding support for extra screen modes...."
 	for led_modes in SEC_FLOATING_FEATURE_LCD_SUPPORT_MDNIE_HW SEC_FLOATING_FEATURE_LCD_SUPPORT_WIDE_COLOR_GAMUT; do
-		change_xml_values "${led_modes}" "FALSE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+		change_xml_values "${led_modes}" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	done
 fi
 
@@ -318,7 +304,7 @@ fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH; then
 	console_print "Disabling Smart Switch feature in setup...."
-	change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SMART_SWITCH" "FALSE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SMART_SWITCH" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
 fi
 
@@ -346,16 +332,14 @@ fi
 if boolReturn $TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER_PLUGIN; then
 	for part in $HORIZON_SYSTEM_DIR $HORIZON_VENDOR_DIR; do
 		for libdir in "$part/lib" "$part/lib64"; do
-			if [ -f "$part/$libdir/liboemcrypto.so" ]; then
-				touch "$part/$libdir/liboemcrypto.so"
-			fi 
+			[ -f "$part/$libdir/liboemcrypto.so" ] && touch "$part/$libdir/liboemcrypto.so"
 		done
 	done
 fi
 
 # custom wallpaper-res resources_info.json generator.
 if boolReturn $CUSTOM_WALLPAPER_RES_JSON_GENERATOR; then
-	console_print "Opening resources_info.json generator....."
+	console_print "Opening resources_info.json generator..."
 	. ${SCRIPTS[3]}
 fi
 
@@ -364,7 +348,7 @@ if boolReturn $TARGET_REMOVE_USELESS_VENDOR_STUFFS; then
 	console_print "Nuking useless vendor stuffs..."
     nuke_stuffs
 	console_print "Finished removing useless vendor file(s)"
-	console_print "Don't worry, if you have bootloops, then dm my bot with logs"
+	console_print "if you have bootloops, dm my bot with logs"
 fi
 
 # nukes display refresh rate overrides on some video platforms.
@@ -587,14 +571,14 @@ if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMART
 		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L99
 	} &>>$thisConsoleTempLogFile
 	debugPrint "Moved SmartManager and Device Care to a temporary directory.."
-	change_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
-	change_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" "TRUE"
 	for i in ${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS[@]}; do
 		for j in ${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS_SAVE_PATHS[@]}; do
 			download_stuffs "${i}" "${j}" || {
 				{
-					debugPrint "Looks like on of the loop is happen to fail, restoring the backup..."
+					debugPrint "Looks like one of the loop is failed, restoring the backup..."
 					# actual thing
 					mv "../local_build/etc/priv-app/Firewall/*" "$HORIZON_SYSTEM_DIR/priv-app/Firewall/"
 					mv "../local_build/etc/priv-app/SAppLock/*" "$HORIZON_SYSTEM_DIR/priv-app/SAppLock/"
@@ -649,13 +633,13 @@ if [[ -n "${BUILD_TARGET_BOOT_ANIMATION_FPS}" && "${BUILD_TARGET_BOOT_ANIMATION_
 	setprop --system "shutdown.fps" "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}"
 fi
 default_language_configuration ${NEW_DEFAULT_LANGUAGE_ON_PRODUCT} ${NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT}
-change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 setprop --vendor "vendor.audio.offload.buffer.size.kb" "256"
 rm -rf "$HORIZON_SYSTEM_DIR/hidden" "$HORIZON_SYSTEM_DIR/preload" "$HORIZON_SYSTEM_DIR/recovery-from-boot.p" "$HORIZON_SYSTEM_DIR/bin/install-recovery.sh"
 cp -af ./misc/etc/ringtones_and_etc/media/audio/* "$HORIZON_SYSTEM_DIR/media/audio/"
-change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 if boolReturn "$TARGET_INCLUDE_CUSTOM_BRAND_NAME"; then
-	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 [ -f "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" ] && touch "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so"
 for i in "logcat.live disable" "sys.dropdump.on Off" "profiler.force_disable_err_rpt 1" "profiler.force_disable_ulog 1" \
@@ -698,4 +682,4 @@ if ask "Do you want to add a stub app for missing activities?"; then
 	build_and_sign "./horizon/packages/HorizonStub" "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
 fi
 tinkerWithCSCFeaturesFile --encode
-rm -rf "$TMPDIR" "${TARGET_BUILD_FLOATING_FEATURE_PATH}.bak"
+rm -rf "$TMPDIR" "${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak"

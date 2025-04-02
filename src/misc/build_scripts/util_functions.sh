@@ -65,7 +65,7 @@ function abort() {
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    rm -rf "$TMPDIR" "${TARGET_BUILD_FLOATING_FEATURE_PATH}.bak"
+    rm -rf "$TMPDIR" "${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak"
     exit 1
 }
 
@@ -94,33 +94,19 @@ function default_language_configuration() {
     if [[ ! "$country" =~ ^[A-Z]{2,3}$ ]]; then
         abort "Invalid country code: $country"
     fi
-    # Path to CSC customer.xml
-    local customer_xml="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/customer.xml"
-    if [ -f "$customer_xml" ]; then
-        # Only modify if values are different
-        if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$customer_xml" && \
-           grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$customer_xml"; then
-            debugPrint "Language already set to ${language}-${country}, skipping modification."
-        else
-            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$customer_xml" 2>>"$thisConsoleTempLogFile"
-            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$customer_xml" 2>>"$thisConsoleTempLogFile"
-            debugPrint "Updated default language to ${language}-${country} in $customer_xml"
+    debugPrint "Changing default language...."
+    for EXPECTED_CUSTOMER_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/customer.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
+        [ -f "$EXPECTED_CUSTOMER_XML_PATH" ] || continue
+        # Skip modification if the values are already correct
+        if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$EXPECTED_CUSTOMER_XML_PATH" && \
+            grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$EXPECTED_CUSTOMER_XML_PATH"; then
+            debugPrint "Skipping $EXPECTED_CUSTOMER_XML_PATH (already set)"
+            continue
         fi
-    else
-        debugPrint "customer.xml not found for ${PRODUCT_CSC_NAME}, applying changes to all OMC directories."
-        for file in "$HORIZON_PRODUCT_DIR/omc/"*/conf/customer.xml; do
-            [ -f "$file" ] || continue
-            # Skip modification if the values are already correct
-            if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$file" && \
-               grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$file"; then
-                debugPrint "Skipping $file (already set)"
-                continue
-            fi
-            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$file" 2>>"$thisConsoleTempLogFile"
-            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$file" 2>>"$thisConsoleTempLogFile"
-            debugPrint "Updated default language in $file"
-        done
-    fi
+        sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$EXPECTED_CUSTOMER_XML_PATH" 2>>"$thisConsoleTempLogFile"
+        sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$EXPECTED_CUSTOMER_XML_PATH" 2>>"$thisConsoleTempLogFile"
+        debugPrint "Updated default language in $EXPECTED_CUSTOMER_XML_PATH"
+    done
 }
 
 function custom_setup_finished_messsage() {
@@ -220,7 +206,7 @@ function add_float_xml_values() {
     # Convert feature_code to uppercase
     feature_code="$(string_format -u "${feature_code}")"
     # check if we have duplicates or not, uf we have anything extra, call the catch_duplicates_in_xml to do the job lol.
-    if [ "$(catch_duplicates_in_xml "${feature_code}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}")" == "0" ]; then
+    if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == "0" ]; then
         # Create a temporary file to hold the modified content
         local tmp_file="./tmp_feature"
         # Read the original file and write to the temporary file
@@ -229,11 +215,11 @@ function add_float_xml_values() {
                 echo "${line}"
                 [ "${line}" == "<SecFloatingFeatureSet>" ] && echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
             done
-        } < "${TARGET_BUILD_FLOATING_FEATURE_PATH}" > "${tmp_file}"
+        } < "${BUILD_TARGET_FLOATING_FEATURE_PATH}" > "${tmp_file}"
         # Replace the original file with the modified one
-        mv "${tmp_file}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+        mv "${tmp_file}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     else
-        change_xml_values "${feature_code}" "${feature_code_value}" "${TARGET_BUILD_FLOATING_FEATURE_PATH}"
+        change_xml_values "${feature_code}" "${feature_code_value}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     fi
 }
 
@@ -242,90 +228,58 @@ function add_csc_xml_values() {
     local feature_code_value="$2"
     # Convert feature_code to uppercase
     feature_code="$(string_format -u "${feature_code}")"
-    # check if we have duplicates or not, uf we have anything extra, call the catch_duplicates_in_xml to do the job lol.
-    if [ "${TARGET_BUILD_CSC_FEATURE_PATH}" == "USE_LOOP_CONTROL" ]; then
-        for i in "$HORIZON_PRODUCT_DIR/omc/*"; do
-            ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH="$i/conf/cscfeature.xml"
-            if [ -f "$i/conf/cscfeature.xml" ]; then
-                if [ "$(catch_duplicates_in_xml "${feature_code}" "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}")" == "0" ]; then
-                    # Create a temporary file to hold the modified content
-                    local tmp_file="./tmp_csc"
-                    # Read the original file and write to the temporary file
-                    {
-                        while IFS= read -r line; do
-                            echo "${line}"
-                            if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
+    for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+        if [ -f "$EXPECTED_CSC_FEATURE_XML_PATH" ]; then
+            if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == "0" ]; then
+                # Create a temporary file to hold the modified content
+                local tmp_file="./tmp_csc"
+                # Read the original file and write to the temporary file
+                {
+                    while IFS= read -r line; do
+                        echo "${line}"
+                        if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
                             echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
-                            fi
-                        done
-                    } < "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}" > "${tmp_file}"
-                    # write the ending thing cuz this mf is not writing that for some reason.
-                    echo "</SamsungMobileFeature>" >> "${tmp_file}"
-                    # Replace the original file with the modified one
-                    mv "${tmp_file}" "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}"
-                else 
-                    change_xml_values "${feature_code}" "${feature_code_value}" "${ACTUAL_TARGET_SPLIT_UP_CSC_FEATURE_PATH}"
-                fi
+                        fi
+                    done
+                } < "${EXPECTED_CSC_FEATURE_XML_PATH}" > "${tmp_file}"
+                # write the ending thing cuz this mf is not writing that for some reason.
+                echo "</SamsungMobileFeature>" >> "${tmp_file}"
+                # Replace the original file with the modified one
+                mv "${tmp_file}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
+            else 
+                change_xml_values "${feature_code}" "${feature_code_value}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
             fi
-        done
-    else
-        if [ "$(catch_duplicates_in_xml "${feature_code}" "${TARGET_BUILD_CSC_FEATURE_PATH}")" == "0" ]; then
-            # Create a temporary file to hold the modified content
-            local tmp_file="./tmp_csc"
-            # Read the original file and write to the temporary file
-            {
-                while IFS= read -r line; do
-                    echo "${line}"
-                    if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
-                    echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
-                    fi
-                done
-            } < "${TARGET_BUILD_CSC_FEATURE_PATH}" > "${tmp_file}"
-            # write the ending thing cuz this mf is not writing that for some reason.
-            echo "</SamsungMobileFeature>" >> "${tmp_file}"
-            # Replace the original file with the modified one
-            mv "${tmp_file}" "${TARGET_BUILD_CSC_FEATURE_PATH}"
-        else
-            change_xml_values "${feature_code}" "${feature_code_value}" "${TARGET_BUILD_CSC_FEATURE_PATH}"
         fi
-    fi
+    done
 }
 
 function tinkerWithCSCFeaturesFile() {
     local action="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
     local decoder_jar="./dependencies/bin/omc-decoder.jar"
-    local decoded_csc_feature_path="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature_decoded.xml"
-    local original_csc_feature_path="$HORIZON_PRODUCT_DIR/omc/${PRODUCT_CSC_NAME}/conf/cscfeature.xml"
     # Ensure decoder exists
-    if [ ! -f "$decoder_jar" ]; then
-        abort "Error: omc-decoder.jar not found!"
-        return 1
-    fi
+    [ ! -f "$decoder_jar" ] && abort "Error: omc-decoder.jar not found!"
     if [ "$action" == "--decode" ]; then
-        if [ ! -f "$original_csc_feature_path" ]; then
-            abort "CSC feature file not found: $original_csc_feature_path"
-            return 1
-        fi
-        if [ "$PRODUCT_CSC_NAME" == "USE_LOOP_CONTROL" ]; then
-            for i in "$HORIZON_PRODUCT_DIR/omc/*"; do
-                if [ -f "$i/conf/cscfeature.xml" ]; then
-                    java -jar "$decoder_jar" -i "$i/conf/cscfeature.xml" -o "$i/conf/cscfeature_decoded.xml"
+        for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+            if [ -f "$i" ]; then
+                if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>$thisConsoleTempLogFile; then
+                    debugPrint "CSC feature file successfully decoded."
+                else
+                    abort "Failed to decode the CSC feature file, please try again..."
                 fi
-            done
-        else
-            java -jar "$decoder_jar" -i "$original_csc_feature_path" -o "$decoded_csc_feature_path"
-        fi
+            fi
+        done
         # Mark as decoded
         debugPrint "CSC feature file successfully decoded."
-
     elif [ "$action" == "--encode" ]; then
-        if [ ! -f "$decoded_csc_feature_path" ]; then
-            abort "Error: Decoded CSC feature file not found: $decoded_csc_feature_path"
-            return 1
-        fi
-        # Encode back to original format
-        java -jar "$decoder_jar" -e -i "$decoded_csc_feature_path" -o "$original_csc_feature_path"
-        debugPrint "CSC feature file successfully encoded."
+        for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+            if [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ]; then
+                if java -jar "$decoder_jar" -e -i "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" -o "${EXPECTED_CSC_FEATURE_XML_PATH}" &>$thisConsoleTempLogFile; then
+                    debugPrint "CSC feature file successfully encoded."
+                else
+                    abort "Failed to encode the CSC feature file, please try again..."
+                fi
+            fi
+        done
     else
         abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode"
         return 1
@@ -795,6 +749,8 @@ function kang_dir() {
         dir="$SYSTEM_EXT_DIR"
     elif [ "$WhySoSerious1" == "vendor" ]; then
         dir="$VENDOR_DIR"
+    elif [ "$WhySoSerious1" == "optics" ]; then
+        dir="$OPTICS_DIR"
     fi
     if [ -d "$dir/etc" ]; then
         echo "$dir"
