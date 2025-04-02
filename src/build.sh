@@ -84,7 +84,6 @@ console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F
 console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
-console_print "Do you want to mount super image and proceed?"
 
 # TODO:
 HORIZON_PRODUCT_DIR=$(kang_dir "product")
