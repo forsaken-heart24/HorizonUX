@@ -76,6 +76,12 @@ function console_print() {
 }
 
 function default_language_configuration() {
+    if [ "${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD}" == true ]; then
+        debugPrint "Changing default language...."
+    else
+        console_print "Skipping changing default language, reason: \"SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD\" set to ${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD} instead of true"
+        return 0;
+    fi
     local language="$1"
     local country="$2"
     # Default values
@@ -91,12 +97,10 @@ function default_language_configuration() {
     if [[ ! "$country" =~ ^[A-Z]{2,3}$ ]]; then
         abort "Invalid country code: $country"
     fi
-    debugPrint "Changing default language...."
     for EXPECTED_CUSTOMER_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/customer.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
         [ -f "$EXPECTED_CUSTOMER_XML_PATH" ] || continue
         # Skip modification if the values are already correct
-        if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$EXPECTED_CUSTOMER_XML_PATH" && \
-            grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$EXPECTED_CUSTOMER_XML_PATH"; then
+        if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$EXPECTED_CUSTOMER_XML_PATH" && grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$EXPECTED_CUSTOMER_XML_PATH"; then
             debugPrint "Skipping $EXPECTED_CUSTOMER_XML_PATH (already set)"
             continue
         fi
