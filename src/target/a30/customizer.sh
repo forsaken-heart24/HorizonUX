@@ -1,16 +1,33 @@
 #!/usr/bin/env bash
+#
+# Copyright (C) 2025 Luna
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 # device blob path...
 BUILD_TARGET_BLOB_PATH="./target/a30/patches/stock_blobs"
 soundBoosterBlob=$(ls ${HORIZON_SYSTEM_DIR}/lib/ | grep lib_SoundBooster_ver)
 soundBooster64Blob=$(ls ${HORIZON_SYSTEM_DIR}/lib64/ | grep lib_SoundBooster_ver)
 
-# makes fstab if the ROM fstab doesn't have f2fs configuarations.
+# adds fstab configs if the ROM fstab doesn't have f2fs configurations.
 function mkfstab() {
     cat ${HORIZON_VENDOR_DIR}/etc/fstab.exynos7904 | grep -q f2fs || {
         console_print "Vendor doesn't have f2fs mount configuaration, trying to add it..."
-        echo -e "#<src>                  <mnt_point>         <type>    <mnt_flags and options>                               <fs_mgr_flags>\n# The filesystem that contains the filesystem checker binary (typically /system) cannot\n# specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK\n/dev/block/platform/13500000.dwmmc0/by-name/cache	/cache	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic	wait,check\n/dev/block/platform/13500000.dwmmc0/by-name/cache       /cache  f2fs    nosuid,nodev,noatime,inline_xattr wait,check,formattable\n/dev/block/platform/13500000.dwmmc0/by-name/efs	/mnt/vendor/efs	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic	wait,check\n/dev/block/platform/13500000.dwmmc0/by-name/misc	/misc	emmc	defaults	defaults,first_stage_mount\n/dev/block/platform/13500000.dwmmc0/by-name/userdata	/data	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic	wait,check,fileencryption=ice,quota,reservedsize=128M\n/dev/block/platform/13500000.dwmmc0/by-name/userdata    /data   f2fs    nosuid,nodev,noatime,inline_xattr,data_flush,fsync_mode=nobarrier latemount,wait,check,encryptable=footer,quota\n/dev/block/platform/13500000.dwmmc0/by-name/hidden	/preload	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic	voldmanaged=preload:auto,check\n/devices/platform/13550000.dwmmc2/mmc_host/mmc1*        auto        vfat    defaults    voldmanaged=sdcard:auto\n/devices/platform/13600000.usb/13600000.dwc3*		auto        auto    defaults    voldmanaged=usb:auto\n" > $HORIZON_VENDOR_DIR/etc/fstab.exynos7904
+        echo -e "\n\n# ${BUILD_USERNAME} - ${BUILD_TARGET_CUSTOM_BRAND_NAME}\n/dev/block/platform/13500000.dwmmc0/by-name/cache /cache f2fs nosuid,nodev,noatime,inline_xattr wait,check,formattable\n/dev/block/platform/13500000.dwmmc0/by-name/userdata /data f2fs nosuid,nodev,noatime,inline_xattr,data_flush,fsync_mode=nobarrier latemount,wait,check,encryptable=footer,quota" >> ${HORIZON_VENDOR_DIR}/etc/fstab.exynos7904
         [ "$?" == "0" ] && console_print "Added f2fs mount configs"
+        return 0;
     }
     abort "Failed to add mount configs, this may due to the vendor have came with mount configs"
 }

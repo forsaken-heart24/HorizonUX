@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 # Copyright (C) 2025 Luna
 #
@@ -16,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-#!/usr/bin/env bash
 
 function grep_prop() {
     local variable_name="$1"
