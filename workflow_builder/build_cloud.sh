@@ -22,10 +22,10 @@ cd ../src/
 TARGET_DEVICE=$1
 TARGET_DEVICE_FULL_FIRMWARE_LINK=$2
 MAKECONFIGS_LINK="$3"
+thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
 # device specific customization:
 [ -d "./target/${TARGET_DEVICE}" ] || exit 0;
-. "./target/${TARGET_DEVICE}/buildTargetProperties.conf"
 
 # Check if required files exist
 download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop"
@@ -44,7 +44,7 @@ done
 for i in system/product/priv-app system/product/etc system/product/overlay \
          system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
          system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw \
-         local_build_downloaded_contents/tar_files/ workflow_partitions/; do
+         local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds; do
     mkdir -p "../local_build/$i"
 	debugPrint "Making ../local_build/${i} directories.."
 done
@@ -94,6 +94,47 @@ function mountRawImage() {
     console_print "Successfully mounted $image_path to $mount_point"
     return 0
 }
+
+function getImageFileSystem() {
+    if [[ "$(xxd -p -l "2" --skip "1080" "$1")" == "53ef" ]]; then
+        echo "ext4"
+    elif [[ "$(xxd -p -l "4" --skip "1024" "$1")" == "1020f5f2" ]]; then
+        echo "f2fs"
+    elif [[ "$(xxd -p -l "4" --skip "1024" "$1")" == "e2e1f5e0" ]]; then
+        echo "erofs"
+    else
+        echo "unknown"
+    fi
+}
+
+function setMakeConfigs() {
+    local propVariableName="$1"
+    local propValue="$2"
+    local propFile="$3"
+    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
+}
+
+function abort() {
+    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
+    debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
+    sleep 0.5
+    tinkerWithCSCFeaturesFile --encode
+    rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ../local_build/*
+    exit 1
+}
+
+function buildImage() {
+    local blockPath="$1"
+    local block="$2"
+    if echo "$blockPath" | grep -q "__rw"; then
+        console_print "EROFS fs detected, building an EROFS image..."
+        sudo mkfs.erofs -z none --mount-point=$block ../local_build/workflow_builds/${block}.erofs.img $blockPath/
+    else 
+        console_print "F2FS/EXT4 fs detected, unmounting the image.."
+        sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
+        console_print "Successfully unmounted ${blockPath}.."
+    fi
+}
 # functions
 
 echo -e "\033[0;31m########################################################################"
@@ -124,15 +165,61 @@ done
 console_print "Finished fetching packages at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 console_print "Trying to mount images..."
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
-    for PARTITIONS in system vendor product; do
-        mkdir -p ../local_build/workflow_partitions/${PARTITIONS}
-        mountRawImage "../local_build/local_build_downloaded_contents/tar_files/${PARTITIONS}.img" "../local_build/workflow_partitions/${PARTITIONS}/"
+    console_print "Unpacking images...."
+    for COMMON_FIRMWARE_BLOCKS in system vendor product; do
+        lz4 -d -q ../local_build/local_build_downloaded_contents/tar_files/${COMMON_FIRMWARE_BLOCKS}.img.lz4 "${COMMON_FIRMWARE_BLOCKS}.img_raw" || abort "Failed to extract ${COMMON_FIRMWARE_BLOCKS} from the firmware dump, please try againn....."
+        mountPath="../local_build/workflow_partitions/$(generate_random_hash 10)__$COMMON_FIRMWARE_BLOCK"
+        case "$(getImageFileSystem ${COMMON_FIRMWARE_BLOCKS}.img_raw)" in
+            "erofs")
+                dirt="${mountPath}__rw"
+                mkdir -p $dirt
+                sudo fuse.erofs ${COMMON_FIRMWARE_BLOCK}.img $mountPath &>/dev/null
+                cp -a --preserve=all $mountPath $dirt/
+                setMakeConfigs $(echo "$COMMON_FIRMWARE_BLOCK" | tr '[:lower:]' '[:upper:]')_DIR $dirt ./makeconfigs.prop
+            ;;
+            "f2fs"|"ext4")
+                sudo mount -o rw ../local_build/local_build_downloaded_contents/tar_files/${COMMON_FIRMWARE_BLOCK}.img $mountPath || abort "Failed to mount ${COMMON_FIRMWARE_BLOCK} as rw, please try again..."
+                setMakeConfigs $(echo "$COMMON_FIRMWARE_BLOCK" | tr '[:lower:]' '[:upper:]')_DIR $mountPath ./makeconfigs.prop
+            ;;
+            *)
+                abort "Unknown filesystem to tinker with, aborting..."
+            ;;
+        esac
     done
 elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
-    mkdir -p ../local_build/workflow_partitions/super
-    simg2img ../local_build/local_build_downloaded_contents/tar_files/super.img ../local_build/local_build_downloaded_contents/tar_files/super_raw.img
-    for PARTITIONS in optics prism; do
-        mkdir -p ../local_build/workflow_partitions/${PARTITIONS}
-        mountRawImage "../local_build/local_build_downloaded_contents/tar_files/${PARTITIONS}.img" "../local_build/workflow_partitions/${PARTITIONS}/"
+    console_print "Unpacking Super sparse image block...."
+    if lz4 -d -q ../local_build/local_build_downloaded_contents/tar_files/super.img.lz4 "super.img.sparse" && simg2img "super.img.sparse" "super.img" && rm -rf "super.img.sparse"; then
+        console_print "Successfully unpacked, converted into raw, and deleted the base Super.img from the downloaded source....."
+    else
+        abort "Failed to unpack the base Super.img from the downloaded source..."
+    fi
+    lpunpack "super.img" &>$thisConsoleTempLogFile
+    lpdump "super.img" > dumpOfTheSuperBlock
+    for COMMON_FIRMWARE_BLOCK in vendor system product; do
+        lpunpack --partition=$COMMON_FIRMWARE_BLOCK ../local_build/local_build_downloaded_contents/tar_files/super.img || abort "Failed to extract \"${COMMON_FIRMWARE_BLOCK}\" from the super image, please try again..."
+        mountPath="../local_build/workflow_partitions/$(generate_random_hash 10)__$COMMON_FIRMWARE_BLOCK"
+        case "$(getImageFileSystem ${COMMON_FIRMWARE_BLOCK}.img)" in
+            "erofs")
+                dirt="${mountPath}__rw"
+                mkdir -p $dirt
+                sudo fuse.erofs ${COMMON_FIRMWARE_BLOCK}.img $mountPath &>/dev/null
+                cp -a --preserve=all $mountPath $dirt/
+                setMakeConfigs $(echo "$COMMON_FIRMWARE_BLOCK" | tr '[:lower:]' '[:upper:]')_DIR $dirt ./makeconfigs.prop
+            ;;
+            "f2fs"|"ext4")
+                sudo mount -o rw ../local_build/local_build_downloaded_contents/tar_files/${COMMON_FIRMWARE_BLOCK}.img $mountPath || abort "Failed to mount ${COMMON_FIRMWARE_BLOCK} as rw, please try again..."
+                setMakeConfigs $(echo "$COMMON_FIRMWARE_BLOCK" | tr '[:lower:]' '[:upper:]')_DIR $mountPath ./makeconfigs.prop
+            ;;
+            *)
+                abort "Unknown filesystem to tinker with, aborting..."
+            ;;
+        esac
     done
 fi
+setMakeConfigs TARGET_BUILD_PRODUCT_NAME ${TARGET_DEVICE} ./makeconfigs.prop
+./build.sh
+for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
+    for IMAGES in ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS} ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS}__rw; do
+        buildImage "${IMAGES}" "${COMMON_FIRMWARE_BLOCKS}"
+    done
+done

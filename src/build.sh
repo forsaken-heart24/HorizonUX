@@ -453,7 +453,7 @@ if boolReturn "$TARGET_BUILD_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING"; th
 fi
 
 if boolReturn "$TARGET_BUILD_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER"; then
-	console_print "Adding call recording feature in samsung dialler, please note that im not responsible for legal actions against you!"
+	console_print "Adding call recording feature in samsung dialler, please note that I'm not responsible for legal actions against you!"
 	add_csc_xml_values "CscFeature_VoiceCall_ConfigRecording" "RecordingAllowedByMenu"
 fi
 
@@ -463,21 +463,21 @@ if boolReturn "$BUILD_TARGET_DISABLE_KNOX_PROPERTIES"; then
 	setprop --system "ro.security.vaultkeeper.native" "0"
 	if [ "$BUILD_TARGET_SDK_VERSION" == "34" ]; then
 		# Thanks salvo!
-		setprop --system security.mdf.result   "                       "
-		setprop --system security.mdf   "                       "
-		setprop --system ro.security.mdf.ver   "                       "
-		setprop --system ro.security.mdf.release   "                       "
-		setprop --system ro.security.wlan.ver   "                       "
-		setprop --system ro.security.wlan.release   "                       "
-		setprop --system ro.security.bt.ver   "                       "
-		setprop --system ro.security.bt.release  "                       "
-		setprop --system ro.security.bio.ver "                  "
-		setprop --system ro.security.bio.release  "                   "
-		setprop --system ro.security.mdf.ux "        "
+		setprop --system security.mdf.result " "
+		setprop --system security.mdf " "
+		setprop --system ro.security.mdf.ver " "
+		setprop --system ro.security.mdf.release " "
+		setprop --system ro.security.wlan.ver " "
+		setprop --system ro.security.wlan.release " "
+		setprop --system ro.security.bt.ver " "
+		setprop --system ro.security.bt.release " "
+		setprop --system ro.security.bio.ver " "
+		setprop --system ro.security.bio.release " "
+		setprop --system ro.security.mdf.ux " "
 		setprop --system "ro.security.fips.ux" "Disabled"
-		setprop --system ro.security.fips_bssl.ver "                     "
-		setprop --vendor ro.security.fips_skc.ver "                       "
-		setprop --vendor ro.security.fips_scrypto.ver "                  "
+		setprop --system ro.security.fips_bssl.ver " "
+		setprop --vendor ro.security.fips_skc.ver " "
+		setprop --vendor ro.security.fips_scrypto.ver " "
 	fi
 	add_csc_xml_values "CscFeature_Knox_SupportKnoxGuard" "FALSE"
 fi
@@ -611,7 +611,7 @@ if boolReturn "$TINKER_MAX_REFRESH_RATE"; then
 	fi
 fi
 
-# device customization script bro
+# device customization script
 [ -f "./target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh" ] && ./target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
