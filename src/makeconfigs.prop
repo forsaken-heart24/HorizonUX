@@ -15,9 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# 12:35AM - 30-10-2024 @Luna : fuck no, i dont want to have an another version for testing purposes lmao.
-testEnv=false
-
 # must be the same from (ro.product.system.device in /system/build.prop)
 # and also, this will switch the config file to genericTargetProperties.conf if the device blobs weren't available in the source.
 TARGET_BUILD_PRODUCT_NAME=

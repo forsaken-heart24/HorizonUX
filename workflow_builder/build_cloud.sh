@@ -17,19 +17,24 @@
 #
 
 # cd to src bcuz everything is there.
-cd ../src/
+cd ./src/
 
 TARGET_DEVICE=$1
 TARGET_DEVICE_FULL_FIRMWARE_LINK=$2
 MAKECONFIGS_LINK="$3"
 PACK_IMAGE_WITH_TS_FORMAT="$4"
+PRIVATE_KEY_SETUP_SCRIPT_LINK="$4"
+theBotToken="$(echo "${{secrets.BUGREPORTER_BOT_TOKEN}}")"
+chatID="$(echo "${{secrets.CHAT_ID}}")"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
 # device specific customization:
 [ -d "./target/${TARGET_DEVICE}" ] || exit 0;
 
 # Check if required files exist
+rm -rf ./makeconfigs.prop
 download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop"
+download_stuffs "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
 for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika.conf"; do
     if [ ! -f "$i" ]; then
         echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
@@ -74,28 +79,6 @@ function download_stuffs() {
     return $?
 }
 
-function mountRawImage() {
-    local image_path="$1"
-    local mount_point="$2"
-    if [ "$#" -lt '2' ]; then
-        warns "Arguments are not enough. Usage: mountRawImage <image_path> <mount_point>" "mountRawImage"
-        return 1
-    fi
-    if [ ! -f "$image_path" ]; then
-        abort "The specified image file does not exist: $image_path"
-    fi
-    if [ ! -d "$mount_point" ]; then
-        debugPrint "Creating mount point directory: $mount_point"
-        mkdir -p "$mount_point"
-    fi
-    debugPrint "Mounting raw image $image_path to $mount_point..."
-    if ! mount -o loop "$image_path" "$mount_point"; then
-        abort "Failed to mount the image: $image_path"
-    fi
-    console_print "Successfully mounted $image_path to $mount_point"
-    return 0
-}
-
 function getImageFileSystem() {
     if [[ "$(xxd -p -l "2" --skip "1080" "$1")" == "53ef" ]]; then
         echo "ext4"
@@ -130,30 +113,51 @@ function buildImage() {
     local buildType="$3"
     local imagePath=$(mount | grep ${blockPath} | awk '{print $1}')
     if echo "$blockPath" | grep -q "__rw"; then
-        console_print "EROFS fs detected, building an EROFS image..."
+        echo "EROFS fs detected, building an EROFS image..."
         sudo mkfs.erofs -z lz4 --mount-point=$block ../local_build/workflow_builds/${block}.erofs.img $blockPath/
     else 
-        console_print "F2FS/EXT4 fs detected, unmounting the image.."
+        echo "F2FS/EXT4 fs detected, unmounting the image.."
         sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
-        console_print "Successfully unmounted ${blockPath}.."
+        echo "Successfully unmounted ${blockPath}.."
     fi
     cp $imagePath ../local_build/workflow_builds/${block}_buildImage.img
     rm $imagePath
     if [ "$?" -ne '0' ]; then
         abort "Failed to copy the image to the build directory, aborting this instance.."
     fi
-    console_print "Successfully built ${block}_buildImage.img"
+    echo "Successfully built ${block}_buildImage.img"
+}
+
+function warns() {
+    echo -e "[$2]: $1"
+    debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1"
+}
+
+function console_print() {
+    echo -e "$1"
 }
 # functions
 
-echo -e "\033[0;31m########################################################################"
-echo -e "   _  _     _   _            _                _   ___  __"
-echo -e " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
-echo -e "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
-echo -e "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
-echo -e "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
-echo -e "                                                         "
-echo -e "########################################################################\033[0m"
+# prepare env.sh -
+for dependenciesRequiredForTheJob in zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3; do
+    if ! command -v $dependenciesRequiredForTheJob; then
+        if ! sudo apt install -y $dependenciesRequiredForTheJob; then
+            console_print "Error: Failed to install $dependenciesRequiredForTheJob. Aborting this workflow session."
+            exit 1;
+        fi
+    fi
+    command -v java || sudo apt install -y "openjdk-21-jre-headless"
+done
+
+# builds the ROM
+console_print "\033[0;31m########################################################################"
+console_print "   _  _     _   _            _                _   ___  __"
+console_print " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
+console_print "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
+console_print "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
+console_print "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
+console_print "                                                         "
+console_print "########################################################################\033[0m"
 console_print "Starting to build HorizonUX on cloud..."
 console_print "Build started at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
@@ -235,18 +239,25 @@ done
 case "${PACK_IMAGE_WITH_TS_FORMAT}" in
     "tar")
         rm -f "../local_build/workflow_builds/packed_buildImages.tar"
-        for IMG_PATH in ../local_build/workflow_builds/*_buildImage.img; do
+        for IMG_PATH in ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile; do
             tar --append --file="../local_build/workflow_builds/packed_buildImages.tar" -C "$(dirname "$IMG_PATH")" "$(basename "$IMG_PATH")" && rm -f "$IMG_PATH"
         done
     ;;
     "zstd")
-        for f in ../local_build/workflow_builds/*_buildImage.img; do
+        for f in ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile; do
             zstd -T0 --ultra -22 "$f" -o "${f}.zst" && rm -f "$f"
         done
     ;;
     "zip")
-        zip -r ../local_build/workflow_builds/packed_buildImages.zip ../local_build/workflow_builds/*_buildImage.img && rm -f ../local_build/workflow_builds/*_buildImage.img
+        zip -r ../local_build/workflow_builds/packed_buildImages.zip ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile && rm -f ../local_build/workflow_builds/*_buildImage.img
     ;;
 esac
 console_print "Build completed successfully at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
-console_print "Build images can be found at ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}"
+console_print "Trying to upload ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to the requested chat..."
+curl -F "chat_id=${chatID}" -F "document=@../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
+if [ "$(cat output | cut -c 7-10)" == "true" ]; then
+    console_print "Uploaded ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} successfully....."
+    exit 0
+fi
+abort "Failed to upload the build, please try again...."
+exit 1

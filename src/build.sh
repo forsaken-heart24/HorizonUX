@@ -17,35 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Check if required files exist
-for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika.conf"; do
-    if [ ! -f "$i" ]; then
-        echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
-        sleep 0.5
-        exit 1
-    else
-		debugPrint "Executing ${i}.."
-        . "$i"
-    fi
-done
-
-# device specific customization:
-if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
-	debugPrint "- Device specific config and blobs are found, customizing the rom...."
-	. "./target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf"
-else
-	debugPrint "- Using genericTargetProperties.conf for configs..."
-	. "./genericTargetProperties.conf"
-fi
-
-# mako mako mako mako those who know💀
-for i in system/product/priv-app system/product/etc system/product/overlay \
-         system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
-         system/etc/init/ tmp/hux/; do
-    mkdir -p "../local_build/$i"
-	debugPrint "Making ../local_build/${i} directories.."
-done
-
 # misc variables
 BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut -c 2-200)"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
@@ -53,37 +24,58 @@ rm -rf ../local_build/logs/*
 TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
 
-# Check dependencies
-if [ "$testEnv" != "true" ]; then
-    if [ ! -f "${SCRIPTS[0]}" ]; then
-        abort "Script files are missing, exiting..."
-    elif [ -z "$(command -v zip)" ]; then
-        abort "zip is not installed. Please install it to proceed."
-    elif [ -z "$(command -v python3)" ]; then
-        warns "python3 is not installed. It's not required unless you want to patch your recovery image." "DEPENDENCIES_ERRORS"
-    elif [ ! -f "$PREFIX/bin/java" ]; then
-        abort "Please install the latest openjdk to proceed."
-    fi
-fi
-
 # ok, fbans dropped!
-clear
-echo -e "\033[0;31m########################################################################"
-echo -e "   _  _     _   _            _                _   ___  __"
-echo -e " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
-echo -e "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
-echo -e "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
-echo -e "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
-echo -e "                                                         "
-echo -e "########################################################################\033[0m"
-console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
-console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
-console_print "The Current Username : $BUILD_USERNAME"
-console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
-console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
-console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
-console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
-console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
+if [ ! -n "${TARGET_DEVICE}" ]; then
+	# Check dependencies
+	for dependenciesRequiredForTheBuild in java python3 zip ${SCRIPTS[0]}; do
+		if [[ -z "$(command -v ${dependenciesRequiredForTheBuild})" || ! -f "${dependenciesRequiredForTheBuild}" ]]; then
+			abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
+		fi
+	done
+	# Check if required files exist
+	for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika.conf"; do
+		if [ ! -f "$i" ]; then
+			echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
+			sleep 0.5
+			exit 1
+		else
+			debugPrint "Executing ${i}.."
+			. "$i"
+		fi
+	done
+	# device specific customization:
+	if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
+		debugPrint "- Device specific config and blobs are found, customizing the rom...."
+		. "./target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf"
+	else
+		debugPrint "- Using genericTargetProperties.conf for configs..."
+		. "./genericTargetProperties.conf"
+	fi
+	# mako mako mako mako those who know💀
+	for i in system/product/priv-app system/product/etc system/product/overlay \
+			system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
+			system/etc/init/ tmp/hux/; do
+		mkdir -p "../local_build/$i"
+		debugPrint "Making ../local_build/${i} directories.."
+	done
+	clear
+	echo -e "\033[0;31m########################################################################"
+	echo -e "   _  _     _   _            _                _   ___  __"
+	echo -e " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
+	echo -e "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
+	echo -e "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
+	echo -e "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
+	echo -e "                                                         "
+	echo -e "########################################################################\033[0m"
+	console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
+	console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
+	console_print "The Current Username : $BUILD_USERNAME"
+	console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
+	console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
+	console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
+	console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
+	console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
+fi
 
 # TODO:
 HORIZON_PRODUCT_DIR=$(kang_dir "product")
@@ -115,7 +107,7 @@ BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROP
 
 ################ boom
 if boolReturn $TARGET_BUILD_IS_FOR_DEBUGGING; then
-	debugPrint "Bro thinks he's him ahh, debug flags are getting enabled"
+	debugPrint "Debug flags are getting enabled"
     for i in "logcat.live enable" "sys.lpdumpd 1" "persist.debug.atrace.boottrace 1" "persist.device_config.global_settings.sys_traced 1" \
 		"persist.traced.enable 1" "log.tag.ConnectivityManager V" "log.tag.ConnectivityService V" "log.tag.NetworkLogger V" "log.tag.IptablesRestoreController V" \
 		"log.tag.ClatdController V" "persist.sys.lmk.reportkills false" "security.dsmsd.enable true" "persist.log.ewlogd 1" \
@@ -138,8 +130,7 @@ stack_build_properties
 
 if [ "$BUILD_TARGET_ANDROID_VERSION" == "14" ]; then
 	console_print "Removing some bloats, thnx Salvo!"
-	rm -rf $HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml \
-	$HORIZON_SYSTEM_DIR/etc/public.libraries-wsm.samsung.txt \
+	rm -rf $HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml $HORIZON_SYSTEM_DIR/etc/public.libraries-wsm.samsung.txt \
 	$HORIZON_SYSTEM_DIR/lib/libhal.wsm.samsung.so \
 	$HORIZON_SYSTEM_DIR/lib/vendor.samsung.hardware.security.wsm.service-V1-ndk.so \
 	$HORIZON_SYSTEM_DIR/lib64/libhal.wsm.samsung.so \
@@ -627,6 +618,9 @@ add_csc_xml_values "CscFeature_Settings_GOTA" "TRUE"
 add_csc_xml_values "CscFeature_Settings_FOTA" "FALSE"
 setprop --system ro.config.iccc_version "iccc_disabled"
 setprop --system ro.config.dmverity "false"
+for defaultHorizonAlertSounds in "ro.config.ringtone whatever.ogg" "ro.config.ringtone_2 whatever.ogg" "ro.config.notification_sound Bling.ogg" "ro.config.notification_sound_2 Luna.ogg"; do
+	setprop --vendor "$(echo "${defaultHorizonAlertSounds}" | awk '{print $1}')" "$(echo "${defaultHorizonAlertSounds}" | awk '{print $2}')"
+done
 if [[ -n "${BUILD_TARGET_BOOT_ANIMATION_FPS}" && "${BUILD_TARGET_BOOT_ANIMATION_FPS}" -le "60" && -n "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" && "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}" -le "60" ]]; then
 	setprop --system "boot.fps" "${BUILD_TARGET_BOOT_ANIMATION_FPS}"
 	setprop --system "shutdown.fps" "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}"
