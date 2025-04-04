@@ -22,6 +22,7 @@ cd ../src/
 TARGET_DEVICE=$1
 TARGET_DEVICE_FULL_FIRMWARE_LINK=$2
 MAKECONFIGS_LINK="$3"
+PACK_IMAGE_WITH_TS_FORMAT="$4"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
 # device specific customization:
@@ -126,14 +127,22 @@ function abort() {
 function buildImage() {
     local blockPath="$1"
     local block="$2"
+    local buildType="$3"
+    local imagePath=$(mount | grep ${blockPath} | awk '{print $1}')
     if echo "$blockPath" | grep -q "__rw"; then
         console_print "EROFS fs detected, building an EROFS image..."
-        sudo mkfs.erofs -z none --mount-point=$block ../local_build/workflow_builds/${block}.erofs.img $blockPath/
+        sudo mkfs.erofs -z lz4 --mount-point=$block ../local_build/workflow_builds/${block}.erofs.img $blockPath/
     else 
         console_print "F2FS/EXT4 fs detected, unmounting the image.."
         sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
         console_print "Successfully unmounted ${blockPath}.."
     fi
+    cp $imagePath ../local_build/workflow_builds/${block}_buildImage.img
+    rm $imagePath
+    if [ "$?" -ne '0' ]; then
+        abort "Failed to copy the image to the build directory, aborting this instance.."
+    fi
+    console_print "Successfully built ${block}_buildImage.img"
 }
 # functions
 
@@ -174,7 +183,7 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
                 dirt="${mountPath}__rw"
                 mkdir -p $dirt
                 sudo fuse.erofs ${COMMON_FIRMWARE_BLOCK}.img $mountPath &>/dev/null
-                cp -a --preserve=all $mountPath $dirt/
+                sudo cp -a --preserve=all $mountPath $dirt/
                 setMakeConfigs $(echo "$COMMON_FIRMWARE_BLOCK" | tr '[:lower:]' '[:upper:]')_DIR $dirt ./makeconfigs.prop
             ;;
             "f2fs"|"ext4")
@@ -203,7 +212,7 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
                 dirt="${mountPath}__rw"
                 mkdir -p $dirt
                 sudo fuse.erofs ${COMMON_FIRMWARE_BLOCK}.img $mountPath &>/dev/null
-                cp -a --preserve=all $mountPath $dirt/
+                sudo cp -a --preserve=all $mountPath $dirt/
                 setMakeConfigs $(echo "$COMMON_FIRMWARE_BLOCK" | tr '[:lower:]' '[:upper:]')_DIR $dirt ./makeconfigs.prop
             ;;
             "f2fs"|"ext4")
@@ -223,3 +232,21 @@ for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
         buildImage "${IMAGES}" "${COMMON_FIRMWARE_BLOCKS}"
     done
 done
+case "${PACK_IMAGE_WITH_TS_FORMAT}" in
+    "tar")
+        rm -f "../local_build/workflow_builds/packed_buildImages.tar"
+        for IMG_PATH in ../local_build/workflow_builds/*_buildImage.img; do
+            tar --append --file="../local_build/workflow_builds/packed_buildImages.tar" -C "$(dirname "$IMG_PATH")" "$(basename "$IMG_PATH")" && rm -f "$IMG_PATH"
+        done
+    ;;
+    "zstd")
+        for f in ../local_build/workflow_builds/*_buildImage.img; do
+            zstd -T0 --ultra -22 "$f" -o "${f}.zst" && rm -f "$f"
+        done
+    ;;
+    "zip")
+        zip -r ../local_build/workflow_builds/packed_buildImages.zip ../local_build/workflow_builds/*_buildImage.img && rm -f ../local_build/workflow_builds/*_buildImage.img
+    ;;
+esac
+console_print "Build completed successfully at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
+console_print "Build images can be found at ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}"
