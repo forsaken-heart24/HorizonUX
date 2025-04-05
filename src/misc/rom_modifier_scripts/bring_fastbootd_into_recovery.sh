@@ -19,7 +19,7 @@
 
 # booooooooooooom
 if $(echo $RECOVERY_IMAGE_PATH | grep -q lz4); then
-    abort "blud extract the image and give the raw image path, im lazy bish"
+    abort "Blud extract the image and give the raw image path"
 fi
 
 # Check for recovery images

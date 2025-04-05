@@ -26,37 +26,29 @@ TMPFILE="$(mktemp)"
 
 # ok, fbans dropped!
 if [ ! -n "${TARGET_DEVICE}" ]; then
-	# Check dependencies
-	for dependenciesRequiredForTheBuild in java python3 zip ${SCRIPTS[0]}; do
-		if [[ -z "$(command -v ${dependenciesRequiredForTheBuild})" || ! -f "${dependenciesRequiredForTheBuild}" ]]; then
-			abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
-		fi
-	done
 	# Check if required files exist
-	for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika.conf"; do
+	for i in ./makeconfigs.prop ./misc/build_scripts/util_functions.sh ./monika.conf; do
 		if [ ! -f "$i" ]; then
 			echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
 			sleep 0.5
 			exit 1
 		else
-			debugPrint "Executing ${i}.."
 			. "$i"
+			debugPrint "Executing ${i}.."
 		fi
 	done
-	# device specific customization:
-	if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
-		debugPrint "- Device specific config and blobs are found, customizing the rom...."
-		. "./target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf"
-	else
-		debugPrint "- Using genericTargetProperties.conf for configs..."
-		. "./genericTargetProperties.conf"
-	fi
+	# Check dependencies
+	for dependenciesRequiredForTheBuild in java python3 zip; do
+		if [ -z "$(command -v ${dependenciesRequiredForTheBuild})" ]; then
+			abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
+		fi
+	done
 	# mako mako mako mako those who know💀
 	for i in system/product/priv-app system/product/etc system/product/overlay \
 			system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
 			system/etc/init/ tmp/hux/; do
 		mkdir -p "../local_build/$i"
-		debugPrint "Making ../local_build/${i} directories.."
+		debugPrint "Making ../local_build/${i} directory.."
 	done
 	clear
 	echo -e "\033[0;31m########################################################################"
@@ -77,33 +69,34 @@ if [ ! -n "${TARGET_DEVICE}" ]; then
 	console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 fi
 
-# TODO:
-HORIZON_PRODUCT_DIR=$(kang_dir "product")
-HORIZON_PRISM_DIR=$(kang_dir "prism")
-HORIZON_SYSTEM_DIR=$(kang_dir "system")
-HORIZON_SYSTEM_EXT_DIR=$(kang_dir "system_ext")
-HORIZON_VENDOR_DIR=$(kang_dir "vendor")
-HORIZON_OPTICS_DIR=$(kang_dir "optics")
-
 # Locate build.prop files
-HORIZON_PRODUCT_PROPERTY_FILE=$(check_build_prop "${HORIZON_PRODUCT_DIR}")
-HORIZON_SYSTEM_PROPERTY_FILE=$(check_build_prop "${HORIZON_SYSTEM_DIR}")
-HORIZON_SYSTEM_EXT_PROPERTY_FILE=$(check_build_prop "${HORIZON_SYSTEM_EXT_DIR}")
-HORIZON_VENDOR_PROPERTY_FILE=$(check_build_prop "${HORIZON_VENDOR_DIR}")
+HORIZON_PRODUCT_PROPERTY_FILE=$(check_build_prop "${PRODUCT_DIR}")
+HORIZON_SYSTEM_PROPERTY_FILE=$(check_build_prop "${SYSTEM_DIR}")
+HORIZON_SYSTEM_EXT_PROPERTY_FILE=$(check_build_prop "${SYSTEM_EXT_DIR}")
+HORIZON_VENDOR_PROPERTY_FILE=$(check_build_prop "${VENDOR_DIR}")
 
 # Locate overlay paths
-if [ -d "$HORIZON_PRODUCT_DIR/overlay" ]; then
-    HORIZON_PRODUCT_OVERLAY="$HORIZON_PRODUCT_DIR/overlay"
-elif [ -d "$HORIZON_SYSTEM_DIR/product/overlay" ]; then
-    HORIZON_PRODUCT_OVERLAY="$HORIZON_SYSTEM_DIR/product/overlay"
+if [ -d "$PRODUCT_DIR/overlay" ]; then
+    HORIZON_PRODUCT_OVERLAY="$PRODUCT_DIR/overlay"
+elif [ -d "$SYSTEM_DIR/product/overlay" ]; then
+    HORIZON_PRODUCT_OVERLAY="$SYSTEM_DIR/product/overlay"
 fi
-HORIZON_VENDOR_OVERLAY="$HORIZON_VENDOR_DIR/overlay"
+HORIZON_VENDOR_OVERLAY="$VENDOR_DIR/overlay"
 HORIZON_FALLBACK_OVERLAY_PATH="${HORIZON_VENDOR_OVERLAY}"
 
 # fix: "grep: /build.prop: No such file or directory" moved to build.sh to fix that error.
 BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
+
+# device specific customization:
+if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
+	debugPrint "build.sh: Device specific config and blobs are found, customizing the rom...."
+	source "./target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf"
+else
+	debugPrint "- Using genericTargetProperties.conf for configs..."
+	source "./genericTargetProperties.conf"
+fi
 
 ################ boom
 if boolReturn $TARGET_BUILD_IS_FOR_DEBUGGING; then
@@ -115,7 +108,7 @@ if boolReturn $TARGET_BUILD_IS_FOR_DEBUGGING; then
 		"security.edmaudit false" "ro.sys.dropdump.on On" "persist.systemserver.sa_bindertracker false"; do
 		setprop --system "$(echo $i | awk '{print $1}')" "$(echo $i | awk '{print $2}')"
     done
-	echo -e "\n############ WARNING, EXPERIMENTAL FLAGS AHEAD!\nsetprop log.tag.snap_api::snpe VERBOSE\nsetprop log.tag.snap_api::V3 VERBOSE\nsetprop log.tag.snap_api::V2 VERBOSE\nsetprop log.tag.snap_compute::V3 VERBOSE\nsetprop log.tag.snap_compute::V2 VERBOSE\nsetprop log.tag.snaplite_lib VERBOSE\nsetprop log.tag.snap_api::snap_eden::V3 VERBOSE\nsetprop log.tag.snap_api::snap_ofi::V1 VERBOSE\nsetprop log.tag.snap_hidl_v3 VERBOSE\nsetprop log.tag.snap_service@1.2 VERBOSE\n############ WARNING, EXPERIMENTAL FLAGS AHEAD!" > $HORIZON_SYSTEM_DIR/etc/init/init.debug_castleprops.rc
+	echo -e "\n############ WARNING, EXPERIMENTAL FLAGS AHEAD!\nsetprop log.tag.snap_api::snpe VERBOSE\nsetprop log.tag.snap_api::V3 VERBOSE\nsetprop log.tag.snap_api::V2 VERBOSE\nsetprop log.tag.snap_compute::V3 VERBOSE\nsetprop log.tag.snap_compute::V2 VERBOSE\nsetprop log.tag.snaplite_lib VERBOSE\nsetprop log.tag.snap_api::snap_eden::V3 VERBOSE\nsetprop log.tag.snap_api::snap_ofi::V1 VERBOSE\nsetprop log.tag.snap_hidl_v3 VERBOSE\nsetprop log.tag.snap_service@1.2 VERBOSE\n############ WARNING, EXPERIMENTAL FLAGS AHEAD!" > $SYSTEM_DIR/etc/init/init.debug_castleprops.rc
 	warns "Debugging stuffs are enabled in this build, please proceed with caution and do remember that your device will heat more due to debugging process running in the background.." "DEBUGGING_ENABLER"
 	# change the values to enable debugging without authorization.
 	for i in "ro.debuggable 1" "ro.adb.secure 0"; do 
@@ -128,14 +121,17 @@ fi
 console_print "Storing the ROM's build properties into a temporary directory..."
 stack_build_properties
 
+# warn users about test key
+[ "$MY_KEYSTORE_PATH" == "../test-keys/HorizonUX-testkey.jks" ] && warns "NOTE: You are using HorizonUX test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
+
 if [ "$BUILD_TARGET_ANDROID_VERSION" == "14" ]; then
 	console_print "Removing some bloats, thnx Salvo!"
-	rm -rf $HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml $HORIZON_SYSTEM_DIR/etc/public.libraries-wsm.samsung.txt \
-	$HORIZON_SYSTEM_DIR/lib/libhal.wsm.samsung.so \
-	$HORIZON_SYSTEM_DIR/lib/vendor.samsung.hardware.security.wsm.service-V1-ndk.so \
-	$HORIZON_SYSTEM_DIR/lib64/libhal.wsm.samsung.so \
-	$HORIZON_SYSTEM_DIR/lib64/vendor.samsung.hardware.security.wsm.service-V1-ndk.so \
-	$HORIZON_SYSTEM_DIR/priv-app/KnoxGuard
+	rm -rf $SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml $SYSTEM_DIR/etc/public.libraries-wsm.samsung.txt \
+	$SYSTEM_DIR/lib/libhal.wsm.samsung.so \
+	$SYSTEM_DIR/lib/vendor.samsung.hardware.security.wsm.service-V1-ndk.so \
+	$SYSTEM_DIR/lib64/libhal.wsm.samsung.so \
+	$SYSTEM_DIR/lib64/vendor.samsung.hardware.security.wsm.service-V1-ndk.so \
+	$SYSTEM_DIR/priv-app/KnoxGuard
 fi
 
 if boolReturn $TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS; then
@@ -149,8 +145,8 @@ fi
 
 if boolReturn $BUILD_TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES; then
 	console_print "Patching bluetooth...."
-	[ -f "$HORIZON_SYSTEM_DIR/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found, copy and put them in a random directory and try again.."
-	HEX_PATCH "$HORIZON_SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052"
+	[ -f "$SYSTEM_DIR/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found, copy and put them in a random directory and try again.."
+	HEX_PATCH "$SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052"
 fi
 
 if boolReturn $BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED; then
@@ -192,7 +188,7 @@ if boolReturn $TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN; t
 	console_print "Enabling Game Launcher..."
 	change_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
-	warns "Disabling Game Launcher..." "TARGET_FEATURE_CONFIGURATION"
+	console_print "Disabling Game Launcher..."
 	change_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
@@ -200,7 +196,7 @@ if boolReturn $BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES; then
 	console_print "Switching the default refresh rate to ${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}Hz..."
 	change_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
-	warns "Switching the default refresh rate to 60Hz (due to the BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES variable being set to false)." "TARGET_FEATURE_CONFIGURATION"
+	console_print "Switching the default refresh rate to 60Hz (due to the BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES variable being set to false)."
 	change_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "60" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
@@ -251,13 +247,13 @@ else
 			if existance "$files"; then
 				case "$files" in
 					*lib64/*)
-						cp "$files" "$HORIZON_SYSTEM_DIR/lib64/" || abort "Failed to copy $files to $HORIZON_SYSTEM_DIR/lib64"
+						cp "$files" "$SYSTEM_DIR/lib64/" || abort "Failed to copy $files to $SYSTEM_DIR/lib64"
 					;;
 					*lib/*)
-						cp "$files" "$HORIZON_SYSTEM_DIR/lib/" || abort "Failed to copy $files to $HORIZON_SYSTEM_DIR/lib"
+						cp "$files" "$SYSTEM_DIR/lib/" || abort "Failed to copy $files to $SYSTEM_DIR/lib"
 					;;
 					*bin/*)
-						cp "$files" "$HORIZON_SYSTEM_DIR/bin/" || abort "Failed to copy $files to $HORIZON_SYSTEM_DIR/bin"
+						cp "$files" "$SYSTEM_DIR/bin/" || abort "Failed to copy $files to $SYSTEM_DIR/bin"
 					;;
 				esac
 			fi
@@ -295,7 +291,7 @@ fi
 if boolReturn $TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH; then
 	console_print "Disabling Smart Switch feature in setup...."
 	change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SMART_SWITCH" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
-	apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
+	apply_diff_patches "$SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
 fi
 
 if boolReturn $TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES; then
@@ -306,7 +302,7 @@ if boolReturn $TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES; then
 fi
 
 # let's download goodlook modules from corsicanu's repo.
-debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] - Starting to check and try to download goodlook modules, logs can be seen below if any errors spawn upon the process"
+debugPrint "[$(date +%H:%M%p)] - Starting to check and try to download goodlook modules, logs can be seen below if any errors spawn upon the process"
 boolReturn $TARGET_INCLUDE_SAMSUNG_THEMING_MODULES && check_internet_connection "GOODLOCK_MODULES" && download_glmodules 2>> $thisConsoleTempLogFile
 
 # installs audio resampler.
@@ -319,8 +315,8 @@ else
 fi
 
 # L, see the dawn makeconfigs.prop file :\
-if boolReturn $TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER_PLUGIN; then
-	for part in $HORIZON_SYSTEM_DIR $HORIZON_VENDOR_DIR; do
+if boolReturn $TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER; then
+	for part in $SYSTEM_DIR $VENDOR_DIR; do
 		for libdir in "$part/lib" "$part/lib64"; do
 			[ -f "$part/$libdir/liboemcrypto.so" ] && touch "$part/$libdir/liboemcrypto.so"
 		done
@@ -336,7 +332,35 @@ fi
 # removes useless samsung stuffs from the vendor partition.
 if boolReturn $TARGET_REMOVE_USELESS_VENDOR_STUFFS; then
 	console_print "Nuking useless vendor stuffs..."
-    nuke_stuffs
+    if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 29 && "${BUILD_TARGET_SDK_VERSION}" -le 34 ]]; then
+        console_print "Removing services from the system config files..."
+        if grep_prop "ro.product.vendor.model" "${HORIZON_VENDOR_PROPERTY_FILE}" | grep -E 'G97([035][FNUW0]|7[BNUW])|N97([05][FNUW0]|6[BNQ0]|1N)|T860|F90(0[FN]|7[BN])|M[23]15F'; then
+            for cass in ${SYSTEM_DIR}/../init.rc $VENDOR_DIR/etc/init/cass.rc; do
+                sed -i -e 's/^[^#].*cass.*$/# &/' -re '/\/(system|vendor)\/bin\/cass/,/^#?$/s/^[^#]*$/#&/' "${cass}"
+            done
+        fi
+        if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
+            for useless_service_def in $VENDOR_DIR/etc/vintf/manifest.xml $SYSTEM_DIR/etc/vintf/compatibility_matrix.device.xml $VENDOR_DIR/etc/vintf/manifest/vaultkeeper_manifest.xml; do
+                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.vaultkeeper"
+                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.proca"
+                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.wsm"
+            done
+            for vk in $SYSTEM_DIR/etc/init/vk*.rc $VENDOR_DIR/etc/init/vk*.rc $VENDOR_DIR/etc/init/vaultkeeper*.rc; do
+                [ -f "${vk}" ] && sed -i -e 's/^[^#].*$/# &/' ${vk} && console_print "Disabled VaultKeeper service."
+            done
+            for proca in $VENDOR_DIR/etc/init/pa_daemon*.rc; do
+                [ -f "${proca}" ] && sed -i -e 's/^[^#]/# &/' ${proca} && console_print "Disabled Proca (Process Authenticator) service."
+            done
+        fi
+        rm -rf "${VENDOR_DIR}/overlay/AccentColorBlack" "${VENDOR_DIR}/overlay/AccentColorCinnamon" "${VENDOR_DIR}/overlay/AccentColorGreen" \
+        "${VENDOR_DIR}/overlay/AccentColorOcean" "${VENDOR_DIR}/overlay/AccentColorOrchid" "${VENDOR_DIR}/overlay/AccentColorPurple" \
+        "${VENDOR_DIR}/etc/init/boringssl_self_test.rc" "${VENDOR_DIR}/overlay/AccentColorSpace" &> "$thisConsoleTempLogFile"
+        if [ "${TARGET_DISABLE_FILE_BASED_ENCRYPTION}" == "true" ]; then
+            for fstab__ in $VENDOR_DIR/etc/fstab.*; do
+                sed -i -e 's/^\([^#].*\)fileencryption=[^,]*\(.*\)$/# &\n\1encryptable\2/g' ${fstab__}
+            done
+        fi
+    fi
 	console_print "Finished removing useless vendor file(s)"
 	console_print "if you have bootloops, dm my bot with logs"
 fi
@@ -344,16 +368,14 @@ fi
 # nukes display refresh rate overrides on some video platforms.
 if boolReturn $DISABLE_DISPLAY_REFRESH_RATE_OVERRIDE; then
 	console_print "Disabling Refresh rate override from surfaceflinger..."
-	sed -i \
-		"/max_frame_buffer_acquired_buffers/a ro.surface_flinger.enable_frame_rate_override=false" \
-		"$HORIZON_VENDOR_DIR/default.prop"	
+	sed -i "/max_frame_buffer_acquired_buffers/a ro.surface_flinger.enable_frame_rate_override=false" "$VENDOR_DIR/default.prop"	
 fi
 
 # disable's DRC shit
 if boolReturn $DISABLE_DYNAMIC_RANGE_COMPRESSION; then
 	console_print "Disabling Dynamic Range Compression..."
-	if [ -f "$HORIZON_VENDOR_DIR/etc/audio_policy_configuration.xml" ]; then
-		sed -i 's/speaker_drc_enabled="true"/speaker_drc_enabled="false"/g' "$HORIZON_VENDOR_DIR/etc/audio_policy_configuration.xml"
+	if [ -f "$VENDOR_DIR/etc/audio_policy_configuration.xml" ]; then
+		sed -i 's/speaker_drc_enabled="true"/speaker_drc_enabled="false"/g' "$VENDOR_DIR/etc/audio_policy_configuration.xml"
 		debugPrint "Disabled speaker DRC in audio_policy_configuration.xml"
 	else
 		abort "Error: audio_policy_configuration.xml not found!"
@@ -367,9 +389,7 @@ fi
 
 if boolReturn $FORCE_HARDWARE_ACCELERATION; then
 	warns "Enabling hardware acceleration..." "MISC"
-	for i in "debug.hwui.renderer skiagl" "video.accelerate.hw 1" "debug.sf.hw 1" \
-	"debug.performance.tuning 0" "debug.egl.hw 1" "debug.composition.type gpu"; do
-		# use echo to null-terminate the var value.
+	for i in "debug.hwui.renderer skiagl" "video.accelerate.hw 1" "debug.sf.hw 1" "debug.performance.tuning 0" "debug.egl.hw 1" "debug.composition.type gpu"; do
 		setprop --system "$(echo "${i}" | awk '{printf $1}')" "$(echo "${i}" | awk '{printf $2}')"
 	done
 fi
@@ -393,21 +413,21 @@ if boolReturn "$TARGET_BUILD_REMOVE_SYSTEM_LOGGING"; then
 	debugPrint "Patching atrace, dumpstate, and logd for ${BUILD_TARGET_SDK_VERSION} if possible...."
 	if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 28 && "${BUILD_TARGET_SDK_VERSION}" -le 31 ]]; then
 		if [[ "${BUILD_TARGET_SDK_VERSION}" -eq 28 ]]; then
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[6]}"
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[0]}"
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[9]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[6]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[0]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[9]}"
 		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 29 ]]; then
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[7]}"
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[1]}"
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[10]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[7]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[1]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[10]}"
 		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 30 ]]; then
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[8]}"
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[2]}"
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[11]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[8]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[2]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[11]}"
 		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 31 ]]; then
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[9]}"
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[3]}"
-			apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[12]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[9]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[3]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[12]}"
 		fi
 	fi
 fi
@@ -452,8 +472,8 @@ if boolReturn "$BUILD_TARGET_DISABLE_KNOX_PROPERTIES"; then
 	console_print "Disabling Knox and applying rmm fix.."
 	setprop --system "ro.securestorage.knox" "false"
 	setprop --system "ro.security.vaultkeeper.native" "0"
+	# Thanks salvo!
 	if [ "$BUILD_TARGET_SDK_VERSION" == "34" ]; then
-		# Thanks salvo!
 		setprop --system security.mdf.result " "
 		setprop --system security.mdf " "
 		setprop --system ro.security.mdf.ver " "
@@ -514,23 +534,22 @@ if [[ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" || "${TARGET_INCLUDE_HORIZON
 	console_print "Starting to compile bashScriptLoader.."
 	make loader &>>$thisConsoleTempLogFile
 	console_print "bashScriptLoader compiled successfully!"
-	mv ../local_build/binaries/bashScriptLoader $HORIZON_SYSTEM_DIR/bin/ || abort "Failed to move bashScriptLoader to $HORIZON_SYSTEM_DIR/bin/"
+	mv ../local_build/binaries/bashScriptLoader $SYSTEM_DIR/bin/ || abort "Failed to move bashScriptLoader to $SYSTEM_DIR/bin/"
 	if [ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" ]; then
 		console_print "HorizonUX Ellen is enabled, please note that this feature is experimental and may cause bootloops, if you face any bootloops, please dm me with the logs."
 		setprop --system "persist.horizonux.ellen" "available"
-		cp -af ./horizon/rom_tweaker_script/horizonux_ellen.sh $HORIZON_SYSTEM_DIR/bin/ || abort "Failed to move horizonux_ellen.sh to $HORIZON_SYSTEM_DIR/bin/"
+		cp -af ./horizon/rom_tweaker_script/horizonux_ellen.sh $SYSTEM_DIR/bin/ || abort "Failed to move horizonux_ellen.sh to $SYSTEM_DIR/bin/"
 	fi
 	if [ "${TARGET_INCLUDE_HORIZON_TOUCH_FIX}" == "true" ]; then
 		console_print "Adding brotherboard's GSI touch fix..."
 		setprop --system "persist.horizonux.brotherboard.touch_fix" "available"
-		cp -af ./horizon/rom_tweaker_script/brotherboard_touch_fix.sh $HORIZON_SYSTEM_DIR/bin/
+		cp -af ./horizon/rom_tweaker_script/brotherboard_touch_fix.sh $SYSTEM_DIR/bin/
 	fi
-	cp -af ./horizon/rom_tweaker_script/init.ellen.rc $HORIZON_SYSTEM_DIR/etc/init/
+	cp -af ./horizon/rom_tweaker_script/init.ellen.rc $SYSTEM_DIR/etc/init/
 fi
 
 if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMARTMANAGER_DEVICE"; then
 	console_print "Replacing stock smartmanager and device care with the chinese version..."
-	# mkdir at the temp dir
 	mkdir -p ../local_build/etc/permissions/ ../local_build/etc/app/SmartManager_v6_DeviceSecurity \
 	../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN ../local_build/etc/priv-app/SmartManager_v5 ../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity \
 	../local_build/etc/priv-app/SmartManagerCN ../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN ../local_build/etc/priv-app/SAppLock ../local_build/etc/priv-app/Firewall;
@@ -538,23 +557,23 @@ if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMART
 		debugPrint "Moving SmartManager and Device Care to a temporary directory.."
 		# now move these for a quick revert if anything goes wrong.
 		# xmls
-		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
-		mv "$HORIZON_SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
-		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "../local_build/etc/permissions/"
-		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
-		mv "$HORIZON_SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
-		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml" "../local_build/etc/permissions/"
-		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "../local_build/etc/permissions/"
-		mv "$HORIZON_SYSTEM_DIR/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "../local_build/etc/permissions/"
+		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
+		mv "$SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "../local_build/etc/permissions/"
+		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "../local_build/etc/permissions/"
+		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
+		mv "$SYSTEM_DIR/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "../local_build/etc/permissions/"
+		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml" "../local_build/etc/permissions/"
+		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "../local_build/etc/permissions/"
+		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "../local_build/etc/permissions/"
 		# actual thing
-		mv "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity"
-		mv "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN"
-		mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v5/*" "../local_build/etc/priv-app/SmartManager_v5"
-		mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity"
-		mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManagerCN/*" "../local_build/etc/priv-app/SmartManagerCN"
-		mv "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN"
-		mv "$HORIZON_SYSTEM_DIR/priv-app/SAppLock/*" "../local_build/etc/priv-app/SAppLock"
-		mv "$HORIZON_SYSTEM_DIR/priv-app/Firewall/*" "../local_build/etc/priv-app/Firewall"
+		mv "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity"
+		mv "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN"
+		mv "$SYSTEM_DIR/priv-app/SmartManager_v5/*" "../local_build/etc/priv-app/SmartManager_v5"
+		mv "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity"
+		mv "$SYSTEM_DIR/priv-app/SmartManagerCN/*" "../local_build/etc/priv-app/SmartManagerCN"
+		mv "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN"
+		mv "$SYSTEM_DIR/priv-app/SAppLock/*" "../local_build/etc/priv-app/SAppLock"
+		mv "$SYSTEM_DIR/priv-app/Firewall/*" "../local_build/etc/priv-app/Firewall"
 		# change float values, as per updater-script from @saadelasfur/SmartManager/Installers/SmartManagerCN/updater-script
 		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L87
 		#                                                          -                                                                           #
@@ -570,26 +589,27 @@ if [ "${BUILD_TARGET_SDK_VERSION}" == "34|35" ] && boolReturn "$BRINGUP_CN_SMART
 				{
 					debugPrint "Looks like one of the loop is failed, restoring the backup..."
 					# actual thing
-					mv "../local_build/etc/priv-app/Firewall/*" "$HORIZON_SYSTEM_DIR/priv-app/Firewall/"
-					mv "../local_build/etc/priv-app/SAppLock/*" "$HORIZON_SYSTEM_DIR/priv-app/SAppLock/"
-					mv "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/"
-					mv "../local_build/etc/priv-app/SmartManagerCN/*" "$HORIZON_SYSTEM_DIR/priv-app/SmartManagerCN/"
-					mv "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity/*" "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/"
-					mv "../local_build/etc/priv-app/SmartManager_v5/*" "$HORIZON_SYSTEM_DIR/priv-app/SmartManager_v5/"
-					mv "../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN/*" "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/"
-					mv "../local_build/etc/app/SmartManager_v6_DeviceSecurity/*" "$HORIZON_SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/"
+					mv "../local_build/etc/priv-app/Firewall/*" "$SYSTEM_DIR/priv-app/Firewall/"
+					mv "../local_build/etc/priv-app/SAppLock/*" "$SYSTEM_DIR/priv-app/SAppLock/"
+					mv "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/"
+					mv "../local_build/etc/priv-app/SmartManagerCN/*" "$SYSTEM_DIR/priv-app/SmartManagerCN/"
+					mv "../local_build/etc/priv-app/SmartManager_v6_DeviceSecurity/*" "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/"
+					mv "../local_build/etc/priv-app/SmartManager_v5/*" "$SYSTEM_DIR/priv-app/SmartManager_v5/"
+					mv "../local_build/etc/app/SmartManager_v6_DeviceSecurity_CN/*" "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/"
+					mv "../local_build/etc/app/SmartManager_v6_DeviceSecurity/*" "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/"
 					# xmls
-					mv "../local_build/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
-					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
-					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
-					mv "../local_build/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
-					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
-					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
-					mv "../local_build/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
-					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "$HORIZON_SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "$SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "$SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml" "$SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/signature-permissions-com.samsung.android.sm_cn.xml" "$SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml" "$SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "$SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "$SYSTEM_DIR/etc/permissions/"
+					mv "../local_build/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "$SYSTEM_DIR/etc/permissions/"
 					debugPrint "Seems like i did restore those files? didn't i?"
+					warns "Failed to download stuffs from @saadelasfur github repo, moved everything to their places!" "FAILED_TO_DOWNLOAD_SMARTMANAGER"
+					break
 				} &>>$thisConsoleTempLogFile
-				warns "Failed to download stuffs from @saadelasfur github repo, moved everything to their places!" "FAILED_TO_DOWNLOAD_SMARTMANAGER"
 			}
 		done
 	done
@@ -603,15 +623,11 @@ if boolReturn "$TINKER_MAX_REFRESH_RATE"; then
 fi
 
 # device customization script
-[ -f "./target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh" ] && ./target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh
+[ -f "./target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh" ] && source ./target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 debugPrint "End of the script, running misc stuffs.."
 console_print "Running misc jobs..."
-setprop --vendor ro.config.ringtone whatever.ogg
-setprop --vendor ro.config.ringtone_2 whatever.ogg
-setprop --vendor ro.config.notification_sound Twitch.ogg
-setprop --vendor ro.config.notification_sound_2 Bling.ogg
 add_csc_xml_values "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Settings_GOTA" "TRUE"
@@ -628,51 +644,48 @@ fi
 default_language_configuration ${NEW_DEFAULT_LANGUAGE_ON_PRODUCT} ${NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT}
 change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 setprop --vendor "vendor.audio.offload.buffer.size.kb" "256"
-rm -rf "$HORIZON_SYSTEM_DIR/hidden" "$HORIZON_SYSTEM_DIR/preload" "$HORIZON_SYSTEM_DIR/recovery-from-boot.p" "$HORIZON_SYSTEM_DIR/bin/install-recovery.sh"
-cp -af ./misc/etc/ringtones_and_etc/media/audio/* "$HORIZON_SYSTEM_DIR/media/audio/"
+rm -rf "$SYSTEM_DIR/hidden" "$SYSTEM_DIR/preload" "$SYSTEM_DIR/recovery-from-boot.p" "$SYSTEM_DIR/bin/install-recovery.sh"
+cp -af ./misc/etc/ringtones_and_etc/media/audio/* "$SYSTEM_DIR/media/audio/"
 change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
-if boolReturn "$TARGET_INCLUDE_CUSTOM_BRAND_NAME"; then
-	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
-fi
-[ -f "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" ] && touch "$HORIZON_SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so"
+boolReturn "$TARGET_INCLUDE_CUSTOM_BRAND_NAME" && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+[ -f "$SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" ] && touch "$SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so"
 for i in "logcat.live disable" "sys.dropdump.on Off" "profiler.force_disable_err_rpt 1" "profiler.force_disable_ulog 1" \
 		 "sys.lpdumpd 0" "persist.device_config.global_settings.sys_traced 0" "persist.traced.enable 0" "persist.sys.lmk.reportkills false" \
 		 "log.tag.ConnectivityManager S" "log.tag.ConnectivityService S" "log.tag.NetworkLogger S" \
 		 "log.tag.IptablesRestoreController S" "log.tag.ClatdController S"; do
-		# use echo to null-terminate the var value.
 		setprop --system "$(echo "${i}" | awk '{printf $1}')" "$(echo "${i}" | awk '{printf $2}')"
 done
 case "${BUILD_TARGET_SDK_VERSION}" in
     28)
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[4]}"
+        apply_diff_patches "$VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[4]}"
     ;;
     29)
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[5]}"
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[14]}"
+        apply_diff_patches "$VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[5]}"
+        apply_diff_patches "$SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[14]}"
     ;;
     30)
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[20]}"
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[22]}"
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[15]}"
+        apply_diff_patches "$VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
+        apply_diff_patches "$SYSTEM_DIR/etc/init/uncrypt.rc" "${DIFF_UNIFIED_PATCHES[20]}"
+        apply_diff_patches "$SYSTEM_DIR/etc/init/vold.rc" "${DIFF_UNIFIED_PATCHES[22]}"
+        apply_diff_patches "$SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[15]}"
     ;;
     31)
-        apply_diff_patches "$HORIZON_VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
-        apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
+        apply_diff_patches "$VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
+        apply_diff_patches "$SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
     ;;
 esac
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "30" ]]; then
-    apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/freecess.rc" "${DIFF_UNIFIED_PATCHES[22]}"
+    apply_diff_patches "$SYSTEM_DIR/etc/init/freecess.rc" "${DIFF_UNIFIED_PATCHES[22]}"
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "31" ]]; then
-    apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[21]}"
+    apply_diff_patches "$SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[21]}"
 fi
 if [[ "${BUILD_TARGET_SDK_VERSION}" -ge "29" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]]; then
-    apply_diff_patches "$HORIZON_SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
+    apply_diff_patches "$SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
 fi
 if ask "Do you want to add a stub app for missing activities?"; then
-	mkdir -p "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
-	build_and_sign "./horizon/packages/HorizonStub" "$HORIZON_SYSTEM_DIR/app/HorizonStub/"
+	mkdir -p "$SYSTEM_DIR/app/HorizonStub/"
+	build_and_sign "./horizon/packages/HorizonStub" "$SYSTEM_DIR/app/HorizonStub/"
 fi
 tinkerWithCSCFeaturesFile --encode
 rm -rf "$TMPDIR" "${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak"

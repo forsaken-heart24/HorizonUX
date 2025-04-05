@@ -23,9 +23,9 @@ TARGET_DEVICE=$1
 TARGET_DEVICE_FULL_FIRMWARE_LINK=$2
 MAKECONFIGS_LINK="$3"
 PACK_IMAGE_WITH_TS_FORMAT="$4"
-PRIVATE_KEY_SETUP_SCRIPT_LINK="$4"
-theBotToken="$(echo "${{secrets.BUGREPORTER_BOT_TOKEN}}")"
-chatID="$(echo "${{secrets.CHAT_ID}}")"
+PRIVATE_KEY_SETUP_SCRIPT_LINK="$5"
+theBotToken="$(echo "${{ secrets.BUGREPORTER_BOT_TOKEN }}")"
+chatID="$(echo "${{ secrets.CHAT_ID }}")"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
 # device specific customization:
@@ -255,8 +255,8 @@ esac
 console_print "Build completed successfully at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 console_print "Trying to upload ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to the requested chat..."
 curl -F "chat_id=${chatID}" -F "document=@../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
-if [ "$(cat output | cut -c 7-10)" == "true" ]; then
-    console_print "Uploaded ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} successfully....."
+if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
+    console_print "Uploaded ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
     exit 0
 fi
 abort "Failed to upload the build, please try again...."

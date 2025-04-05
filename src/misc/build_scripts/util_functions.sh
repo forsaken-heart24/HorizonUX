@@ -49,12 +49,10 @@ function setprop() {
         propValue="$4"
         propFile=$(if [ -f "$2" ]; then echo "$2"; else echo "$HORIZON_VENDOR_PROPERTY_FILE"; fi)
     fi
-    if cat ${stacked_temp_properties} | grep "${propVariableName}" | grep -q =${propValue}; then
-        console_print "Skipping ${propVariableName} because it already has the requested value set in somewhere."
-        return 0;
+    if ! cat ${stacked_temp_properties} | grep ${propVariableName} | grep -q ${propValue}; then
+        awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
+        mv ${propFile}.tmp ${propFile}
     fi
-    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
-    mv ${propFile}.tmp ${propFile}
 }
 
 function abort() {
@@ -62,7 +60,7 @@ function abort() {
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    rm -rf "$TMPDIR" "${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak"
+    rm -rf "$TMPDIR" "${TMPFILE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak"
     exit 1
 }
 
@@ -82,14 +80,12 @@ function default_language_configuration() {
         console_print "Skipping changing default language, reason: \"SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD\" set to ${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD} instead of true"
         return 0;
     fi
-    local language="$1"
-    local country="$2"
     # Default values
     [ -z "$language" ] && language="en"
     [ -z "$country" ] && country="US"
     # Convert to proper case
-    language=$(echo "$language" | tr '[:upper:]' '[:lower:]')
-    country=$(echo "$country" | tr '[:lower:]' '[:upper:]')
+    language=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+    country=$(echo "$2" | tr '[:lower:]' '[:upper:]')
     # Validate length (ISO 639-1 for language, ISO 3166-1 alpha-2 for country)
     if [[ ! "$language" =~ ^[a-z]{2,3}$ ]]; then
         abort "Invalid language code: $language"
@@ -124,18 +120,15 @@ function build_and_sign() {
     local apk_file
 
     # Common checks
-    if [ ! -d "$extracted_dir_path" ]; then
+    if [[ ! -d "$extracted_dir_path" || ! -f "$extracted_dir_path/apktool.yml" ]]; then
         abort "Invalid Apkfile path: $extracted_dir_path"
-    fi
-    if [ ! -f "$extracted_dir_path/apktool.yml" ]; then 
-        abort "Invalid apktool.yml file in: $extracted_dir_path"
     fi
 
     # Extract APK file name from apktool.yml dynamically
     apkFileName=$(grep "apkFileName" "$extracted_dir_path/apktool.yml" | cut -d ':' -f 2 | tr -d ' "')
     apk_file="${extracted_dir_path}/dist/${apkFileName}"
 
-    # Change compile SDK version before build
+    # Change compile SDK version and etc before build
     change_xml_values "compileSdkVersion" "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
     change_xml_values "platformBuildVersionCode" "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}/AndroidManifest.xml" 
     change_xml_values "compileSdkVersionCodename" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
@@ -149,92 +142,77 @@ function build_and_sign() {
     # Build the package
     mkdir -p "$extracted_dir_path/dist/"
     if java -jar ./dependencies/bin/apktool.jar build "$extracted_dir_path" &>>"$thisConsoleTempLogFile"; then
-        debugPrint "Successfully built: $apk_file"
+        debugPrint "Successfully built: $apkFileName"
     else
         abort "Apktool build failed for $extracted_dir_path"
     fi
 
     # Ensure built APK exists
-    if [ ! -f "$apk_file" ]; then
-        abort "No APK found in $extracted_dir_path/dist/"
-    fi
+    [ ! -f "$apk_file" ] && abort "No APK found in $extracted_dir_path/dist/"
 
     # Signing the APK
-    if [ -z "$MY_KEYSTORE_PATH" ]; then
+    if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
+        java -jar ./dependencies/bin/signer.jar --apk "$apk_file" --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" &>>"$thisConsoleTempLogFile"
+    else
         warns "NOTE: You are using Uber test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
         java -jar ./dependencies/bin/signer.jar --apk "$apk_file" &>>"$thisConsoleTempLogFile"
-    elif [ -f "$MY_KEYSTORE_PATH" ]; then
-        [ "$MY_KEYSTORE_PATH" == "../test-keys/HorizonUX-testkey.jks" ] && warns "NOTE: You are using HorizonUX test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
-        java -jar ./dependencies/bin/signer.jar --apk "$apk_file" \
-            --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" \
-            --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" &>>"$thisConsoleTempLogFile"
     fi
 
     # Check if the signed APK exists
     signed_apk=$(find "$extracted_dir_path/dist/" -type f -name "${apk_base_name}*-debugSigned.apk" | head -n 1)
-    if [ ! -f "$signed_apk" ]; then
-        signed_apk=$(find "$extracted_dir_path/dist/" -type f -name "${apk_base_name}*-aligned.apk" | head -n 1)
-        [ ! -f "${signed_apk}" ] && abort "No signed APK found in $extracted_dir_path/dist/"
-    fi
+    [ ! -f "$signed_apk" ] && abort "No signed APK found in $extracted_dir_path/dist/"
 
-    # Move signed APK to target directory
+    # Move signed APK to target directory and do a cleanup
     mv "$signed_apk" "$app_path/"
-
-    # Cleanup
     rm -rf "$extracted_dir_path/build" "$extracted_dir_path/dist/"
 }
 
 function catch_duplicates_in_xml() {
     local feature_code="$1"
     local file="$2" 
+    
     # Convert feature_code to uppercase
     feature_code="$(echo "${feature_code}" | tr '[:lower:]' '[:upper:]')"
+
     # Initialize count
     count=0
+    
     # Count occurrences of the feature_code in the file
     while IFS= read -r line; do
         if echo "$line" | grep -q "${feature_code}"; then
         count=$((count + 1))
         fi
     done < "${file}"
-    # this mf prints this out for the variable shit.
+    
+    # no need to explain tbh
     echo "${count}"
 }
 
 function add_float_xml_values() {
-    local feature_code="$1"
+    local feature_code="$(string_format -u "$1")"
     local feature_code_value="$2"
-    # Convert feature_code to uppercase
-    feature_code="$(string_format -u "${feature_code}")"
-    # check if we have duplicates or not, uf we have anything extra, call the catch_duplicates_in_xml to do the job lol.
+    
+    # check if we have duplicates or not, if we have anything extra, call the catch_duplicates_in_xml to do the job lol.
     if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == "0" ]; then
-        # Create a temporary file to hold the modified content
-        local tmp_file="./tmp_feature"
-        # Read the original file and write to the temporary file
         {
             while IFS= read -r line; do
                 echo "${line}"
                 [ "${line}" == "<SecFloatingFeatureSet>" ] && echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
             done
-        } < "${BUILD_TARGET_FLOATING_FEATURE_PATH}" > "${tmp_file}"
-        # Replace the original file with the modified one
-        mv "${tmp_file}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+        } < "${BUILD_TARGET_FLOATING_FEATURE_PATH}" > "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     else
         change_xml_values "${feature_code}" "${feature_code_value}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     fi
 }
 
 function add_csc_xml_values() {
-    local feature_code="$1"
+    local feature_code="$(string_format -u "$1")"
     local feature_code_value="$2"
-    # Convert feature_code to uppercase
-    feature_code="$(string_format -u "${feature_code}")"
+
+    # write it to the path
     for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
         if [ -f "$EXPECTED_CSC_FEATURE_XML_PATH" ]; then
             if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == "0" ]; then
-                # Create a temporary file to hold the modified content
-                local tmp_file="./tmp_csc"
-                # Read the original file and write to the temporary file
                 {
                     while IFS= read -r line; do
                         echo "${line}"
@@ -242,11 +220,9 @@ function add_csc_xml_values() {
                             echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
                         fi
                     done
-                } < "${EXPECTED_CSC_FEATURE_XML_PATH}" > "${tmp_file}"
+                } < "${EXPECTED_CSC_FEATURE_XML_PATH}" > "${EXPECTED_CSC_FEATURE_XML_PATH}"
                 # write the ending thing cuz this mf is not writing that for some reason.
-                echo "</SamsungMobileFeature>" >> "${tmp_file}"
-                # Replace the original file with the modified one
-                mv "${tmp_file}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
+                echo "</SamsungMobileFeature>" >> "${EXPECTED_CSC_FEATURE_XML_PATH}"
             else 
                 change_xml_values "${feature_code}" "${feature_code_value}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
             fi
@@ -257,62 +233,65 @@ function add_csc_xml_values() {
 function tinkerWithCSCFeaturesFile() {
     local action="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
     local decoder_jar="./dependencies/bin/omc-decoder.jar"
+
     # Ensure decoder exists
     [ ! -f "$decoder_jar" ] && abort "Error: omc-decoder.jar not found!"
-    if [ "$action" == "--decode" ]; then
-        for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
-            if [ -f "$i" ]; then
+
+    # handle arg
+    case "${action}" in
+        --decode)
+            for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
                 if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>$thisConsoleTempLogFile; then
                     debugPrint "CSC feature file successfully decoded."
                 else
                     abort "Failed to decode the CSC feature file, please try again..."
                 fi
-            fi
-        done
-        # Mark as decoded
-        debugPrint "CSC feature file successfully decoded."
-    elif [ "$action" == "--encode" ]; then
-        for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
-            if [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ]; then
+            done
+            debugPrint "CSC feature file successfully decoded."
+        ;;
+        --encode)
+            for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
                 if java -jar "$decoder_jar" -e -i "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" -o "${EXPECTED_CSC_FEATURE_XML_PATH}" &>$thisConsoleTempLogFile; then
                     debugPrint "CSC feature file successfully encoded."
                 else
                     abort "Failed to encode the CSC feature file, please try again..."
                 fi
-            fi
-        done
-    else
-        abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode"
-        return 1
-    fi
-    return 0
+            done
+        ;;
+        *)
+            abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode"
+        ;;
+    esac
+    return $?
 }
 
 function change_xml_values() {
-    local feature_code="$1"
+    local feature_code="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
     local feature_code_value="$2"
     local file="$3"
+
+    # do checks and put ts shyt in log
     debugPrint "change_xml_values(): Arguments: $1 $2 $3"
     [ -z "$file" ] && abort "Error: No XML file specified!"
     [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!"
-    feature_code="$(echo "${feature_code}" | tr '[:lower:]' '[:upper:]')"
-    manifest_attr="${feature_code}"
-    if grep -q "${manifest_attr}=" "$file"; then
-        if ! grep -q "${manifest_attr}=\"${feature_code_value}\"" "$file"; then
-            sed -i.bak "s|\(${manifest_attr}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
-            debugPrint "Updated ${manifest_attr} to ${feature_code_value} in $file"
+
+    # uhrm achshually!
+    if grep -q "${feature_code}=" "$file"; then
+        if ! grep -q "${feature_code}=\"${feature_code_value}\"" "$file"; then
+            sed -i.bak "s|\(${feature_code}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
+            debugPrint "change_xml_values(): Updated ${feature_code} to ${feature_code_value} in $file"
         else
-            debugPrint "${manifest_attr} is already set to ${feature_code_value}, skipping."
+            debugPrint "change_xml_values(): ${feature_code} is already set to ${feature_code_value}, skipping."
         fi
     elif grep -qi "<${feature_code}>" "$file"; then
         if ! grep -q "<${feature_code}>${feature_code_value}</${feature_code}>" "$file"; then
             sed -i.bak "s|<${feature_code}>[^<]*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|g" "$file"
-            debugPrint "Updated <${feature_code}> value to ${feature_code_value}"
+            debugPrint "change_xml_values(): Updated <${feature_code}> value to ${feature_code_value}"
         else
-            debugPrint "<${feature_code}> is already set to ${feature_code_value}, skipping."
+            debugPrint "change_xml_values(): <${feature_code}> is already set to ${feature_code_value}, skipping."
         fi
     else
-        debugPrint "No matching ${feature_code} or ${manifest_attr} found. Skipping modification."
+        debugPrint "change_xml_values(): No matching ${feature_code} or ${manifest_attr} found. Skipping modification."
     fi
 }
 
@@ -320,41 +299,18 @@ function change_yaml_values() {
     local key="$1"
     local value="$2"
     local file="$3"
+
+    # do checks and put ts shyt in log
+    debugPrint "change_yaml_values(): Arguments: $1 $2 $3"
     [ -z "$file" ] && abort "Error: No file specified!"
     [ ! -f "$file" ] && abort "Error: File '$file' not found!"
+
+    # ok lets go
     if grep -Eq "^[[:space:]]*${key}:" "$file"; then
         sed -i -E "s|(^[[:space:]]*${key}:)[[:space:]]*.*|\1 ${value}|" "$file"
     else
         echo "${key}: ${value}" >> "$file"
     fi
-}
-
-# these things are intended for those " pro " programmers 
-function int() {
-    local variable_name="$1"
-    local value="$2"
-    # those shits are not working...
-    debugPrint "Requested to set ${variable_name} variable to with this value: ${value}"
-    eval "$variable_name=$value"
-}
-
-function bool() {
-    local variable_name="$1"
-    local value="$(string_format -l $2)"
-    # Check if the value is either "true" or "false"
-    debugPrint "Requested to set ${variable_name} variable to with this value: ${value}"
-    if [ "$value" == "true" || "$value" == "false" || "$value" == "1" || "$value" == "0" ]; then
-        eval "$variable_name=$value"
-    else
-        abort "Error: '$value' is not a boolean."
-    fi
-}
-# these things are intended for those " pro " programmers 
-
-# useless.
-function warns_api_limitations() {
-    local adrod_version=$1
-    warns "This feature is found on android $adrod_version, report if it doesn't work. thanks!" "TARGET_OUT_OF_BOUNDS"; 
 }
 
 function ask() {
@@ -373,7 +329,7 @@ function remove_attributes() {
     local NAME_TO_SKIP="$3"
     local MODIFIED=false
 
-    # Log start
+    # capture ts input action:
     debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Output File: ${OUTPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
 
     # Validate input
@@ -433,44 +389,7 @@ function remove_attributes() {
     else
         console_print "No changes made. <hal> with name=$NAME_TO_SKIP was not found."
         debugPrint "remove_attributes(): No changes made. <hal> with name=$NAME_TO_SKIP was not found."
-        rm "$OUTPUT_FILE"  # Cleanup unused output file
-    fi
-}
-
-function nuke_stuffs() {
-    if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 29 && "${BUILD_TARGET_SDK_VERSION}" -le 34 ]]; then
-        console_print "Removing some services from the system config files..."
-        grep_prop "ro.product.vendor.model" "${HORIZON_VENDOR_PROPERTY_FILE}" | grep -E 'G97([035][FNUW0]|7[BNUW])|N97([05][FNUW0]|6[BNQ0]|1N)|T860|F90(0[FN]|7[BN])|M[23]15F' && {
-            for cass in ${HORIZON_SYSTEM_DIR}/../init.rc $HORIZON_VENDOR_DIR/etc/init/cass.rc; do
-                sed -i -e 's/^[^#].*cass.*$/# &/' -re '/\/(system|vendor)\/bin\/cass/,/^#?$/s/^[^#]*$/#&/' "${cass}"
-            done
-        }
-        if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
-            for useless_service_def in $HORIZON_VENDOR_DIR/etc/vintf/manifest.xml $HORIZON_SYSTEM_DIR/etc/vintf/compatibility_matrix.device.xml $HORIZON_VENDOR_DIR/etc/vintf/manifest/vaultkeeper_manifest.xml; do
-                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.vaultkeeper"
-                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.proca"
-                remove_attributes "${useless_service_def}" "${useless_service_def}__" "vendor.samsung.hardware.security.wsm"
-            done
-            for vk in $HORIZON_SYSTEM_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vk*.rc $HORIZON_VENDOR_DIR/etc/init/vaultkeeper*.rc; do
-                [ -f "${vk}" ] && sed -i -e 's/^[^#].*$/# &/' ${vk} && console_print "Disabled VaultKeeper service."
-            done
-            for proca in $HORIZON_VENDOR_DIR/etc/init/pa_daemon*.rc; do
-                [ -f "${proca}" ] && sed -i -e 's/^[^#]/# &/' ${proca} && console_print "Disabled Proca (Process Authenticator) service."
-            done
-        fi
-        rm -rf "${HORIZON_VENDOR_DIR}/overlay/AccentColorBlack" \
-        "${HORIZON_VENDOR_DIR}/overlay/AccentColorCinnamon" \
-        "${HORIZON_VENDOR_DIR}/overlay/AccentColorGreen" \
-        "${HORIZON_VENDOR_DIR}/overlay/AccentColorOcean" \
-        "${HORIZON_VENDOR_DIR}/overlay/AccentColorOrchid" \
-        "${HORIZON_VENDOR_DIR}/overlay/AccentColorPurple" \
-        "${HORIZON_VENDOR_DIR}/etc/init/boringssl_self_test.rc"
-        "${HORIZON_VENDOR_DIR}/overlay/AccentColorSpace" &> "$thisConsoleTempLogFile"
-        if [ "${TARGET_DISABLE_FILE_BASED_ENCRYPTION}" == "true" ]; then
-            for fstab__ in $HORIZON_VENDOR_DIR/etc/fstab.*; do
-                sed -i -e 's/^\([^#].*\)fileencryption=[^,]*\(.*\)$/# &\n\1encryptable\2/g' ${fstab__}
-            done
-        fi
+        rm "$OUTPUT_FILE"
     fi
 }
 
@@ -680,7 +599,7 @@ function debugPrint() {
     if [ ! -z "${DEBUG_SCRIPT}" ]; then
         console_print "$@"
     else
-        echo "$@" >> ${thisConsoleTempLogFile}
+        echo "[$(date +%H:%M%p)] - $@" >> ${thisConsoleTempLogFile}
     fi
 }
 
@@ -697,9 +616,9 @@ function apply_diff_patches() {
         debugPrint "apply_diff_patches(): Target file '$TheFileToPatch' not found."
         abort "Error: Target file '${TheFileToPatch}' not found."
     fi
-    if ! patch "$TheFileToPatch" < "$DiffPatchFile" 2>&1; then
-        debugPrint "apply_diff_patches(): Patch failed: ${DiffPatchFile} → ${TheFileToPatch}"
-        warns "Patch failed! Check /tmp/patch_error.log for details." "DIFF_PATCHER"
+    debugPrint "apply_diff_patches(): ${DiffPatchFile} → ${TheFileToPatch}"
+    if ! patch "$TheFileToPatch" < "$DiffPatchFile" &>>$thisConsoleTempLogFile; then
+        console_print "Patch failed! Check logs for details."
     fi
 }
 
@@ -709,7 +628,7 @@ function stack_build_properties() {
     local stacked_temp_properties="${TMPDIR}/$(generate_random_hash 20)___stacked__properties"
     for i in $HORIZON_PRODUCT_PROPERTY_FILE $HORIZON_SYSTEM_PROPERTY_FILE $HORIZON_SYSTEM_EXT_PROPERTY_FILE $HORIZON_VENDOR_PROPERTY_FILE; do
         for unforgettable in "$(cat "${i}")"; do
-            echo "${unforgettable} - ${i}" >> ${stacked_temp_properties}
+            echo "${unforgettable}" >> ${stacked_temp_properties}
         done
     done
 }

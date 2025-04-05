@@ -129,9 +129,9 @@ debloat_the_crap() {
     )
 
     # bomb.
-    for i in "${HORIZON_SYSTEM_DIR}/app/${app[@]}" "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[@]}" \
-    "${HORIZON_SYSTEM_EXT_DIR}/priv-app/${system_extra_privilaged_apps[@]}" "${HORIZON_PRODUCT_DIR}/app/${product_apps[@]}" \
-    "${HORIZON_PRODUCT_DIR}/priv-app/${product_privilaged_apps[@]}"; do
+    for i in "${SYSTEM_DIR}/app/${app[@]}" "${SYSTEM_DIR}/priv-app/${privilaged_apps[@]}" \
+    "${SYSTEM_EXT_DIR}/priv-app/${system_extra_privilaged_apps[@]}" "${PRODUCT_DIR}/app/${product_apps[@]}" \
+    "${PRODUCT_DIR}/priv-app/${product_privilaged_apps[@]}"; do
     debugPrint "debloat_the_crap(): Removing ${i}..."
     if [ -d "${i}" ]; then
         rm -rf "${i}" 2>>./$thisConsoleTempLogFile
@@ -139,9 +139,9 @@ debloat_the_crap() {
         debugPrint "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
     fi
     done
-    for unknown in ${HORIZON_SYSTEM_DIR}/app/SBrowser* ${HORIZON_SYSTEM_DIR}/app/SamsungTTS* ${HORIZON_SYSTEM_DIR}/priv-app/BixbyVisionFramework* \
-    ${HORIZON_SYSTEM_DIR}/priv-app/GalaxyAppsWidget* ${HORIZON_SYSTEM_DIR}/priv-app/GalaxyApps* ${HORIZON_SYSTEM_DIR}/priv-app/OneDrive* \
-    ${HORIZON_SYSTEM_DIR}/priv-app/SecCalculator* ${HORIZON_SYSTEM_DIR}/priv-app/UltraDataSaving*; do
+    for unknown in ${SYSTEM_DIR}/app/SBrowser* ${SYSTEM_DIR}/app/SamsungTTS* ${SYSTEM_DIR}/priv-app/BixbyVisionFramework* \
+    ${SYSTEM_DIR}/priv-app/GalaxyAppsWidget* ${SYSTEM_DIR}/priv-app/GalaxyApps* ${SYSTEM_DIR}/priv-app/OneDrive* \
+    ${SYSTEM_DIR}/priv-app/SecCalculator* ${SYSTEM_DIR}/priv-app/UltraDataSaving*; do
         debugPrint "debloat_the_crap(): Removing ${unknown}..."
         [ -d "${unknown}" ] && rm -rf ${unknown} 2>>./$thisConsoleTempLogFile
     done
@@ -177,35 +177,35 @@ nuke_or_ignore_these_stuffs() {
     console_print "[WARNING] - These apps will potentially hurt device performance"
     console_print "            Type \'y\' to remove"
     console_print "            Type \'n\' to keep them"
-    ask "Do you want to remove Samsung Weather app" && rm -rf "${HORIZON_SYSTEM_DIR}/app/SamsungWeather" 2>./error_ring.log 
+    ask "Do you want to remove Samsung Weather app" && rm -rf "${SYSTEM_DIR}/app/SamsungWeather" 2>./error_ring.log 
     if ask "Do you want to remove Samsung Sharing tools"; then
         for ((i = 0; i < 4; i++)); do
-            rm -rf "${HORIZON_SYSTEM_DIR}/${app[$i]}"
+            rm -rf "${SYSTEM_DIR}/${app[$i]}"
         done
-        rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/ShareLive"
+        rm -rf "${SYSTEM_DIR}/priv-app/ShareLive"
     fi
     if ask "Do you want to remove Samsung AR Camera Plugins"; then
         for ((i = 4; i < 7; i++)); do
-            rm -rf "${HORIZON_SYSTEM_DIR}/app/${app[$i]}"
+            rm -rf "${SYSTEM_DIR}/app/${app[$i]}"
         done
         for ((i = 5; i < 7; i++)); do
-            rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[$i]}"
+            rm -rf "${SYSTEM_DIR}/priv-app/${privilaged_apps[$i]}"
         done
     fi
     if ask "Do you want to remove printing tools from your system"; then
         for ((i = 7; i < 9; i++)); do
-            rm -rf "${HORIZON_SYSTEM_DIR}/app/${app[$i]}"
+            rm -rf "${SYSTEM_DIR}/app/${app[$i]}"
         done
-        rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[4]}"
+        rm -rf "${SYSTEM_DIR}/priv-app/${privilaged_apps[4]}"
     fi
-    ask "Do you want to nuke Finder [heavy ram consuption, used to search apps in homescreen]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/Finder"
+    ask "Do you want to nuke Finder [heavy ram consuption, used to search apps in homescreen]" && rm -rf "${SYSTEM_DIR}/priv-app/Finder"
     if ask "Do you want to nuke Game Launcher and Game Tools [performance will be doomed if you let it cook]"; then
-        rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/GameHome" 2>./error_ring.log
-        rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/GameOptimizingService" 2>./error_ring.log
-        rm -rf ${HORIZON_SYSTEM_DIR}/priv-app/GameTools* 2>./error_ring.log
+        rm -rf "${SYSTEM_DIR}/priv-app/GameHome" 2>./error_ring.log
+        rm -rf "${SYSTEM_DIR}/priv-app/GameOptimizingService" 2>./error_ring.log
+        rm -rf ${SYSTEM_DIR}/priv-app/GameTools* 2>./error_ring.log
     fi
-    ask "Do you want to nuke Device Care Plugin [performance will be doomed if you let it cook]" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[8]}"
-    ask "Do you want to nuke Carrier Services such as ESIM and Wifi-Calling" && rm -rf "${HORIZON_SYSTEM_DIR}/priv-app/${privilaged_apps[10]}"
+    ask "Do you want to nuke Device Care Plugin [performance will be doomed if you let it cook]" && rm -rf "${SYSTEM_DIR}/priv-app/${privilaged_apps[8]}"
+    ask "Do you want to nuke Carrier Services such as ESIM and Wifi-Calling" && rm -rf "${SYSTEM_DIR}/priv-app/${privilaged_apps[10]}"
 }
 case "${BUILD_TARGET_SDK_VERSION}" in
     30|31|32|33|34|35)
