@@ -5,7 +5,7 @@
 - **BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED**: Adds fastbootd support to stock recovery.
 - **BUILD_TARGET_SUPPORTS_WIRELESS_POWER_SHARING**: Enables wireless power sharing if supported by hardware.
 - **BUILD_TARGET_DISABLE_KNOX_PROPERTIES**: For android <= 11, try this at own risk because it disables knox via properties which are untested.
-- **BUILD_TARGET_FLOATING_FEATURE_PATH**: Floating features exact dir.
+- **BUILD_TARGET_FLOATING_FEATURE_PATH**: Put the exact Floating features dir for modifying the xml.
 - **BUILD_TARGET_BOOT_ANIMATION_FPS**: Add any integer value lesser than or equal to 60 if you have a bootanimation that has video/gif like transistions
 - **BUILD_TARGET_SHUTDOWN_ANIMATION_FPS**: Same applies to this variable
 - **BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE**: Sets the default refresh rate (60Hz is recommended).
