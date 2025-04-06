@@ -57,10 +57,10 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     int zygote_pid = getSystemProperty__("hi", "init.svc_debug_pid.zygote");
-    consoleLog("Sleeping for 5s to get the new or old zygote pid....", " ");
+    consoleLog("main(): Sleeping for 5s to get the new or old zygote pid....", " ");
     sleep(5);
     int zygote_pid2 = getSystemProperty__("hi", "init.svc_debug_pid.zygote");
-    consoleLog("Sleeping for 5s to get the new or old zygote pid....", " ");
+    consoleLog("main(): Sleeping for 5s to get the new or old zygote pid....", " ");
     sleep(5);
     int zygote_pid3 = getSystemProperty__("hi", "init.svc_debug_pid.zygote");
     if(zygote_pid <= 1) {
@@ -73,5 +73,6 @@ int main(int argc, char *argv[]) {
             disableMagiskModules();
         }
     }
+    consoleLog("main(): No need to disable modules i think, wrapping up!", " ");
     return 0;
 }

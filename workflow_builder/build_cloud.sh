@@ -28,9 +28,6 @@ theBotToken="$(echo "${{ secrets.BUGREPORTER_BOT_TOKEN }}")"
 chatID="$(echo "${{ secrets.CHAT_ID }}")"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
-# device specific customization:
-[ -d "./target/${TARGET_DEVICE}" ] || exit 0;
-
 # Check if required files exist
 rm -rf ./makeconfigs.prop
 download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop"
@@ -103,7 +100,7 @@ function abort() {
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ../local_build/*
+    rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ../local_build/* output
     exit 1
 }
 
@@ -136,7 +133,30 @@ function warns() {
 function console_print() {
     echo -e "$1"
 }
+
+function uploadGivenFileToTelegram() {
+    local userRequestedFile="$1"
+    curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
+    if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
+        console_print "Uploaded ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
+        return 0
+    fi
+    warns "Failed to upload ${userRequestedFile}, please try again...."
+    return 1
+}
 # functions
+
+# test workflow:
+if [ "$1" == "--test" ]; then
+    console_print "HIAAAAAAAAAA! Workflow works!"
+    console_print "Testing upload function.."
+    echo "HUEHUEHUEHUEHUEHUEHUEHEUEHUEHUHEUEHUEHUEHEUHEUEHUHEUEHUEHUEHEUHEUHEUHEUEHUEUEHEHUE" > let_that_sink_in
+    uploadGivenFileToTelegram "let_that_sink_in" && rm let_that_sink_in
+    exit 0
+fi
+
+# device specific customization:
+[ -d "./target/${TARGET_DEVICE}" ] || exit 0;
 
 # prepare env.sh -
 for dependenciesRequiredForTheJob in zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3; do
@@ -254,10 +274,5 @@ case "${PACK_IMAGE_WITH_TS_FORMAT}" in
 esac
 console_print "Build completed successfully at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 console_print "Trying to upload ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to the requested chat..."
-curl -F "chat_id=${chatID}" -F "document=@../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
-if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
-    console_print "Uploaded ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
-    exit 0
-fi
-abort "Failed to upload the build, please try again...."
-exit 1
+uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || exit 1
+exit 0

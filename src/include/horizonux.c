@@ -73,15 +73,20 @@ int isPackageInstalled(const char *packageName) {
     return executeCommands(command, false) == 0;
 }
 
-int sendToastMessages(const char *service, const char *message) {
+void sendToastMessages(const char *service, const char *message) {
     // Prevents command injection attempts
     if(strchr(message, ';') || strstr(message, "&&")) {
         error_print("sendToastMessages(): Nice try diddy!");
         exit(1);
     }
     if(isPackageInstalled("bellavita.toast") == 0) {
-        char toastTextWithArguments[1028];
-        snprintf(toastTextWithArguments, sizeof(toastTextWithArguments), "am start -a android.intent.action.MAIN -e toasttext \"%s: %s\" -n bellavita.toast/.MainActivity", service, message);
+        size_t toastTextSize = strlen(service) + strlen(message) + strlen("am start -a android.intent.action.MAIN -e toasttext") + strlen("-n bellavita.toast/.MainActivity") + 5;
+        char *toastTextWithArguments = malloc(toastTextSize);
+        if(!toastTextWithArguments) {
+            consoleLog("sendToastMessages():", "Failed to allocate memory for sending messages, please try flushing the ram.");
+            exit(1);
+        }
+        snprintf(toastTextWithArguments, toastTextSize, "am start -a android.intent.action.MAIN -e toasttext \"%s: %s\" -n bellavita.toast/.MainActivity", service, message);
         executeCommands(toastTextWithArguments, false);
     }
 }

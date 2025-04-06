@@ -155,7 +155,7 @@ int searchBlockListedStrings(const char *__filename, const char *__search_str) {
 
 // yet another thing to protect good peoples from getting fucked
 // this ensures that the chosen is a bash script and if it's not one
-// it'll return 1 to make the program to stop executing that bastard
+// it'll return 1 to make the program to stop from executing that bastard
 int verifyScriptStatusUsingShell(const char *__filename) {
     char command[150];
     int written = snprintf(command, sizeof(command), "file \"%s\" | grep -q 'ASCII text executable'", __filename);
@@ -211,12 +211,16 @@ int checkBlocklistedStringsNChar(const char *__haystack) {
         "dd"
     };
     size_t blocklistedStringArraySize = sizeof(blocklistedStrings) / sizeof(blocklistedStrings[0]);
-    for(size_t i = 0; i < blocklistedStringArraySize; i++) {
-        if(searchBlockListedStrings(__haystack, blocklistedStrings[i]) == 1) {
-            return 1;
+    for(int i = 0; i < blocklistedStringArraySize; i++) {
+        switch(searchBlockListedStrings(__haystack, blocklistedStrings[i])) {
+            case 1:
+                error_print_extended("checkBlocklistedStringsNChar(): Found Blocklisted string:", blocklistedStrings[i]);
+                error_print("checkBlocklistedStringsNChar(): Stopping execution process...");
+                return 1;
+            default:
+                continue;
         }
     }
-    return 0;
 }
 
 char *combineShyt(const char *command, const char *value) {

@@ -99,7 +99,7 @@ bool isThisPartitionMounted(const char *baselinePartitionName, bool DoiNeedToMou
         }
         else {
             consoleLog("The requested partition: ", baselinePartitionName);
-            consoleLog("was mounted without errors!", " ");
+            consoleLog("was already mounted without errors!", " ");
             return true;
         }
     }
@@ -176,11 +176,13 @@ int cp(const char *source, const char *destination) {
         fclose(src);
         return 1;
     }
-    char buffer[8192];
+    size_t maxBufferLength = 8192;
+    char *buffer = malloc(maxBufferLength);
     size_t bytesRead;
-    while((bytesRead = fread(buffer, 1, sizeof(buffer), src)) > 0) {
+    while((bytesRead = fread(buffer, 1, maxBufferLength, src)) > 0) {
         fwrite(buffer, 1, bytesRead, dest);
-    }   
+    }
+    free(buffer);
     fclose(src);
     fclose(dest);
     return 0;
@@ -331,15 +333,14 @@ void markInstallTypeAndBlock(const char *imageName, const char *blockPath) {
 
 // takes backup of the given image
 int takeBackupOfTheGivenImage(const char *blockPath) {
-    size_t paper_flower = strlen("cp") + strlen(blockPath) + strlen("/dev/tmp/install/") + 5;
+    size_t paper_flower = strlen("cp") + strlen(blockPath) + strlen("/dev/tmp/install/low-level-backups/") + 5;
     char *infinity = malloc(paper_flower);
     if(!infinity) {
         abort__("takeBackupOfTheGivenImage(): Failed to allocate memory for the backup operation...", " ");
     }
     snprintf(infinity, paper_flower, "cp %s /dev/tmp/install/low-level-backups/", blockPath);
-    int exit_status__ = executeCommands(infinity, false);
     free(infinity);
-    return exit_status__;
+    return executeCommands(infinity, false);
 }
 
 // installs low level images with addtional checks and stuffs.
