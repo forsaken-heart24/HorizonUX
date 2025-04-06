@@ -39,4 +39,6 @@ jobs:
           cache: 'gradle'
 
       - name: Build ROM
-        run: source ./workflow_builder/build_cloud.sh --test
+        run: |
+          chmod +x ./workflow_builder/build_cloud.sh
+          ./workflow_builder/build_cloud.sh --test
