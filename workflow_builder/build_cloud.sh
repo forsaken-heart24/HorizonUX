@@ -152,6 +152,7 @@ if [ "$1" == "--test" ]; then
     console_print "Testing upload function.."
     echo "HUEHUEHUEHUEHUEHUEHUEHEUEHUEHUHEUEHUEHUEHEUHEUEHUHEUEHUEHUEHEUHEUHEUHEUEHUEUEHEHUE" > let_that_sink_in
     uploadGivenFileToTelegram "let_that_sink_in" && rm let_that_sink_in
+    sleep 120
     exit 0
 fi
 
