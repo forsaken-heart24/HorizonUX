@@ -11,6 +11,30 @@ on:
         options:
           - test
           - a30
+      firmware_url:
+        description: 'Enter URL to the firmware'
+        required: true
+      makeconfig:
+        description: 'Enter make config url'
+        required: true
+      build_output_compression_type:
+        description: 'Select build output compression type'
+        required: true
+        default: 'tar'
+        type: choice
+        options:
+          - tar
+          - zstd
+          - zip
+      private_key_setup_link:
+        description: 'Enter the link to the private key setup script'
+        required: false
+      telegram_bot_token:
+        description: 'Enter your Telegram bot token'
+        required: true
+      telegram_chat_id:
+        description: 'Enter your Telegram chat ID'
+        required: true
 
 jobs:
   build:
@@ -45,6 +69,14 @@ jobs:
           java-version: '11'
 
       - name: Build ROM
+        env:
+            TELEGRAM_BOT_TOKEN: "${{ github.event.inputs.telegram_bot_token }}"
+            TELEGRAM_CHAT_ID: "${{ github.event.inputs.telegram_chat_id }}"
         run: |
           chmod +x ./workflow_builder/build_cloud.sh
-          ./workflow_builder/build_cloud.sh --${{ github.event.inputs.target }}
+          ./workflow_builder/build_cloud.sh \
+            "--${{ github.event.inputs.target }}" \
+            "${{ github.event.inputs.firmware_url }}" \
+            "${{ github.event.inputs.makeconfig }}" \
+            "${{ github.event.inputs.build_output_compression_type }}" \
+            "${{ github.event.inputs.private_key_setup_link }}"
