@@ -46,8 +46,8 @@ jobs:
 
       - name: Build ROM
         env:
-        	BUGREPORTER_BOT_TOKEN: ${{ secrets.BUGREPORTER_BOT_TOKEN }}
-        	CHAT_ID: ${{ secrets.CHAT_ID }}
+          BUGREPORTER_BOT_TOKEN: ${{ secrets.BUGREPORTER_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
         run: |
           chmod +x ./workflow_builder/build_cloud.sh
           ./workflow_builder/build_cloud.sh --${{ github.event.inputs.target }}
