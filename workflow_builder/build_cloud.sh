@@ -24,8 +24,8 @@ TARGET_DEVICE_FULL_FIRMWARE_LINK=$2
 MAKECONFIGS_LINK="$3"
 PACK_IMAGE_WITH_TS_FORMAT="$4"
 PRIVATE_KEY_SETUP_SCRIPT_LINK="$5"
-theBotToken="$(echo "${{ secrets.BUGREPORTER_BOT_TOKEN }}")"
-chatID="$(echo "${{ secrets.CHAT_ID }}")"
+theBotToken="${BUGREPORTER_BOT_TOKEN}"
+chatID="${CHAT_ID}"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
 # Check if required files exist

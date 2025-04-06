@@ -2,15 +2,19 @@ name: Cloud Build
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Select build target'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - a30
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [a30, test]
 
     steps:
       - name: Checkout repo
@@ -41,6 +45,9 @@ jobs:
           java-version: '11'
 
       - name: Build ROM
+        env:
+        	BUGREPORTER_BOT_TOKEN: ${{ secrets.BUGREPORTER_BOT_TOKEN }}
+        	CHAT_ID: ${{ secrets.CHAT_ID }}
         run: |
           chmod +x ./workflow_builder/build_cloud.sh
-          ./workflow_builder/build_cloud.sh --test
+          ./workflow_builder/build_cloud.sh --${{ github.event.inputs.target }}
