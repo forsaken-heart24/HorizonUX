@@ -28,9 +28,18 @@ theBotToken="${BUGREPORTER_BOT_TOKEN}"
 chatID="${CHAT_ID}"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
+# test workflow:
+if [ "$1" == "--test" ]; then
+    echo "HIAAAAAAAAAA! Workflow works!"
+    echo "Testing upload function.."
+    echo "HUEHUEHUEHUEHUEHUEHUEHEUEHUEHUHEUEHUEHUEHEUHEUEHUHEUEHUEHUEHEUHEUHEUHEUEHUEUEHEHUE" > let_that_sink_in
+    uploadGivenFileToTelegram "let_that_sink_in" && rm let_that_sink_in
+    sleep 120
+    exit 0
+fi
+
 # Check if required files exist
-rm -rf ./makeconfigs.prop
-download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop"
+download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop" && rm -rf ./makeconfigs.prop
 download_stuffs "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
 for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika.conf"; do
     if [ ! -f "$i" ]; then
@@ -145,16 +154,6 @@ function uploadGivenFileToTelegram() {
     return 1
 }
 # functions
-
-# test workflow:
-if [ "$1" == "--test" ]; then
-    console_print "HIAAAAAAAAAA! Workflow works!"
-    console_print "Testing upload function.."
-    echo "HUEHUEHUEHUEHUEHUEHUEHEUEHUEHUHEUEHUEHUEHEUHEUEHUHEUEHUEHUEHEUHEUHEUHEUEHUEUEHEHUE" > let_that_sink_in
-    uploadGivenFileToTelegram "let_that_sink_in" && rm let_that_sink_in
-    sleep 120
-    exit 0
-fi
 
 # device specific customization:
 [ -d "./target/${TARGET_DEVICE}" ] || exit 0;
