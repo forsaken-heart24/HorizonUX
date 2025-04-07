@@ -120,15 +120,6 @@ function uploadGivenFileToTelegram() {
 }
 # functions
 
-# mako mako mako mako those who know💀
-for i in system/product/priv-app system/product/etc system/product/overlay \
-         system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
-         system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw \
-         local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds; do
-    mkdir -p "../local_build/$i"
-	debugPrint "Making ../local_build/${i} directories.."
-done
-
 # test workflow:
 if [ "$1" == "--test" ]; then
     echo "HIAAAAAAAAAA! Workflow works!"
@@ -137,6 +128,15 @@ if [ "$1" == "--test" ]; then
     uploadGivenFileToTelegram "let_that_sink_in" && rm let_that_sink_in
     exit 0
 fi
+
+# mako mako mako mako those who know💀
+for i in system/product/priv-app system/product/etc system/product/overlay \
+         system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
+         system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw \
+         local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds; do
+    mkdir -p "../local_build/$i"
+	debugPrint "Making ../local_build/${i} directories.."
+done
 
 # download these and delete them if they were downloaded successfully:
 download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop" && rm -rf ./makeconfigs.prop
@@ -181,9 +181,7 @@ for EXTRACTED_FIRMWARE_FILES in ../local_build/local_build_downloaded_contents/e
         continue
     fi
     debugPrint "Extracting tar files from $EXTRACTED_FIRMWARE_FILES..."
-   if ! tar -xvf "$EXTRACTED_FIRMWARE_FILES" -C ../local_build/local_build_downloaded_contents/tar_files/; then
-        abort "Failed to extract tar files from $EXTRACTED_FIRMWARE_FILES..."
-    fi
+    ! tar -xvf "$EXTRACTED_FIRMWARE_FILES" -C ../local_build/local_build_downloaded_contents/tar_files/ || abort "Failed to extract tar files from $EXTRACTED_FIRMWARE_FILES..."
 done
 console_print "Finished fetching packages at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 console_print "Trying to mount images..."
