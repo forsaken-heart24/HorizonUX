@@ -70,7 +70,7 @@ jobs:
 
       - name: Build ROM
         env:
-            TELEGRAM_BOT_TOKEN: "${{ github.event.inputs.telegram_bot_token }}"
+            BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
             TELEGRAM_CHAT_ID: "${{ github.event.inputs.telegram_chat_id }}"
         run: |
           chmod +x ./workflow_builder/build_cloud.sh
