@@ -33,8 +33,8 @@ if [ ! -n "${TARGET_DEVICE}" ]; then
 			sleep 0.5
 			exit 1
 		else
-			. "$i"
 			debugPrint "Executing ${i}.."
+			. "$i"
 		fi
 	done
 	# Check dependencies

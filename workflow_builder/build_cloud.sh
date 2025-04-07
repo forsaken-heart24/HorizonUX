@@ -48,10 +48,8 @@ function download_stuffs() {
         curl -L --progress-bar -o "$save_path" "$link" &>>$thisConsoleTempLogFile
     fi
     # Check if the download failed
-    if [ "$?" -ne '0' ]; then
-        abort "The download failed..."
-    fi
-    return $?
+    [ "$?" -ne '0' ] && abort "The download failed..."
+    return 0
 }
 
 function getImageFileSystem() {
@@ -95,12 +93,10 @@ function buildImage() {
         sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
         echo "Successfully unmounted ${blockPath}.."
     fi
-    cp $imagePath ../local_build/workflow_builds/${block}_buildImage.img
-    rm $imagePath
-    if [ "$?" -ne '0' ]; then
-        abort "Failed to copy the image to the build directory, aborting this instance.."
-    fi
+    cp $imagePath ../local_build/workflow_builds/${block}_buildImage.img && rm $imagePath
+    [ "$?" -ne '0' ] && abort "Failed to copy the image to the build directory, aborting this instance.."
     echo "Successfully built ${block}_buildImage.img"
+    return 0
 }
 
 function warns() {
@@ -116,7 +112,7 @@ function uploadGivenFileToTelegram() {
     local userRequestedFile="$1"
     curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
     if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
-        console_print "Uploaded ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
+        console_print "Uploaded ${userRequestedFile} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
         return 0
     fi
     warns "Failed to upload ${userRequestedFile}, please try again...."
@@ -133,14 +129,6 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 	debugPrint "Making ../local_build/${i} directories.."
 done
 
-# download these and delete them if they were downloaded successfully:
-download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop" && rm -rf ./makeconfigs.prop
-download_stuffs "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
-
-# now let's get the variables for modification:
-source ./makeconfigs.prop
-source ./monika.conf
-
 # test workflow:
 if [ "$1" == "--test" ]; then
     echo "HIAAAAAAAAAA! Workflow works!"
@@ -149,6 +137,14 @@ if [ "$1" == "--test" ]; then
     uploadGivenFileToTelegram "let_that_sink_in" && rm let_that_sink_in
     exit 0
 fi
+
+# download these and delete them if they were downloaded successfully:
+download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop" && rm -rf ./makeconfigs.prop
+download_stuffs "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
+
+# now let's get the variables for modification:
+source ./makeconfigs.prop
+source ./monika.conf
 
 # device specific customization:
 [ -d "./target/${TARGET_DEVICE}" ] || abort "The target device ${TARGET_DEVICE} doesn't exist, please check the name and try again..."
@@ -161,7 +157,6 @@ for dependenciesRequiredForTheJob in zstd zip tar xxd unzip wget curl erofs-util
             exit 1;
         fi
     fi
-    command -v java || sudo apt install -y "openjdk-21-jre-headless"
 done
 
 # builds the ROM
@@ -248,7 +243,7 @@ setMakeConfigs TARGET_BUILD_PRODUCT_NAME ${TARGET_DEVICE} ./makeconfigs.prop
 ./build.sh
 for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
     for IMAGES in ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS} ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS}__rw; do
-        buildImage "${IMAGES}" "${COMMON_FIRMWARE_BLOCKS}"
+        buildImage "${IMAGES}" "/${COMMON_FIRMWARE_BLOCKS}"
     done
 done
 case "${PACK_IMAGE_WITH_TS_FORMAT}" in
@@ -269,5 +264,5 @@ case "${PACK_IMAGE_WITH_TS_FORMAT}" in
 esac
 console_print "Build completed successfully at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 console_print "Trying to upload ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to the requested chat..."
-uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || exit 1
+uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || abort ""
 exit 0

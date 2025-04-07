@@ -2,7 +2,7 @@
 
 # Device Specific Configuration Variables
 
-- **BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED**: Adds fastbootd support to stock recovery.
+- **BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED**: Adds fastbootd support to stock recovery. Make sure to enter the image path to "RECOVERY_IMAGE_PATH" variable in makeconfigs.prop.
 - **BUILD_TARGET_SUPPORTS_WIRELESS_POWER_SHARING**: Enables wireless power sharing if supported by hardware.
 - **BUILD_TARGET_DISABLE_KNOX_PROPERTIES**: For android <= 11, try this at own risk because it disables knox via properties which are untested.
 - **BUILD_TARGET_FLOATING_FEATURE_PATH**: Put the exact Floating features dir for modifying the xml.
@@ -14,6 +14,6 @@
 - **BUILD_TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES**: Can be used to patch bluetooth libs for weird devices.
 
 # Specifically for Galaxy A30:
-- **BUILD_TARGET_ADD_PATCHED_C2API_LIBRARY_FILE**: Brings camera2api via a patched lib.
+- **BUILD_TARGET_ADD_PATCHED_C2API_LIBRARY_FILE**: Brings camera2api via a patched lib. Thanks to @TBM13
 - **BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT**: Builds and adds the vendor overlay to fix the device cutout.
-- **BUILD_TARGET_ADD_EXTRA_CAMERA_MODE**: Adds extra camera mode if not available.
+- **BUILD_TARGET_ADD_EXTRA_CAMERA_MODE**: Adds extra camera mode if not available. (Don't use this in a newer or in a ported ROM)
