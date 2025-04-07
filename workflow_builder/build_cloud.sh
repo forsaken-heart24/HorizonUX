@@ -28,6 +28,9 @@ theBotToken="${TELEGRAM_BOT_TOKEN}"
 chatID="${TELEGRAM_CHAT_ID}"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
+# source scripts to override and get additional functions.
+source ./misc/build_scripts/util_functions.sh
+
 # functions
 function download_stuffs() {
     local link="$1"
@@ -38,7 +41,6 @@ function download_stuffs() {
     fi
     # arg counts
     debugPrint "download_stuffs(): Arguments: $1 $2"
-    # arg counts
     # Check if the URL is a raw GitHub content
     if [[ "$link" == *"raw.githubusercontent.com"* ]]; then
         wget --show-progress --progress=bar:force:noscroll -O "$save_path" "$link" &>>$thisConsoleTempLogFile
@@ -131,6 +133,14 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 	debugPrint "Making ../local_build/${i} directories.."
 done
 
+# download these and delete them if they were downloaded successfully:
+download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop" && rm -rf ./makeconfigs.prop
+download_stuffs "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
+
+# now let's get the variables for modification:
+source ./makeconfigs.prop
+source ./monika.conf
+
 # test workflow:
 if [ "$1" == "--test" ]; then
     echo "HIAAAAAAAAAA! Workflow works!"
@@ -140,22 +150,8 @@ if [ "$1" == "--test" ]; then
     exit 0
 fi
 
-# Check if required files exist
-download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop" && rm -rf ./makeconfigs.prop
-download_stuffs "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
-for i in "./misc/build_scripts/util_functions.sh" "./makeconfigs.prop" "./monika.conf"; do
-    if [ ! -f "$i" ]; then
-        echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
-        sleep 0.5
-        exit 1
-    else
-		debugPrint "Executing ${i}.."
-        . "$i"
-    fi
-done
-
 # device specific customization:
-[ -d "./target/${TARGET_DEVICE}" ] || exit 0;
+[ -d "./target/${TARGET_DEVICE}" ] || abort "The target device ${TARGET_DEVICE} doesn't exist, please check the name and try again..."
 
 # prepare env.sh -
 for dependenciesRequiredForTheJob in zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3; do
