@@ -157,13 +157,16 @@ int searchBlockListedStrings(const char *__filename, const char *__search_str) {
 // this ensures that the chosen is a bash script and if it's not one
 // it'll return 1 to make the program to stop from executing that bastard
 int verifyScriptStatusUsingShell(const char *__filename) {
-    char command[150];
-    int written = snprintf(command, sizeof(command), "file \"%s\" | grep -q 'ASCII text executable'", __filename);
+    size_t commandLength = strlen(__filename) + strlen("file | grep -q 'ASCII text executable'") + 5;
+    char *command = malloc(commandLength);
+    int written = snprintf(command, commandLength, "file \"%s\" | grep -q 'ASCII text executable'", __filename);
     if(written < 0 || written >= sizeof(command)) {
         error_print("verifyScriptStatusUsingShell(): Command truncation detected.");
         return 1;
     }
-    return executeCommands(command, false);
+    int exit__status = executeCommands(command, false);
+    free(command);
+    return exit__status;
 }
 
 // Checks if a given string contains blacklisted substrings
@@ -221,6 +224,7 @@ int checkBlocklistedStringsNChar(const char *__haystack) {
                 continue;
         }
     }
+    return 0;
 }
 
 char *combineShyt(const char *command, const char *value) {

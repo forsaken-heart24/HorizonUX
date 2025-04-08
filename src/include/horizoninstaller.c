@@ -56,9 +56,11 @@ void throwMessagesToConsole(char *text, char *extr_factor, bool putThisinLog) {
 }
 
 // throws installation messages and stops installation
-void abort__(char *text, char *extr_factor) {
+void abort__(const char *text, const char *extr_factor) {
     throwMessagesToConsole(text, extr_factor, true);
-    free(ZIPFILE);
+    if(ZIPFILE) {
+        free(ZIPFILE);
+    }
     exit(1);
 }
 
@@ -278,6 +280,22 @@ bool copyIncrementalFiles(const char *partitionPath, char *partition) {
         }
         snprintf(content, omg, "%s/product", INSTALLER_PATH);
     }
+    else if(strcmp(partition, "prism") == 0) {
+        omg = strlen("/prism") + strlen(INSTALLER_PATH) + 3;
+        content = malloc(omg);
+        if(!content) {
+            abort__("copyIncrementalFiles(): Failed to allocate memory for the installation process..", " ");
+        }
+        snprintf(content, omg, "%s/prism", INSTALLER_PATH);
+    }
+    else if(strcmp(partition, "optics") == 0) {
+        omg = strlen("/optics") + strlen(INSTALLER_PATH) + 3;
+        content = malloc(omg);
+        if(!content) {
+            abort__("copyIncrementalFiles(): Failed to allocate memory for the installation process..", " ");
+        }
+        snprintf(content, omg, "%s/optics", INSTALLER_PATH);
+    }
     else {
         free(content);
         abort__("Unknown incremental path, please contact the dev.", " ");
@@ -343,6 +361,20 @@ int takeBackupOfTheGivenImage(const char *blockPath) {
     return executeCommands(infinity, false);
 }
 
+// deletes stuffs from INSTALLER_PATH
+void deleteMeFromInstallerPath(const char *who_am_i__) {
+    size_t fullPathLength = strlen(INSTALLER_PATH) + strlen(who_am_i__) + 2;
+    char *fullPath = malloc(fullPathLength);
+    if(!fullPath) {
+        abort__("deleteMeFromInstallerPath(): Failed to allocate memory for full path", "");
+    }
+    snprintf(fullPath, fullPathLength, "%s/%s", INSTALLER_PATH, who_am_i__);
+    char *theCommandList[] = { "rm", "-rf", fullPath, NULL };
+    execvp(theCommandList[0], theCommandList);
+    free(fullPath);
+    abort__("deleteMeFromInstallerPath(): Failed to execute the command", "");
+}
+
 // installs low level images with addtional checks and stuffs.
 bool installLowLevelImages(const char *imagePath, const char *blockPath, const char *imageName, const char *expected_image_hash___) {
     if(!imagePath || !blockPath || !imageName || !expected_image_hash___) {
@@ -352,7 +384,7 @@ bool installLowLevelImages(const char *imagePath, const char *blockPath, const c
     markInstallTypeAndBlock(imageName, blockPath);
     executeScripts("/dev/tmp/install/manage-firmware.sh --backup", false);
     extractThisFileFromMe(imageName, true);
-    size_t teteteteteto = 500;
+    size_t teteteteteto = strlen(tarballPassword) + strlen(INSTALLER_PATH) + strlen(imageName) + strlen(blockPath) + strlen(ZIPFILE) + 10;
     char *defoq = malloc(teteteteteto);
     if(tarballHasPasswordProtection && strcmp(shippedAs, "tarProtected") == 0) {
         snprintf(defoq, teteteteteto, "tar --password=\"%s\" -xf %s -C %s", tarballPassword, INSTALLER_PATH, imageName, blockPath);
@@ -364,7 +396,7 @@ bool installLowLevelImages(const char *imagePath, const char *blockPath, const c
         snprintf(defoq, teteteteteto, "simg2img %s/%s %s", INSTALLER_PATH, imageName, blockPath);
     } 
     else if(strcmp(shippedAs, "raw") == 0) {
-        snprintf(defoq, teteteteteto, "unzip -o %s %s -d %s", ZIPFILE, imageName, blockPath);
+        snprintf(defoq, teteteteteto, "cp %s/%s", INSTALLER_PATH, imageName);
     } 
     else {
         free(defoq);
@@ -386,6 +418,10 @@ bool installLowLevelImages(const char *imagePath, const char *blockPath, const c
     if(executeCommands(defoq, false) != 0) {
         free(defoq);
         throwMessagesToConsole("installLowLevelImages(): Failed to update low level images, using fallback scripts to restore previous firmware...", "", false);
-        executeScripts("/dev/tmp/install/manage-firmware.sh --restore", false);
+        if(executeScripts("/dev/tmp/install/manage-firmware.sh --restore", false) != 0) {
+            return false;
+        }
     }
+    free(defoq);
+    return true
 }

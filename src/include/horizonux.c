@@ -137,10 +137,16 @@ int manageBlocks(const char *infile, const char *outfile, size_t block_size, siz
 }
 
 void sendNotification(const char *message) {
-    if (!message) return;
-    char buffer[512];
-    snprintf(buffer, sizeof(buffer), "cmd notification post -S bigtext -t 'HorizonUX' 'Tag' \"%s\"", message);
-    executeCommands(buffer, "");
+    if(!message || !*message) return;
+    const char *template = "cmd notification post -S bigtext -t 'HorizonUX' 'Tag' \"%s\"";
+    size_t commandLength = snprintf(NULL, 0, template, message) + 1;
+    char *command = malloc(commandLength);
+    if(!command) {
+        abort__("sendNotification(): Failed to allocate memory for notification command", "");
+    }
+    snprintf(command, commandLength, template, message);
+    executeCommands(command, "");
+    free(command);
 }
 
 char *getSystemProperty(const char *filepath, const char *propertyVariableName) {
