@@ -29,5 +29,5 @@ Check out this README:
 🔗 [**Supported Devices**](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/SUPPORTED_DEVICES.md)
 
 ✅ **Can I use this for my personal or for commercial use cases?**  
-You are requested to open-source and give credits if you use anything from this project.  
+You are requested to give credits if you use anything from this project.  
 Failure to do so may violate the **GNU General Public License v3 (GPL-3.0)**.

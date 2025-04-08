@@ -850,3 +850,108 @@ function manageCameraFeatures() {
     fi
     mv  ${XMLFile}_tmp ${XMLFile}
 }
+
+function parseBuildValues() {
+    local file="$1"
+    while IFS='=' read -r key value; do
+        echo "$key"
+        echo "${value:-<empty>}"
+    done < "$file"
+}
+
+function replaceTargetBuildProperties() {
+    [ "${BUILD_TARGET_REPLACE_REQUIRED_PROPERTIES}" == true ] || return 1
+    local BUILD_TARGET="$1"
+    local scope file key value kv_array
+    console_print "Replacing properties for your device...."
+    for entry in "vendor ./target/${BUILD_TARGET}/replaceableVendorProps.prop" "system ./target/${BUILD_TARGET}/replaceableSystemProps.prop"; do
+        scope=$(echo "$entry" | awk '{print $1}')
+        file=$(echo "$entry" | awk '{print $2}')
+        [[ ! -f "$file" || grep -q "nothing to replace" "$file" ]] && continue
+        kv_array=($(parseBuildValues "$file"))
+        for ((i = 0; i < ${#kv_array[@]}; i+=2)); do
+            key="${kv_array[i]}"
+            value="${kv_array[i+1]}"
+            [ "$scope" == "vendor" ] && setprop --vendor "$key" "$value"
+            [ "$scope" == "system" ] && setprop --system "$key" "$value"
+        done
+    done
+    if [ $? -eq 0 ]; then
+        console_print "Finished replacing them"
+    else
+        console_print "Failed to replace them"
+    fi
+}
+
+# takes backup of the blob, restores only if they were not copied properly.
+function copyDeviceBlobsSafely() {
+    local blobFromSource="$1"
+    local blobInROM="$2"
+    local backupBlob="../local_build/tmp/hux/${blobInROM}.bak"
+    console_print "Trying to copy ${blobFromSource} to ${blobInROM}"
+    if [ -f "$blobInROM" ]; then
+        cp -af "$blobInROM" "$backupBlob"
+    fi
+    if [ ! -f "$blobInROM" ] && ask "${blobFromSource} is not found on the ROM, do you wanna copy this blob to the device?"; then
+        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>${thisConsoleTempLogFile}; then
+            warns "Failed to copy ${blobFromSource}, this might cause a bootloop, attempting to restore original blob." "copyDeviceBlobsSafely()"
+            [ -f "$backupBlob" ] && cp -af "$backupBlob" "$blobInROM"
+        fi
+    else
+        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>"${thisConsoleTempLogFile}"; then
+            warns "Failed to copy ${blobFromSource}, this might cause a bootloop, attempting to restore original blob." "copyDeviceBlobsSafely()"
+            [ -f "$backupBlob" ] && cp -af "$backupBlob" "$blobInROM"
+        fi
+    fi
+    console_print "Finished copying given blobs!"
+    return 0
+}
+
+function getImageFileSystem() {
+    if [[ "$(xxd -p -l "2" --skip "1080" "$1")" == "53ef" ]]; then
+        echo "ext4"
+    elif [[ "$(xxd -p -l "4" --skip "1024" "$1")" == "1020f5f2" ]]; then
+        echo "f2fs"
+    elif [[ "$(xxd -p -l "4" --skip "1024" "$1")" == "e2e1f5e0" ]]; then
+        echo "erofs"
+    else
+        echo "unknown"
+    fi
+}
+
+function setMakeConfigs() {
+    local propVariableName="$1"
+    local propValue="$2"
+    local propFile="$3"
+    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
+}
+
+function buildImage() {
+    local blockPath="$1"
+    local block="$2"
+    local buildType="$3"
+    local imagePath=$(mount | grep ${blockPath} | awk '{print $1}')
+    if echo "$blockPath" | grep -q "__rw"; then
+        echo "EROFS fs detected, building an EROFS image..."
+        sudo mkfs.erofs -z lz4 --mount-point=$block ../local_build/workflow_builds/${block}.erofs.img $blockPath/
+    else 
+        echo "F2FS/EXT4 fs detected, unmounting the image.."
+        sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
+        echo "Successfully unmounted ${blockPath}.."
+    fi
+    cp $imagePath ../local_build/workflow_builds/${block}_buildImage.img && rm $imagePath
+    [ "$?" -ne '0' ] && abort "Failed to copy the image to the build directory, aborting this instance.."
+    echo "Successfully built ${block}_buildImage.img"
+    return 0
+}
+
+function uploadGivenFileToTelegram() {
+    local userRequestedFile="$1"
+    curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
+    if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
+        console_print "Uploaded ${userRequestedFile} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
+        return 0
+    fi
+    warns "Failed to upload ${userRequestedFile}, please try again...."
+    return 1
+}

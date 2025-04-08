@@ -52,25 +52,6 @@ function download_stuffs() {
     return 0
 }
 
-function getImageFileSystem() {
-    if [[ "$(xxd -p -l "2" --skip "1080" "$1")" == "53ef" ]]; then
-        echo "ext4"
-    elif [[ "$(xxd -p -l "4" --skip "1024" "$1")" == "1020f5f2" ]]; then
-        echo "f2fs"
-    elif [[ "$(xxd -p -l "4" --skip "1024" "$1")" == "e2e1f5e0" ]]; then
-        echo "erofs"
-    else
-        echo "unknown"
-    fi
-}
-
-function setMakeConfigs() {
-    local propVariableName="$1"
-    local propValue="$2"
-    local propFile="$3"
-    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
-}
-
 function abort() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
@@ -80,25 +61,6 @@ function abort() {
     exit 1
 }
 
-function buildImage() {
-    local blockPath="$1"
-    local block="$2"
-    local buildType="$3"
-    local imagePath=$(mount | grep ${blockPath} | awk '{print $1}')
-    if echo "$blockPath" | grep -q "__rw"; then
-        echo "EROFS fs detected, building an EROFS image..."
-        sudo mkfs.erofs -z lz4 --mount-point=$block ../local_build/workflow_builds/${block}.erofs.img $blockPath/
-    else 
-        echo "F2FS/EXT4 fs detected, unmounting the image.."
-        sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
-        echo "Successfully unmounted ${blockPath}.."
-    fi
-    cp $imagePath ../local_build/workflow_builds/${block}_buildImage.img && rm $imagePath
-    [ "$?" -ne '0' ] && abort "Failed to copy the image to the build directory, aborting this instance.."
-    echo "Successfully built ${block}_buildImage.img"
-    return 0
-}
-
 function warns() {
     echo -e "[$2]: $1"
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1"
@@ -106,17 +68,6 @@ function warns() {
 
 function console_print() {
     echo -e "$1"
-}
-
-function uploadGivenFileToTelegram() {
-    local userRequestedFile="$1"
-    curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
-    if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
-        console_print "Uploaded ${userRequestedFile} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
-        return 0
-    fi
-    warns "Failed to upload ${userRequestedFile}, please try again...."
-    return 1
 }
 # functions
 

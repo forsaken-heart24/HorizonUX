@@ -38,38 +38,12 @@ function mkfstab() {
     #abort "Failed to add mount configs, this may due to the vendor have came with mount configs"
 }
 
-# takes backup of the blob, restores only if they were not copied properly.
-function copyDeviceBlobsSafely() {
-    local blobFromSource="$1"
-    local blobInROM="$2"
-    local backupBlob="../local_build/tmp/hux/${blobInROM}.bak"
-    console_print "Trying to copy ${blobFromSource} to ${blobInROM}"
-    if [ -f "$blobInROM" ]; then
-        cp -af "$blobInROM" "$backupBlob"
-    fi
-    if [ ! -f "$blobInROM" ] && ask "${blobFromSource} is not found on the ROM, do you wanna copy this blob to the device?"; then
-        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>${thisConsoleTempLogFile}; then
-            warns "Failed to copy ${blobFromSource}, this might cause a bootloop, attempting to restore original blob." "copyDeviceBlobsSafely()"
-            [ -f "$backupBlob" ] && cp -af "$backupBlob" "$blobInROM"
-        fi
-    else
-        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>"${thisConsoleTempLogFile}"; then
-            warns "Failed to copy ${blobFromSource}, this might cause a bootloop, attempting to restore original blob." "copyDeviceBlobsSafely()"
-            [ -f "$backupBlob" ] && cp -af "$backupBlob" "$blobInROM"
-        fi
-    fi
-    console_print "Finished copying given blobs!"
-    return 0
-}
-
 if [[ "$(grep_prop "ro.product.vendor.device" "$HORIZON_VENDOR_PROPERTY_FILE")" == *"a30"* && -f "${VENDOR_DIR}/etc/fstab.exynos7904" ]]; then
     console_print "Customizing experience for Galaxy A30..."
-    setprop --vendor ro.config.pageboost.io_prefetch.enabled "false"
-    setprop --vendor ro.config.pageboost.io_prefetch.level '2'
-    setprop --vendor ro.frp.pst " "
     mkfstab
     setprop --custom "${VENDOR_DIR}/default.prop" "log.tag.stats_log" "D"
     setprop --custom "${VENDOR_DIR}/default.prop" "persist.sys.usb.config" "mtp,adb"
+    replaceTargetBuildProperties "a30"
     if boolReturn "${BUILD_TARGET_ADD_PATCHED_C2API_LIBRARY_FILE}"; then
         console_print "Copying patched camera2api library file..."
         if [ -z "$(grep_prop "ro.vendor.build.date.utc" "$HORIZON_VENDOR_PROPERTY_FILE")" ]; then

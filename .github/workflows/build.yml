@@ -11,6 +11,7 @@ on:
         options:
           - test
           - a30
+          - r8q
       firmware_url:
         description: 'Enter URL to the firmware'
         required: true

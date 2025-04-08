@@ -3,8 +3,10 @@
 # Supported Devices
 
 ## Current List of Supported Devices
-- **Samsung Galaxy A30**  
+- **Samsung Galaxy A30 (a30)**  
     **Maintainer:** [Luna](https://github.com/forsaken-heart24)
+- **Samsung Galaxy S20 FE (r8q)**
+     **Maintainer:** [Robin](htttps://t.me/Bomb_read)
 
 ## Notes:
 - This list is subject to change as new devices are added or deprecated.
