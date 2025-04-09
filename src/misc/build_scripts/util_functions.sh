@@ -56,21 +56,24 @@ function setprop() {
 }
 
 function abort() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
-    debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
+    echo -e "\e[0;31m$1\e[0;37m"
+    debugPrint "[:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    rm -rf "$TMPDIR" "${TMPFILE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak"
+    sendMessageToTelegramChat "Workflow failed"
+    sendMessageToTelegramChat "Workflow ended at $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
+    rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ../local_build/* output
+    uploadGivenFileToTelegram "${thisConsoleTempLogFile}"
     exit 1
 }
 
 function warns() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] / [:\e[0;36mWARN\e[0;37m:] / [:\e[0;32m$2\e[0;37m:] -\e[0;33m $1\e[0;37m"
+    echo -e "[$2]: $1"
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1"
 }
 
 function console_print() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m $1\e[0;37m"
+    echo -e "$1"
 }
 
 function default_language_configuration() {
@@ -474,20 +477,21 @@ function download_stuffs() {
         warns "Arguments are not enough.." "DOWNLOADER"
         return 1
     fi
-    # arg counts
-    debugPrint "download_stuffs(): Arguments: $1 $2"
-    # arg counts
-    # Check if the URL is a raw GitHub content
-    if [[ "$link" == *"raw.githubusercontent.com"* ]]; then
-        wget -O "$save_path" "$link" &>>$thisConsoleTempLogFile
-    else
-        curl -L -o "$save_path" "$link" &>>$thisConsoleTempLogFile
-    fi
-    # Check if the download failed
-    if [ "$?" -ne '0' ]; then
-        abort "The download failed..."
-    fi
-    return $?
+    for ((tries = 1; i <= 4; tries++)); do
+        sendMessageToTelegramChat "Trying to download the requested file | Number of tries: $i"
+        if [[ "$link" == *"raw.githubusercontent.com"* ]]; then
+            wget --show-progress --progress=bar:force:noscroll -O "${save_path}" "$link" &>>$thisConsoleTempLogFile && break
+        else
+            curl -L --progress-bar -o "${save_path}" "$link" &>>$thisConsoleTempLogFile && break;
+        fi
+        if [[ $? -ne 0 && $tries -ge 4 ]]; then
+            sendMessageToTelegramChat "Failed to download the requested file after $tries tries, please try again"
+            abort " "
+        elif [[ $? -ne 0 ]]; then
+            sendMessageToTelegramChat "Failed to download the requested file | Number of tries: $tries"
+        fi
+    done
+    sendMessageToTelegramChat "Successfully downloaded file after $tries attempt(s)"
 }
 
 function string_format() {
@@ -947,6 +951,7 @@ function buildImage() {
 
 function uploadGivenFileToTelegram() {
     local userRequestedFile="$1"
+    sendMessageToTelegramChat "Trying to upload ${userRequestedFile} to the requested chat..."
     curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
     if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
         console_print "Uploaded ${userRequestedFile} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
@@ -954,4 +959,30 @@ function uploadGivenFileToTelegram() {
     fi
     warns "Failed to upload ${userRequestedFile}, please try again...."
     return 1
+}
+
+function sendMessageToTelegramChat() {
+    local messageToBeSent="$1"
+    if [ -z "${theBotToken}" ]; then
+        console_print "${messageToBeSent}"
+        return 0
+    fi
+    curl -s -X POST "https://api.telegram.org/bot${theBotToken}/sendMessage" -d "chat_id=${chatID}" -d "text=${messageToBeSent}" &>output
+    if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
+        debugPrint "Sent message to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
+        return 0
+    fi
+    debugPrint "Failed to send message to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs)"
+    return 1
+}
+
+function deviceCodenameToModel() {
+    case $(string_format -l $1) in
+        "r8q")
+            echo "S20 FE"
+        ;;
+        "a30")
+            echo "A30"
+        ;;
+    esac
 }

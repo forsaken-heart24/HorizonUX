@@ -28,54 +28,13 @@ theBotToken="${TELEGRAM_BOT_TOKEN}"
 chatID="${TELEGRAM_CHAT_ID}"
 thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
-# source scripts to override and get additional functions.
+# source scripts to override the functions.
 source ./misc/build_scripts/util_functions.sh
-
-# functions
-function download_stuffs() {
-    local link="$1"
-    local save_path="$2"
-    if [ "$#" -lt '2' ]; then
-        warns "Arguments are not enough.." "DOWNLOADER"
-        return 1
-    fi
-    # arg counts
-    debugPrint "download_stuffs(): Arguments: $1 $2"
-    # Check if the URL is a raw GitHub content
-    if [[ "$link" == *"raw.githubusercontent.com"* ]]; then
-        wget --show-progress --progress=bar:force:noscroll -O "$save_path" "$link" &>>$thisConsoleTempLogFile
-    else
-        curl -L --progress-bar -o "$save_path" "$link" &>>$thisConsoleTempLogFile
-    fi
-    # Check if the download failed
-    [ "$?" -ne '0' ] && abort "The download failed..."
-    return 0
-}
-
-function abort() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
-    debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] [:ABORT:] - $1"
-    sleep 0.5
-    tinkerWithCSCFeaturesFile --encode
-    rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ../local_build/* output
-    exit 1
-}
-
-function warns() {
-    echo -e "[$2]: $1"
-    debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1"
-}
-
-function console_print() {
-    echo -e "$1"
-}
-# functions
 
 # test workflow:
 if [ "$1" == "--test" ]; then
-    echo "HIAAAAAAAAAA! Workflow works!"
-    echo "Testing upload function.."
-    echo "HUEHUEHUEHUEHUEHUEHUEHEUEHUEHUHEUEHUEHUEHEUHEUEHUHEUEHUEHUEHEUHEUHEUHEUEHUEUEHEHUE" > let_that_sink_in
+    sendMessageToTelegramChat "HIAAAAAAAAAA! Workflow works!"
+    echo "HUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUE" > let_that_sink_in
     uploadGivenFileToTelegram "let_that_sink_in" && rm let_that_sink_in
     exit 0
 fi
@@ -111,6 +70,8 @@ for dependenciesRequiredForTheJob in zstd zip tar xxd unzip wget curl erofs-util
 done
 
 # builds the ROM
+sendMessageToTelegramChat "Build started at $(date +%d\ %b\ %Y --date='TZ="America/Mountain_Standard_Time"'), $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"') (MST)"
+sendMessageToTelegramChat "Requested Device: Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | test_workflow=true"
 console_print "\033[0;31m########################################################################"
 console_print "   _  _     _   _            _                _   ___  __"
 console_print " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
@@ -120,7 +81,7 @@ console_print "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
 console_print "                                                         "
 console_print "########################################################################\033[0m"
 console_print "Starting to build HorizonUX on cloud..."
-console_print "Build started at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
+console_print "Build started at $(date +%d\ %b\ %Y --date='TZ="America/Mountain_Standard_Time"'), $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "Downloading firmware package from the web..."
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "../local_build/local_build_downloaded_contents/"
@@ -134,7 +95,7 @@ for EXTRACTED_FIRMWARE_FILES in ../local_build/local_build_downloaded_contents/e
     debugPrint "Extracting tar files from $EXTRACTED_FIRMWARE_FILES..."
     ! tar -xvf "$EXTRACTED_FIRMWARE_FILES" -C ../local_build/local_build_downloaded_contents/tar_files/ || abort "Failed to extract tar files from $EXTRACTED_FIRMWARE_FILES..."
 done
-console_print "Finished fetching packages at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
+console_print "Finished fetching packages at $(date +%d\ %b\ %Y --date='TZ="America/Mountain_Standard_Time"'), $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
 console_print "Trying to mount images..."
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
     console_print "Unpacking images...."
@@ -208,10 +169,10 @@ case "${PACK_IMAGE_WITH_TS_FORMAT}" in
         done
     ;;
     "zip")
-        zip -r ../local_build/workflow_builds/packed_buildImages.zip ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile && rm -f ../local_build/workflow_builds/*_buildImage.img
+        zip -r ../local_build/workflow_builds/packed_buildImages.zip ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile
     ;;
 esac
-console_print "Build completed successfully at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
-console_print "Trying to upload ../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT} to the requested chat..."
+rm -f ../local_build/workflow_builds/*_buildImage.img
+sendMessageToTelegramChat "Build completed successfully at $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
 uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || abort ""
 exit 0
