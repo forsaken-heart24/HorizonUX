@@ -30,26 +30,25 @@ function grep_prop() {
 }
 
 function download_stuffs() {
-    local link
-    local save_path
+    local link="$1"
+    local save_path="$2"
+    [[ -z "$link" || -z "$save_path" ]] && return 1
     if [ "$1" == "--skip" ]; then
         link="$2"
         save_path="$3"
+        aria2c -x 8 -s 8 -o "${save_path}" "${link}" &>>$thisConsoleTempLogFile
     else
-        link="$1"
-        save_path="$2"
+        for ((tries = 1; tries <= 4; tries++)); do
+            sendMessageToTelegramChat "📥 Trying to download: $link | Attempt: $tries"
+            if aria2c -x 8 -s 8 -o "${save_path}" "${link}" &>>"$thisConsoleTempLogFile"; then
+                sendMessageToTelegramChat "✅ Successfully downloaded file after $tries attempt(s)"
+                return 0
+            fi
+            sendMessageToTelegramChat "❌ Failed to download the file | Attempt: $tries"
+        done
+        sendMessageToTelegramChat "⚠️ Failed to download the file after $((tries - 1)) attempts."
+        exit 1
     fi
-    [[ -z "$link" || -z "$save_path" ]] && return 1
-    for ((tries = 1; tries <= 4; tries++)); do
-        sendMessageToTelegramChat "📥 Trying to download: $link | Attempt: $tries"
-        if aria2c -x 8 -s 8 -o "${save_path}" "${link}" &>>"$thisConsoleTempLogFile"; then
-            sendMessageToTelegramChat "✅ Successfully downloaded file after $tries attempt(s)"
-            return 0
-        fi
-        sendMessageToTelegramChat "❌ Failed to download the file | Attempt: $tries"
-    done
-    sendMessageToTelegramChat "⚠️ Failed to download the file after $((tries - 1)) attempts."
-    [ "$1" == "--skip" ] || exit 1
 }
 
 function setprop() {
