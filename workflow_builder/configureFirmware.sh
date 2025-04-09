@@ -20,9 +20,12 @@
 TARGET_DEVICE_FULL_FIRMWARE_LINK="$1"
 MAKECONFIGS_LINK="$2"
 PRIVATE_KEY_SETUP_SCRIPT_LINK="$3"
+TARGET_DEVICE="$4"
+theBotToken="$5"
+chatID="$6"
 
 # source script to fetch functions.
-source ./src/misc/build_scripts/util_functions.sh
+. ./src/misc/build_scripts/util_functions.sh ${theBotToken} ${chatID}
 
 # builds the ROM
 sendMessageToTelegramChat "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (MST)"

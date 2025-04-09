@@ -18,6 +18,9 @@
 
 # fix: ./src/misc/build_scripts/util_functions.sh: line 43: $thisConsoleTempLogFile : No such file or directory
 thisConsoleTempLogFile="./local_build/logs/hux_build.log"
+theBotToken="$1"
+chatID="$2"
+touch ./local_build/logs/hux_build.log
 
 function grep_prop() {
     local variable_name="$1"
