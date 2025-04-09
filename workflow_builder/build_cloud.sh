@@ -48,14 +48,6 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 	debugPrint "Making ../local_build/${i} directories.."
 done
 
-# download these and delete them if they were downloaded successfully:
-download_stuffs "${MAKECONFIGS_LINK}" "./makeconfigs.prop" && rm -rf ./makeconfigs.prop
-download_stuffs "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
-
-# now let's get the variables for modification:
-source ./makeconfigs.prop
-source ./monika.conf
-
 # device specific customization:
 [ -d "./target/${TARGET_DEVICE}" ] || abort "The target device ${TARGET_DEVICE} doesn't exist, please check the name and try again..."
 
@@ -85,6 +77,13 @@ console_print "Build started at $(date +%d\ %b\ %Y --date='TZ="America/Mountain_
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "Downloading firmware package from the web..."
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "../local_build/local_build_downloaded_contents/"
+mv ./makeconfigs.prop ./makeconfigs.prop_
+if download_stuffs --skip "${MAKECONFIGS_LINK}" "./makeconfigs.prop"; then
+    rm -rf ./makeconfigs.prop_
+else
+    mv ./makeconfigs.prop_ ./makeconfigs.prop
+fi
+download_stuffs --skip "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
 unzip -o ../local_build/local_build_downloaded_contents/*.zip -d ../local_build/local_build_downloaded_contents/extracted_fw
 for EXTRACTED_FIRMWARE_FILES in ../local_build/local_build_downloaded_contents/extracted_fw/*.md5; do
     if echo "${EXTRACTED_FIRMWARE_FILES}" | tr '[:upper:]' '[:lower:]' | grep -q -E 'cp|bl|csc_odm_'; then
@@ -150,7 +149,11 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
     done
 fi
 setMakeConfigs TARGET_BUILD_PRODUCT_NAME ${TARGET_DEVICE} ./makeconfigs.prop
-./build.sh
+# execve these following to build:
+. ./makeconfigs.prop
+. ./monika.conf
+. ./build.sh
+# -------------------------------
 for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
     for IMAGES in ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS} ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS}__rw; do
         buildImage "${IMAGES}" "/${COMMON_FIRMWARE_BLOCKS}"
