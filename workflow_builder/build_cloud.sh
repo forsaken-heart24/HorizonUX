@@ -26,7 +26,7 @@ PACK_IMAGE_WITH_TS_FORMAT="$4"
 PRIVATE_KEY_SETUP_SCRIPT_LINK="$5"
 theBotToken="${TELEGRAM_BOT_TOKEN}"
 chatID="${TELEGRAM_CHAT_ID}"
-thisConsoleTempLogFile="../local_build/logs/hux_build.log"
+export thisConsoleTempLogFile="../local_build/logs/hux_build.log"
 
 # source scripts to override the functions.
 source ./misc/build_scripts/util_functions.sh
