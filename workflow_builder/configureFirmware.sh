@@ -16,48 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# cd to src bcuz everything is there.
-cd ./src/
+# args
+TARGET_DEVICE_FULL_FIRMWARE_LINK="$1"
+MAKECONFIGS_LINK="$2"
+PRIVATE_KEY_SETUP_SCRIPT_LINK="$3"
 
-TARGET_DEVICE=$1
-TARGET_DEVICE_FULL_FIRMWARE_LINK=$2
-MAKECONFIGS_LINK="$3"
-PACK_IMAGE_WITH_TS_FORMAT="$4"
-PRIVATE_KEY_SETUP_SCRIPT_LINK="$5"
-theBotToken="${TELEGRAM_BOT_TOKEN}"
-chatID="${TELEGRAM_CHAT_ID}"
-export thisConsoleTempLogFile="../local_build/logs/hux_build.log"
-
-# source scripts to override the functions.
+# source script to fetch functions.
 source ./misc/build_scripts/util_functions.sh
 
-# test workflow:
-if [ "$1" == "--test" ]; then
-    sendMessageToTelegramChat "HIAAAAAAAAAA! Workflow works!"
-    echo "HUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUEHUE" > let_that_sink_in
-    uploadGivenFileToTelegram "let_that_sink_in" && rm let_that_sink_in
-    exit 0
-fi
-
-# mako mako mako mako those who know💀
-for i in system/product/priv-app system/product/etc system/product/overlay \
-         system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
-         system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw \
-         local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds; do
-    mkdir -p "../local_build/$i"
-	debugPrint "Making ../local_build/${i} directories.."
-done
-
-# device specific customization:
-[ -d "./target/${TARGET_DEVICE}" ] || abort "The target device ${TARGET_DEVICE} doesn't exist, please check the name and try again..."
-
-# prepare env.sh -
-for dependenciesRequiredForTheJob in zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3; do
-    command -v $dependenciesRequiredForTheJob || sudo apt install -y $dependenciesRequiredForTheJob || abort "Error: Failed to install $dependenciesRequiredForTheJob. Aborting this workflow session."
-done
-
 # builds the ROM
-sendMessageToTelegramChat "Build started at $(date +%d\ %b\ %Y --date='TZ="America/Mountain_Standard_Time"'), $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"') (MST)"
+sendMessageToTelegramChat "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (MST)"
 sendMessageToTelegramChat "Requested Device: Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | test_workflow=true"
 console_print "\033[0;31m########################################################################"
 console_print "   _  _     _   _            _                _   ___  __"
@@ -68,7 +36,7 @@ console_print "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
 console_print "                                                         "
 console_print "########################################################################\033[0m"
 console_print "Starting to build HorizonUX on cloud..."
-console_print "Build started at $(date +%d\ %b\ %Y --date='TZ="America/Mountain_Standard_Time"'), $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
+console_print "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (MST)"
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "Downloading firmware package from the web..."
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "../local_build/local_build_downloaded_contents/"
@@ -87,12 +55,11 @@ for EXTRACTED_FIRMWARE_FILES in ../local_build/local_build_downloaded_contents/e
         continue
     fi
     debugPrint "Extracting tar files from $EXTRACTED_FIRMWARE_FILES..."
-    ! tar -xvf "$EXTRACTED_FIRMWARE_FILES" -C ../local_build/local_build_downloaded_contents/tar_files/ || abort "Failed to extract tar files from $EXTRACTED_FIRMWARE_FILES..."
+    tar -xvf "$EXTRACTED_FIRMWARE_FILES" -C ../local_build/local_build_downloaded_contents/tar_files/ || abort "Failed to extract tar files from $EXTRACTED_FIRMWARE_FILES..."
 done
-console_print "Finished fetching packages at $(date +%d\ %b\ %Y --date='TZ="America/Mountain_Standard_Time"'), $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
-console_print "Trying to mount images..."
+console_print "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (MST)"
+console_print "Trying to configure images..."
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
-    console_print "Unpacking images...."
     for COMMON_FIRMWARE_BLOCKS in system vendor product; do
         lz4 -d -q ../local_build/local_build_downloaded_contents/tar_files/${COMMON_FIRMWARE_BLOCKS}.img.lz4 "${COMMON_FIRMWARE_BLOCKS}.img_raw" || abort "Failed to extract ${COMMON_FIRMWARE_BLOCKS} from the firmware dump, please try againn....."
         mountPath="../local_build/workflow_partitions/$(generate_random_hash 10)__$COMMON_FIRMWARE_BLOCK"
@@ -114,7 +81,6 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
         esac
     done
 elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
-    console_print "Unpacking Super sparse image block...."
     if lz4 -d -q ../local_build/local_build_downloaded_contents/tar_files/super.img.lz4 "super.img.sparse" && simg2img "super.img.sparse" "super.img" && rm -rf "super.img.sparse"; then
         console_print "Successfully unpacked, converted into raw, and deleted the base Super.img from the downloaded source....."
     else
@@ -144,33 +110,3 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
     done
 fi
 setMakeConfigs TARGET_BUILD_PRODUCT_NAME ${TARGET_DEVICE} ./makeconfigs.prop
-# execve and import these following to build:
-source ./makeconfigs.prop
-source ./monika.conf
-. ./build.sh
-# -------------------------------
-for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
-    for IMAGES in ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS} ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS}__rw; do
-        buildImage "${IMAGES}" "/${COMMON_FIRMWARE_BLOCKS}"
-    done
-done
-case "${PACK_IMAGE_WITH_TS_FORMAT}" in
-    "tar")
-        rm -f "../local_build/workflow_builds/packed_buildImages.tar"
-        for IMG_PATH in ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile; do
-            tar --append --file="../local_build/workflow_builds/packed_buildImages.tar" -C "$(dirname "$IMG_PATH")" "$(basename "$IMG_PATH")" && rm -f "$IMG_PATH"
-        done
-    ;;
-    "zstd")
-        for f in ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile; do
-            zstd -T0 --ultra -22 "$f" -o "${f}.zst" && rm -f "$f"
-        done
-    ;;
-    "zip")
-        zip -r ../local_build/workflow_builds/packed_buildImages.zip ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile
-    ;;
-esac
-rm -f ../local_build/workflow_builds/*_buildImage.img
-sendMessageToTelegramChat "Build completed successfully at $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
-uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || exit 1
-exit 0

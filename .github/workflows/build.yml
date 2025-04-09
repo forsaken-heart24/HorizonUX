@@ -1,4 +1,4 @@
-name: Cloud Build
+name: HorizonUX Actions ROM Modifier
 
 on:
   workflow_dispatch:
@@ -9,7 +9,6 @@ on:
         default: 'r8q'
         type: choice
         options:
-          - test
           - a30
           - r8q
       firmware_url:
@@ -80,15 +79,34 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - name: Build ROM
+      - name: Install Dependencies and Setup Environment
         env:
-          TELEGRAM_BOT_TOKEN: "${{ github.event.inputs.telegram_bot_token }}"
-          TELEGRAM_CHAT_ID: "${{ github.event.inputs.telegram_chat_id }}"
+          TARGET_DEVICE: ${{ github.event.inputs.target }}
+          thisConsoleTempLogFile: "../local_build/logs/hux_build.log"
+          theBotToken: "${{ github.event.inputs.telegram_bot_token }}"
+          chatID: "${{ github.event.inputs.telegram_chat_id }}"
         run: |
-          chmod +x ./workflow_builder/build_cloud.sh
-          ./workflow_builder/build_cloud.sh \
-            "${{ github.event.inputs.target }}" \
+          sudo apt install -y zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3
+          for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds; do
+              mkdir -p "../local_build/$i"
+          done
+          cd ./src/
+          
+      - name: Download And Configure Firmware 
+        run: |
+          chmod +x ./workflow_builder/configureFirmware.sh
+          ./workflow_builder/configureFirmware.sh \
             "${{ github.event.inputs.firmware_url }}" \
-            "${{ github.event.inputs.makeconfig }}" \
-            "${{ github.event.inputs.build_output_compression_type }}" \
+            "${{ github.event.inputs.makeconfig }}"
             "${{ github.event.inputs.private_key_setup_link }}"
+          
+      - name: Modify ROM
+        run: |
+          chmod +x ./src/build.sh
+          ./src/build.sh
+
+      - name: Pack Firmware And Upload it to Telegram
+        run: |
+            chmod +x ./workflow_builder/packAndUpload.sh
+            ./workflow_builder/packAndUpload.sh \
+            "${{ github.event.inputs.build_output_compression_type }}"
