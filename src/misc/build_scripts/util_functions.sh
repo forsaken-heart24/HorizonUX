@@ -16,6 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# fix: ./src/misc/build_scripts/util_functions.sh: line 43: $thisConsoleTempLogFile : No such file or directory
+thisConsoleTempLogFile="../local_build/logs/hux_build.log"
+
 function grep_prop() {
     local variable_name="$1"
     local prop_file="${2:-$SYSTEM_DIR/build.prop}"

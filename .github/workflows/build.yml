@@ -80,25 +80,24 @@ jobs:
           java-version: '11'
 
       - name: Install Dependencies and Setup Environment
-        env:
-          TARGET_DEVICE: ${{ github.event.inputs.target }}
-          thisConsoleTempLogFile: "../local_build/logs/hux_build.log"
-          theBotToken: "${{ github.event.inputs.telegram_bot_token }}"
-          chatID: "${{ github.event.inputs.telegram_chat_id }}"
         run: |
           sudo apt install -y zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3
           for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds; do
-              mkdir -p "../local_build/$i"
+            mkdir -p "../local_build/$i"
           done
-          
+          export TARGET_DEVICE="${{ github.event.inputs.target }}"
+          export theBotToken="${{ github.event.inputs.telegram_bot_token }}"
+          export chatID="${{ github.event.inputs.telegram_chat_id }}"
+          export thisConsoleTempLogFile="../local_build/logs/hux_build.log"
+
       - name: Download And Configure Firmware 
         run: |
           chmod +x ./workflow_builder/configureFirmware.sh
           ./workflow_builder/configureFirmware.sh \
             "${{ github.event.inputs.firmware_url }}" \
-            "${{ github.event.inputs.makeconfig }}"
+            "${{ github.event.inputs.makeconfig }}" \
             "${{ github.event.inputs.private_key_setup_link }}"
-          
+  
       - name: Modify ROM
         run: |
           chmod +x ./src/build.sh
