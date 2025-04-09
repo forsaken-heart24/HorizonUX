@@ -30,29 +30,26 @@ function grep_prop() {
 }
 
 download_stuffs() {
-    local link="$1"
-    local save_path="$2"
-
-    # Handle --skip flag
-    if [ "$link" == "--skip" ]; then
+    local link
+    local save_path
+    if [ "$1" == "--skip" ]; then
         link="$2"
         save_path="$3"
+    else
+        link="$1"
+        save_path="$2"
     fi
-
-    # check args.
     [[ -z "$link" || -z "$save_path" ]] && return 1
-    
-    # i swear to satan
     for ((tries = 1; tries <= 4; tries++)); do
         sendMessageToTelegramChat "Trying to download the requested file | Number of tries: $tries"
-        if curl -L --progress-bar -o "${save_path}" "$link" &>>"$thisConsoleTempLogFile"; then
+        if curl -L --progress-bar -o "${save_path}" "$link" &>>$thisConsoleTempLogFile; then
             sendMessageToTelegramChat "Successfully downloaded file after $tries attempt(s)"
             return 0
         fi
         sendMessageToTelegramChat "Failed to download the requested file | Number of tries: $tries"
     done
-    sendMessageToTelegramChat "Failed to download the requested file after $tries tries, please try again"
-    [ "$1" == "--skip" ] || abort " "
+    sendMessageToTelegramChat "Failed to download the requested file after $((tries - 1)) tries, please try again"
+    [ "$1" == "--skip" ] || exit 1
 }
 
 function setprop() {
@@ -946,6 +943,7 @@ function buildImage() {
 
 function uploadGivenFileToTelegram() {
     local userRequestedFile="$1"
+    [ -f "${userRequestedFile}" ] || return 1
     sendMessageToTelegramChat "Trying to upload ${userRequestedFile} to the requested chat..."
     curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
     if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
