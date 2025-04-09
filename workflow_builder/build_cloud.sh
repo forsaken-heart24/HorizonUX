@@ -175,7 +175,9 @@ case "${PACK_IMAGE_WITH_TS_FORMAT}" in
         zip -r ../local_build/workflow_builds/packed_buildImages.zip ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile
     ;;
 esac
-rm -f ../local_build/workflow_builds/*_buildImage.img
+if [ "$TARGET_DEVICE" != "test" ]; then
+    rm -f ../local_build/workflow_builds/*_buildImage.img
+fi
 sendMessageToTelegramChat "Build completed successfully at $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
 uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || abort ""
 exit 0
