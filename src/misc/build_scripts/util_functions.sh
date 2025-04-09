@@ -956,32 +956,43 @@ function deviceCodenameToModel() {
     esac
 }
 
-function download_stuffs() {
-    local arg="$1"
-	local link="$1"
+download_stuffs() {
+    local link="$1"
     local save_path="$2"
-	if [ "$arg" == "--skip" ]; then
+    local success=0
+
+    # Handle --skip flag
+    if [ "$1" == "--skip" ]; then
         link="$2"
-		save_path="$3"
+        save_path="$3"
     fi
-    if [ "$#" -lt 2 ]; then
+
+    if [ -z "$link" ] || [ -z "$save_path" ]; then
         warns "Arguments are not enough.." "DOWNLOADER"
         return 1
     fi
-    local success=0
+
     for ((tries = 1; tries <= 4; tries++)); do
-        sendMessageToTelegramChat "Trying to download the requested file | Number of tries: $tries"
-        if [[ "$link" == *"raw.githubusercontent.com"* ]]; then
-            wget --show-progress --progress=bar:force:noscroll -O "${save_path}" "$link" &>>"$thisConsoleTempLogFile" && success=1 && break
+        sendMessageToTelegramChat "Trying to download the requested file | Try: $tries"
+
+        if echo "$link" | grep -q "raw.githubusercontent.com"; then
+            wget --show-progress --progress=bar:force:noscroll -O "$save_path" "$link" &>> "$thisConsoleTempLogFile"
         else
-            curl -L --progress-bar -o "${save_path}" "$link" &>>"$thisConsoleTempLogFile" && success=1 && break
+            curl -L --progress-bar -o "$save_path" "$link" &>> "$thisConsoleTempLogFile"
         fi
-        sendMessageToTelegramChat "Failed to download the requested file | Number of tries: $tries"
+
+        if [ $? -eq 0 ]; then
+            success=1
+            break
+        else
+            sendMessageToTelegramChat "Failed to download file | Try: $tries"
+        fi
     done
-    if [[ "$success" -eq 1 ]]; then
-        sendMessageToTelegramChat "Successfully downloaded file after $tries attempt(s)"
+
+    if [ "$success" -eq 1 ]; then
+        sendMessageToTelegramChat "✅ File downloaded successfully after $tries attempt(s)"
     else
-        sendMessageToTelegramChat "Failed to download the requested file after $tries tries, please try again"
-        [ "$arg" == "--skip" ] || abort " "
+        sendMessageToTelegramChat "❌ Failed after $tries attempts"
+        [ "$1" == "--skip" ] || abort "Download failed"
     fi
 }
