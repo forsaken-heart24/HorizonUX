@@ -955,8 +955,13 @@ function deviceCodenameToModel() {
 }
 
 function download_stuffs() {
-    local link="$1"
+    local arg="$1"
+	local link="$1"
     local save_path="$2"
+	if [ "$arg" == "--skip" ]; then
+        link="$2"
+		save_path="$3"
+    fi
     if [ "$#" -lt 2 ]; then
         warns "Arguments are not enough.." "DOWNLOADER"
         return 1
@@ -975,6 +980,6 @@ function download_stuffs() {
         sendMessageToTelegramChat "Successfully downloaded file after $tries attempt(s)"
     else
         sendMessageToTelegramChat "Failed to download the requested file after $tries tries, please try again"
-        abort " "
+        [ "$arg" == "--skip" ] || abort " "
     fi
 }
