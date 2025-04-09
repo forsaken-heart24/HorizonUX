@@ -29,6 +29,32 @@ function grep_prop() {
     grep "^${variable_name}=" "$prop_file" | cut -d '=' -f 2- | tr -d '"' 2>>$thisConsoleTempLogFile
 }
 
+download_stuffs() {
+    local link="$1"
+    local save_path="$2"
+
+    # Handle --skip flag
+    if [ "$link" == "--skip" ]; then
+        link="$2"
+        save_path="$3"
+    fi
+
+    # check args.
+    [[ -z "$link" || -z "$save_path" ]] && return 1
+    
+    # i swear to satan
+    for ((tries = 1; tries <= 4; tries++)); do
+        sendMessageToTelegramChat "Trying to download the requested file | Number of tries: $tries"
+        if curl -L --progress-bar -o "${save_path}" "$link" &>>"$thisConsoleTempLogFile"; then
+            sendMessageToTelegramChat "Successfully downloaded file after $tries attempt(s)"
+            return 0
+        fi
+        sendMessageToTelegramChat "Failed to download the requested file | Number of tries: $tries"
+    done
+    sendMessageToTelegramChat "Failed to download the requested file after $tries tries, please try again"
+    [ "$1" == "--skip" ] || abort " "
+}
+
 function setprop() {
     local propFile
     local propVariableName="$2"
@@ -954,45 +980,4 @@ function deviceCodenameToModel() {
             echo "A30"
         ;;
     esac
-}
-
-download_stuffs() {
-    local link="$1"
-    local save_path="$2"
-    local success=0
-
-    # Handle --skip flag
-    if [ "$1" == "--skip" ]; then
-        link="$2"
-        save_path="$3"
-    fi
-
-    if [ -z "$link" ] || [ -z "$save_path" ]; then
-        warns "Arguments are not enough.." "DOWNLOADER"
-        return 1
-    fi
-
-    for ((tries = 1; tries <= 4; tries++)); do
-        sendMessageToTelegramChat "Trying to download the requested file | Try: $tries"
-
-        if echo "$link" | grep -q "raw.githubusercontent.com"; then
-            wget --show-progress --progress=bar:force:noscroll -O "$save_path" "$link" &>> "$thisConsoleTempLogFile"
-        else
-            curl -L --progress-bar -o "$save_path" "$link" &>> "$thisConsoleTempLogFile"
-        fi
-
-        if [ $? -eq 0 ]; then
-            success=1
-            break
-        else
-            sendMessageToTelegramChat "Failed to download file | Try: $tries"
-        fi
-    done
-
-    if [ "$success" -eq 1 ]; then
-        sendMessageToTelegramChat "✅ File downloaded successfully after $tries attempt(s)"
-    else
-        sendMessageToTelegramChat "❌ Failed after $tries attempts"
-        [ "$1" == "--skip" ] || abort "Download failed"
-    fi
 }

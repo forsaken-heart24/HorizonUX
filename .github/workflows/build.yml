@@ -6,17 +6,17 @@ on:
       target:
         description: 'Select build target'
         required: true
-        default: 'test'
+        default: 'r8q'
         type: choice
         options:
           - test
           - a30
           - r8q
       firmware_url:
-        description: 'Enter URL to the firmware'
+        description: 'Enter Firmware URL'
         required: true
       makeconfig:
-        description: 'Enter make config url'
+        description: 'Enter makeconfig url'
         required: true
       build_output_compression_type:
         description: 'Select build output compression type'
@@ -36,6 +36,14 @@ on:
       telegram_chat_id:
         description: 'Enter your Telegram chat ID'
         required: true
+      cleanup_disk:
+        description: 'Do you want to clean the disk before building?'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - true
+          - false
 
 jobs:
   build:
@@ -48,17 +56,20 @@ jobs:
           submodules: 'recursive'
 
       - name: Free disk space (1/3)
+        if: ${{ github.event.inputs.cleanup_disk == 'true' }}
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force
           sudo docker builder prune -a
 
       - name: Free disk space (2/3)
+        if: ${{ github.event.inputs.cleanup_disk == 'true' }}
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: true
 
       - name: Free disk space (3/3)
+        if: ${{ github.event.inputs.cleanup_disk == 'true' }}
         uses: rokibhasansagar/slimhub_actions@main
         with:
           retain: 'compiler_cmake'
@@ -71,8 +82,8 @@ jobs:
 
       - name: Build ROM
         env:
-            TELEGRAM_BOT_TOKEN: "${{ github.event.inputs.telegram_bot_token }}"
-            TELEGRAM_CHAT_ID: "${{ github.event.inputs.telegram_chat_id }}"
+          TELEGRAM_BOT_TOKEN: "${{ github.event.inputs.telegram_bot_token }}"
+          TELEGRAM_CHAT_ID: "${{ github.event.inputs.telegram_chat_id }}"
         run: |
           chmod +x ./workflow_builder/build_cloud.sh
           ./workflow_builder/build_cloud.sh \

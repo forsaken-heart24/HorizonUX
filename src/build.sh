@@ -34,7 +34,7 @@ if [ ! -n "${TARGET_DEVICE}" ]; then
 			exit 1
 		else
 			debugPrint "Executing ${i}.."
-			. "$i"
+			source "$i"
 		fi
 	done
 	# Check dependencies

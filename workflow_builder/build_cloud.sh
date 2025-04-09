@@ -53,12 +53,7 @@ done
 
 # prepare env.sh -
 for dependenciesRequiredForTheJob in zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3; do
-    if ! command -v $dependenciesRequiredForTheJob; then
-        if ! sudo apt install -y $dependenciesRequiredForTheJob; then
-            console_print "Error: Failed to install $dependenciesRequiredForTheJob. Aborting this workflow session."
-            exit 1;
-        fi
-    fi
+    command -v $dependenciesRequiredForTheJob || sudo apt install -y $dependenciesRequiredForTheJob || abort "Error: Failed to install $dependenciesRequiredForTheJob. Aborting this workflow session."
 done
 
 # builds the ROM
@@ -149,9 +144,9 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
     done
 fi
 setMakeConfigs TARGET_BUILD_PRODUCT_NAME ${TARGET_DEVICE} ./makeconfigs.prop
-# execve these following to build:
-. ./makeconfigs.prop
-. ./monika.conf
+# execve and import these following to build:
+source ./makeconfigs.prop
+source ./monika.conf
 . ./build.sh
 # -------------------------------
 for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
@@ -177,5 +172,5 @@ case "${PACK_IMAGE_WITH_TS_FORMAT}" in
 esac
 rm -f ../local_build/workflow_builds/*_buildImage.img
 sendMessageToTelegramChat "Build completed successfully at $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
-uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || abort ""
+uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || exit 1
 exit 0
