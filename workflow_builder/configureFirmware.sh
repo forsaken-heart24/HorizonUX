@@ -22,7 +22,7 @@ MAKECONFIGS_LINK="$2"
 PRIVATE_KEY_SETUP_SCRIPT_LINK="$3"
 
 # source script to fetch functions.
-source ./misc/build_scripts/util_functions.sh
+source ./src/misc/build_scripts/util_functions.sh
 
 # builds the ROM
 sendMessageToTelegramChat "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (MST)"
@@ -110,3 +110,6 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
     done
 fi
 setMakeConfigs TARGET_BUILD_PRODUCT_NAME ${TARGET_DEVICE} ./makeconfigs.prop
+source ./src/monica.conf
+source ./src/makeconfigs.prop
+cd ./src/

@@ -90,7 +90,6 @@ jobs:
           for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds; do
               mkdir -p "../local_build/$i"
           done
-          cd ./src/
           
       - name: Download And Configure Firmware 
         run: |
