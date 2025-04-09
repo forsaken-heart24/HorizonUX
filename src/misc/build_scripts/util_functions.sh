@@ -45,7 +45,7 @@ function download_stuffs() {
         aria2c -x 8 -s 8 -o "${save_path}" "${link}" &>>$thisConsoleTempLogFile
     else
         for ((tries = 1; tries <= 4; tries++)); do
-            sendMessageToTelegramChat "📥 Trying to download: $link | Attempt: $tries"
+            sendMessageToTelegramChat "📥 Trying to download requested file | Attempt: $tries"
             if aria2c -x 8 -s 8 -o "${save_path}" "${link}" &>>"$thisConsoleTempLogFile"; then
                 sendMessageToTelegramChat "✅ Successfully downloaded file after $tries attempt(s)"
                 return 0
@@ -88,8 +88,7 @@ function abort() {
     debugPrint "[:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    sendMessageToTelegramChat "Workflow failed"
-    sendMessageToTelegramChat "Workflow ended at $(date +%I:%M%p --date='TZ="America/Mountain_Standard_Time"')"
+    sendMessageToTelegramChat "Workflow ended at $(TZ=America/Phoenix date +%I:%M%p)"
     rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ./local_build/* output
     uploadGivenFileToTelegram "${thisConsoleTempLogFile}"
     exit 1
