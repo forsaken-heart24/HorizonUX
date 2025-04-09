@@ -244,6 +244,7 @@ function tinkerWithCSCFeaturesFile() {
     case "${action}" in
         --decode)
             for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+	            [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
                 if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>$thisConsoleTempLogFile; then
                     debugPrint "CSC feature file successfully decoded."
                 else
@@ -254,6 +255,7 @@ function tinkerWithCSCFeaturesFile() {
         ;;
         --encode)
             for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+	            [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
                 if java -jar "$decoder_jar" -e -i "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" -o "${EXPECTED_CSC_FEATURE_XML_PATH}" &>$thisConsoleTempLogFile; then
                     debugPrint "CSC feature file successfully encoded."
                 else
