@@ -20,27 +20,27 @@
 source ./misc/build_scripts/util_functions.sh
 
 for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
-    for IMAGES in ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS} ../local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS}__rw; do
+    for IMAGES in ./local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS} ./local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS}__rw; do
         buildImage "${IMAGES}" "/${COMMON_FIRMWARE_BLOCKS}"
     done
 done
 case "${PACK_IMAGE_WITH_TS_FORMAT}" in
     "tar")
-        rm -f "../local_build/workflow_builds/packed_buildImages.tar"
-        for IMG_PATH in ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile; do
-            tar --append --file="../local_build/workflow_builds/packed_buildImages.tar" -C "$(dirname "$IMG_PATH")" "$(basename "$IMG_PATH")" && rm -f "$IMG_PATH"
+        rm -f "./local_build/workflow_builds/packed_buildImages.tar"
+        for IMG_PATH in ./local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile; do
+            tar --append --file="./local_build/workflow_builds/packed_buildImages.tar" -C "$(dirname "$IMG_PATH")" "$(basename "$IMG_PATH")" && rm -f "$IMG_PATH"
         done
     ;;
     "zstd")
-        for f in ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile; do
+        for f in ./local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile; do
             zstd -T0 --ultra -22 "$f" -o "${f}.zst" && rm -f "$f"
         done
     ;;
     "zip")
-        zip -r ../local_build/workflow_builds/packed_buildImages.zip ../local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile
+        zip -r ./local_build/workflow_builds/packed_buildImages.zip ./local_build/workflow_builds/*_buildImage.img $thisConsoleTempLogFile
     ;;
 esac
-rm -f ../local_build/workflow_builds/*_buildImage.img
+rm -f ./local_build/workflow_builds/*_buildImage.img
 sendMessageToTelegramChat "Build completed successfully at $(TZ=America/Phoenix date +%I:%M%p)"
-uploadGivenFileToTelegram "../local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || exit 1
+uploadGivenFileToTelegram "./local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" || exit 1
 exit 0
