@@ -88,7 +88,7 @@ jobs:
           export TARGET_DEVICE="${{ github.event.inputs.target }}"
           export theBotToken="${{ github.event.inputs.telegram_bot_token }}"
           export chatID="${{ github.event.inputs.telegram_chat_id }}"
-          export thisConsoleTempLogFile="../local_build/logs/hux_build.log"
+          export thisConsoleTempLogFile="./local_build/logs/hux_build.log"
           touch ./local_build/logs/hux_build.log
 
       - name: Download And Configure Firmware 

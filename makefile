@@ -20,22 +20,22 @@ COMPILER = gcc
 EXTRA_FLAGS =
 
 # Output binaries
-UPDATER_OUTPUT = ../local_build/binaries/updater-script
-LOADER_OUTPUT = ../local_build/binaries/bashScriptLoader
-SAVIOUR_OUTPUT = ../local_build/binaries/bootloopSaviour
+UPDATER_OUTPUT = ./local_build/binaries/updater-script
+LOADER_OUTPUT = ./local_build/binaries/bashScriptLoader
+SAVIOUR_OUTPUT = ./local_build/binaries/bootloopSaviour
 
 # Source files for each target
-UPDATER_SRCS = ./include/horizonutils.c ./include/horizonux.c ./include/horizoninstaller.c
-LOADER_SRCS = ./include/horizonux.c ./include/horizonutils.c
-SAVIOUR_SRCS = ./include/horizonux.c ./include/horizonutils.c
+UPDATER_SRCS = ./src/include/horizonutils.c ./src/include/horizonux.c ./src/include/horizoninstaller.c
+LOADER_SRCS = ./src/include/horizonux.c ./src/include/horizonutils.c
+SAVIOUR_SRCS = ./src/include/horizonux.c ./src/include/horizonutils.c
 
 # Main source path
-UPDATER_MAIN = ./HorizonInstaller/main.c
-LOADER_MAIN = ./bashScriptLoader/main.c
-SAVIOUR_MAIN = ./bootloopSaviour/main.c
+UPDATER_MAIN = ./src/HorizonInstaller/main.c
+LOADER_MAIN = ./src/bashScriptLoader/main.c
+SAVIOUR_MAIN = ./src/bootloopSaviour/main.c
 
 # Error logs path
-ERR_LOG = ../local_build/logs/compiler__errors
+ERR_LOG = ./local_build/logs/compiler__errors
 
 # Default: Build both
 all: updater loader bootloop_saviour
