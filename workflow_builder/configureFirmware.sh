@@ -28,6 +28,7 @@ touch cloud
 
 # source script to fetch functions.
 . ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
+source ./src/target/${TARGET_DEVICE}/buildTargetProperties.conf
 
 # builds the ROM
 sendMessageToTelegramChat "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
