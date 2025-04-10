@@ -101,7 +101,7 @@ jobs:
         run: |
           chmod +x ./src/build.sh
           ./src/build.sh
-
+        
       - name: Pack Firmware And Upload it to Telegram
         run: |
             chmod +x ./workflow_builder/packAndUpload.sh

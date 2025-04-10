@@ -54,6 +54,7 @@ else
 fi
 download_stuffs --skip "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
 for specificTargetFirmwareFiles in $(unzip -l "${firmwareZip}" | grep -E 'AP|HOME_CSC' | awk '{print $4}'); do
+    sendMessageToTelegramChat "Unpacking firmware | ${specificTargetFirmwareFiles}"
     unzip "${firmwareZip}" "$specificTargetFirmwareFiles" -d "./local_build/local_build_downloaded_contents/extracted_fw" &>>"$thisConsoleTempLogFile"
     extractedPath="./local_build/local_build_downloaded_contents/extracted_fw/$(basename "$specificTargetFirmwareFiles")"
     tar -xvf "$extractedPath" -C ./local_build/local_build_downloaded_contents/tar_files/ &>>"$thisConsoleTempLogFile" || abort "Failed to extract tar files from $specificTargetFirmwareFiles..."
@@ -87,3 +88,6 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
     done
 fi
 setMakeConfigs TARGET_BUILD_PRODUCT_NAME "${TARGET_DEVICE}" ./src/makeconfigs.prop
+uploadGivenFileToTelegram "./src/makeconfigs.prop"
+sendMessageToTelegramChat "Uploaded makeconfigs to telegram.."
+sleep 165
