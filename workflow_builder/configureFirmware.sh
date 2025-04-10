@@ -45,8 +45,7 @@ console_print "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=Ame
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "Downloading firmware package from the web..."
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip" || abort "Failed to download the given firmware package"
-console_print "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
-sendMessageToTelegramChat "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
+console_print tg "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 mv ./src/makeconfigs.prop ./src/makeconfigs.prop_
 if download_stuffs --skip "${MAKECONFIGS_LINK}" "./src/makeconfigs.prop"; then
     rm -rf ./src/makeconfigs.prop_
@@ -55,13 +54,13 @@ else
 fi
 download_stuffs --skip "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
 for specificTargetFirmwareFiles in $(unzip -l "${firmwareZip}" | grep -E 'AP|HOME_CSC' | awk '{print $4}'); do
-    sendMessageToTelegramChat "Unpacking firmware | ${specificTargetFirmwareFiles}"
+    console_print tg "Unpacking firmware | ${specificTargetFirmwareFiles}"
     unzip "${firmwareZip}" "$specificTargetFirmwareFiles" -d "./local_build/local_build_downloaded_contents/extracted_fw" &>>"$thisConsoleTempLogFile"
     extractedPath="./local_build/local_build_downloaded_contents/extracted_fw/$(basename "$specificTargetFirmwareFiles")"
     tar -xvf "$extractedPath" -C ./local_build/local_build_downloaded_contents/tar_files/ &>>"$thisConsoleTempLogFile" || abort "Failed to extract tar files from $specificTargetFirmwareFiles..."
     rm -f "$extractedPath"
 done
-console_print "Trying to configure images..."
+console_print tg "Trying to configure images..."
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
     for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
         ls ./local_build/local_build_downloaded_contents/tar_files/ &>$thisConsoleTempLogFile
@@ -92,6 +91,7 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
 fi
 setMakeConfigs TARGET_BUILD_PRODUCT_NAME "${TARGET_DEVICE}" ./src/makeconfigs.prop
 uploadGivenFileToTelegram "./src/makeconfigs.prop"
+uploadGivenFileToTelegram "./src/makeconfigs.prop_"
 uploadGivenFileToTelegram "$thisConsoleTempLogFile"
 sendMessageToTelegramChat "Uploaded makeconfigs to telegram.."
 abort "Ending workflow because test is going on:"
