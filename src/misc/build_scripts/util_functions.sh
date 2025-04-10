@@ -827,7 +827,14 @@ function setMakeConfigs() {
     local propVariableName="$1"
     local propValue="$2"
     local propFile="$3"
-    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
+    if grep -q "^${propVariableName}=" "$propFile"; then
+        awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" \
+            '{ if ($0 ~ pat) print value; else print $0; }' "$propFile" > "${propFile}.tmp"
+    else
+        cp "$propFile" "${propFile}.tmp"
+        echo "${propVariableName}=${propValue}" >> "${propFile}.tmp"
+    fi
+    mv "${propFile}.tmp" "$propFile"
 }
 
 function buildImage() {
