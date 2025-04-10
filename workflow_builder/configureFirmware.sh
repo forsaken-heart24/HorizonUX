@@ -24,6 +24,7 @@ TARGET_DEVICE="$4"
 theBotToken="$5"
 chatID="$6"
 firmwareZip="./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip"
+touch cloud
 
 # source script to fetch functions.
 . ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
@@ -63,6 +64,7 @@ done
 console_print "Trying to configure images..."
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
     for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
+        ls ./local_build/local_build_downloaded_contents/tar_files/ &>$thisConsoleTempLogFile
         [ ! -f "./local_build/local_build_downloaded_contents/tar_files/${COMMON_FIRMWARE_BLOCKS}.img.lz4" ] && continue
         lz4 -d -q "./local_build/local_build_downloaded_contents/tar_files/${COMMON_FIRMWARE_BLOCKS}.img.lz4" "${COMMON_FIRMWARE_BLOCKS}.img" || abort "Failed to extract ${COMMON_FIRMWARE_BLOCKS} from the firmware dump, please try again....."
         mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${COMMON_FIRMWARE_BLOCKS}"
@@ -70,6 +72,7 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
         setupLocalImage "${COMMON_FIRMWARE_BLOCKS}.img" "${mountPath}"
     done
 elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
+    ls ./local_build/local_build_downloaded_contents/tar_files/ &>$thisConsoleTempLogFile
     lz4 -d -q "./local_build/local_build_downloaded_contents/tar_files/super.img.lz4" "super.img" || abort "Failed to unpack the base Super.img from the downloaded source..."
     if lz4 -d -q "./local_build/local_build_downloaded_contents/tar_files/optics.img.lz4" "optics.img" &>>"$thisConsoleTempLogFile"; then
         mountPath="./local_build/$(generate_random_hash 10)__optics"
@@ -89,5 +92,6 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
 fi
 setMakeConfigs TARGET_BUILD_PRODUCT_NAME "${TARGET_DEVICE}" ./src/makeconfigs.prop
 uploadGivenFileToTelegram "./src/makeconfigs.prop"
+uploadGivenFileToTelegram "$thisConsoleTempLogFile"
 sendMessageToTelegramChat "Uploaded makeconfigs to telegram.."
-sleep 165
+abort "Ending workflow because test is going on:"

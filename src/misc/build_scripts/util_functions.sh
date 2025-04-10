@@ -905,6 +905,7 @@ function setupLocalImage() {
     local imageBlock=$(basename "$imagePath" | sed -E 's/\.img(\..+)?$//')
     case "$(getImageFileSystem ${imagePath})" in
         "erofs")
+            console_print "EROFS Image detected, preparing stuffs..."
             local dirt="${mountPath}__rw"
             mkdir -p $dirt
             sudo fuse.erofs ${imagePath} ${mountPath} || abort "Failed to mount erofs image! (${imagePath})"
@@ -912,6 +913,7 @@ function setupLocalImage() {
             setMakeConfigs $(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR ${dirt} ./src/makeconfigs.prop
         ;;
         "f2fs"|"ext4")
+            console_print "$(getImageFileSystem ${imagePath}) Image detected, preparing stuffs..."
             sudo mount -o rw ${imagePath} ${mountPath} || abort "Failed to mount ${imageBlock} as rw, please try again"
             setMakeConfigs $(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR ${mountPath} ./src/makeconfigs.prop
         ;;
