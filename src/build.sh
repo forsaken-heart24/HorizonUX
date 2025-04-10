@@ -67,6 +67,9 @@ if [ ! -n "${TARGET_DEVICE}" ]; then
 	console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
 	console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 	console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
+else
+	source ./src/monica.conf
+	source ./src/makeconfigs.prop
 fi
 
 # Locate build.prop files
@@ -134,9 +137,7 @@ if [ "$BUILD_TARGET_ANDROID_VERSION" == "14" ]; then
 	$SYSTEM_DIR/priv-app/KnoxGuard
 fi
 
-if boolReturn $TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS; then
-	. ${SCRIPTS[5]}
-fi
+boolReturn $TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS && . ${SCRIPTS[5]}
 
 if boolReturn $TARGET_INCLUDE_UNLIMITED_BACKUP; then
 	console_print "Adding unlimited backup feature...."
@@ -149,10 +150,7 @@ if boolReturn $BUILD_TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES; then
 	HEX_PATCH "$SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052"
 fi
 
-if boolReturn $BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED; then
-	console_print "Patching recovery image..."
-	. ${SCRIPTS[2]}
-fi
+boolReturn $BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED && . ${SCRIPTS[2]}
 
 if boolReturn $TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES; then
 	console_print "Adding custom setup wizard text...."
@@ -324,10 +322,7 @@ if boolReturn $TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER; then
 fi
 
 # custom wallpaper-res resources_info.json generator.
-if boolReturn $CUSTOM_WALLPAPER_RES_JSON_GENERATOR; then
-	console_print "Opening resources_info.json generator..."
-	. ${SCRIPTS[3]}
-fi
+boolReturn $CUSTOM_WALLPAPER_RES_JSON_GENERATOR && . ${SCRIPTS[3]}
 
 # removes useless samsung stuffs from the vendor partition.
 if boolReturn $TARGET_REMOVE_USELESS_VENDOR_STUFFS; then
@@ -384,7 +379,7 @@ fi
 
 if boolReturn $DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION; then
 	console_print "Disabling Samsung's ASKS..."
-	check_existence_of_property "ro.build.official.release" > $TMPFILE && setprop --$(absolute_path --$(cat $TMPFILE)) "ro.build.official.release" "false"
+	setprop --system ro.build.official.release false
 fi
 
 if boolReturn $FORCE_HARDWARE_ACCELERATION; then
@@ -623,7 +618,7 @@ if boolReturn "$TINKER_MAX_REFRESH_RATE"; then
 fi
 
 # device customization script
-[ -f "./src/target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh" ] && source ./src/target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh
+[ -f "./src/target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh" ] && . ./src/target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 debugPrint "End of the script, running misc stuffs.."

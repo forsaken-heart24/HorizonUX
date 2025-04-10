@@ -24,10 +24,8 @@ touch ./local_build/logs/hux_build.log
 
 function grep_prop() {
     local variable_name="$1"
-    local prop_file="${2:-$SYSTEM_DIR/build.prop}"
-    if [ -z "$variable_name" ] || [ -z "$prop_file" ]; then
-        return 1
-    fi
+    local prop_file="$2"
+    [[ -z "$variable_name" || -z "$prop_file" ]] && return 1
     if [ ! -f "$prop_file" ]; then
         echo "Error: Property file '$prop_file' not found." >&2
         return 1
@@ -88,7 +86,7 @@ function abort() {
     debugPrint "[:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    sendMessageToTelegramChat "Workflow ended at $(TZ=America/Phoenix date +%I:%M%p)"
+    sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p)"
     rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ./local_build/* output
     uploadGivenFileToTelegram "${thisConsoleTempLogFile}"
     exit 1
@@ -226,8 +224,11 @@ function add_float_xml_values() {
     if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == "0" ]; then
         {
             while IFS= read -r line; do
-                echo "${line}"
-                [ "${line}" == "<SecFloatingFeatureSet>" ] && echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+                if [[ "${line}" == "<SecFloatingFeatureSet>" ]]; then
+                    echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+                else
+                    echo "${line}"
+                fi
             done
         } < "${BUILD_TARGET_FLOATING_FEATURE_PATH}" > "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     else
@@ -245,14 +246,13 @@ function add_csc_xml_values() {
             if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == "0" ]; then
                 {
                     while IFS= read -r line; do
-                        echo "${line}"
                         if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
                             echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
+                        else
+                            echo "${line}"
                         fi
                     done
                 } < "${EXPECTED_CSC_FEATURE_XML_PATH}" > "${EXPECTED_CSC_FEATURE_XML_PATH}"
-                # write the ending thing cuz this mf is not writing that for some reason.
-                echo "</SamsungMobileFeature>" >> "${EXPECTED_CSC_FEATURE_XML_PATH}"
             else 
                 change_xml_values "${feature_code}" "${feature_code_value}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
             fi
@@ -338,11 +338,7 @@ function change_yaml_values() {
     [ ! -f "$file" ] && abort "Error: File '$file' not found!"
 
     # ok lets go
-    if grep -Eq "^[[:space:]]*${key}:" "$file"; then
-        sed -i -E "s|(^[[:space:]]*${key}:)[[:space:]]*.*|\1 ${value}|" "$file"
-    else
-        echo "${key}: ${value}" >> "$file"
-    fi
+    grep -Eq "^[[:space:]]*${key}:" "$file" && sed -i -E "s|(^[[:space:]]*${key}:)[[:space:]]*.*|\1 ${value}|" "$file"
 }
 
 function ask() {
@@ -360,48 +356,34 @@ function remove_attributes() {
     local OUTPUT_FILE="$2"
     local NAME_TO_SKIP="$3"
     local MODIFIED=false
-
     # capture ts input action:
     debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Output File: ${OUTPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
-
     # Validate input
     [ ! -f "$INPUT_FILE" ] && { debugPrint "Error: Input file not found!"; return 1; }
     [ -z "$NAME_TO_SKIP" ] && { debugPrint "Error: Attribute to skip was not provided"; return 1; }
-
     # Create output file
     touch "$OUTPUT_FILE"
-
     # Start writing new XML
     {
-
         # Read the input XML file line by line
         while IFS='' read -r line; do
             # Check if this line starts a <hal> block
             if [[ "$line" =~ ^[[:space:]]*"<hal" ]]; then
                 block="$line"
                 skip_block=false
-
                 # Read the rest of the <hal> block
                 while IFS='' read -r inner_line; do
                     block+=$'\n'"$inner_line"
-
                     # If we find a <name> tag with the specified value, mark this block for skipping
-                    if [[ "$inner_line" =~ ^[[:space:]]*"<name>"$NAME_TO_SKIP"</name>"[[:space:]]* ]]; then
-                        skip_block=true
-                    fi
-
+                    [[ "$inner_line" =~ ^[[:space:]]*"<name>"$NAME_TO_SKIP"</name>"[[:space:]]* ]] && skip_block=true
                     # Stop reading if we reach the closing </hal>
-                    if [[ "$inner_line" =~ ^[[:space:]]*"</hal>" ]]; then
-                        break
-                    fi
+                    [[ "$inner_line" =~ ^[[:space:]]*"</hal>" ]] && break
                 done
-
                 # If block was marked for skipping, do not write it to the output file
                 if $skip_block; then
                     MODIFIED=true
                     continue
                 fi
-
                 # Otherwise, write the block to the output
                 echo "$block"
             else
@@ -409,10 +391,8 @@ function remove_attributes() {
                 echo "$line"
             fi
         done < "$INPUT_FILE"
-
         echo "</manifest>"
     } > "$OUTPUT_FILE"
-
     # Only replace the input file if changes were made
     if $MODIFIED; then
         mv "$OUTPUT_FILE" "$INPUT_FILE"
@@ -519,48 +499,9 @@ function string_format() {
 function generate_random_hash() {
     local how_much
     how_much=$(echo "$1")
-    if [ ! "$#" == "1" ]; then
-        abort "Not enough arguments..."
-    fi
+    [ "$#" == "1" ] || abort "Not enough / more than enough arguments..."
     debugPrint "generate_random_hash(): Requested random seed: ${how_much}"
     timeout 0.1 cat /dev/urandom | xxd -p | head -n 1 | cut -c 1-${how_much}
-}
-
-# for compatibility vro
-function execute_scripts() {
-    local script="$1"
-    . $script 2>> $thisConsoleTempLogFile;
-}
-
-function absolute_path() {
-    local parsed_argument
-    parsed_argument="$(string_format -l "$1")"
-    parsed_argument="${parsed_argument:2}"
-    case "$parsed_argument" in
-        system)
-            [[ -f "$HORIZON_SYSTEM_DIR/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR"
-            [[ -f "$HORIZON_SYSTEM_DIR/system/build.prop" ]] && echo "$HORIZON_SYSTEM_DIR/system"
-        ;;
-        system_ext)
-            [[ -f "$HORIZON_SYSTEM_DIR/system_ext/etc" ]] && echo "$HORIZON_SYSTEM_DIR/system_ext"
-            echo "$HORIZON_SYSTEM_EXT_DIR"
-        ;;
-        vendor)
-            [[ -f "$HORIZON_VENDOR_DIR/build.prop" ]] && echo "$HORIZON_VENDOR_DIR"
-            [[ -f "$HORIZON_VENDOR_DIR/vendor/build.prop" ]] && echo "$HORIZON_VENDOR_DIR/vendor"
-        ;;
-        product)
-            [[ -f "$HORIZON_PRODUCT_DIR/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR"
-            [[ -f "$HORIZON_PRODUCT_DIR/product/build.prop" ]] && echo "$HORIZON_PRODUCT_DIR/product"
-        ;;
-        prism)
-            [[ -f "$HORIZON_PRISM_DIR/build.prop" ]] && echo "$HORIZON_PRISM_DIR"
-            [[ -f "$HORIZON_PRISM_DIR/prism/build.prop" ]] && echo "$HORIZON_PRISM_DIR/prism"
-        ;;
-        *)
-            abort "Invalid partition argument: $parsed_argument"
-        ;;
-    esac
 }
 
 function fetch_rom_arch() {
@@ -615,9 +556,7 @@ function debugPrint() {
 function apply_diff_patches() {
     local DiffPatchFile="$1"
     local TheFileToPatch="$2"
-    if [ "$#" -ne 2 ]; then
-        abort "Error: Missing arguments. Usage: apply_diff_patches <patch file> <target file>"
-    fi
+    [ "$#" -ne 2 ] && abort "Error: Missing arguments. Usage: apply_diff_patches <patch file> <target file>"
     if [ ! -f "$DiffPatchFile" ]; then
         debugPrint "apply_diff_patches(): Patch file '$DiffPatchFile' not found."
         abort "Error: Patch file '${DiffPatchFile}' not found."
@@ -626,9 +565,7 @@ function apply_diff_patches() {
         abort "Error: Target file '${TheFileToPatch}' not found."
     fi
     debugPrint "apply_diff_patches(): ${DiffPatchFile} → ${TheFileToPatch}"
-    if ! patch "$TheFileToPatch" < "$DiffPatchFile" &>>$thisConsoleTempLogFile; then
-        console_print "Patch failed! Check logs for details."
-    fi
+    patch "$TheFileToPatch" < "$DiffPatchFile" &>>$thisConsoleTempLogFile || console_print "Patch failed! Check logs for details."
 }
 
 function stack_build_properties() {
@@ -640,29 +577,6 @@ function stack_build_properties() {
             echo "${unforgettable}" >> ${stacked_temp_properties}
         done
     done
-}
-
-function check_existence_of_property() {
-    local property="$1"
-    local stacked_properties_file
-    stacked_properties_file=$(ls ${TMPDIR} | grep ___stacked__properties)
-    if [ -z "$stacked_properties_file" ]; then
-        abort "Error: No stacked properties file found in TMPDIR."
-    fi
-    if grep -q "$property" "${TMPDIR}/$stacked_properties_file"; then
-        if grep -q "system/" <<< "$property"; then
-            echo "system"
-        elif grep -q "system_ext/" <<< "$property"; then
-            echo "system_ext"
-        elif grep -q "vendor/" <<< "$property"; then
-            echo "vendor"
-        elif grep -q "product/" <<< "$property"; then
-            echo "product"
-        elif grep -q "prism/" <<< "$property"; then
-            echo "prism"
-        fi
-    fi
-    return 1
 }
 
 function kang_dir() {
@@ -681,21 +595,14 @@ function kang_dir() {
     elif [ "$WhySoSerious1" == "optics" ]; then
         dir="$OPTICS_DIR"
     fi
-    if [ -d "$dir/etc" ]; then
-        echo "$dir"
-    elif [ -d "$dir/$1/etc" ]; then
-        echo "$dir/$1"
-    fi
+    [ -d "$dir/etc" ] && echo "$dir"
+    [ -d "$dir/$1/etc" ] && echo "$dir/$1"
 }
 
 function check_build_prop() {
     local dir="$1"
-    if [ -f "$dir/build.prop" ]; then
-        echo "$dir/build.prop"
-    elif [ -f "$dir/etc/build.prop" ]; then
-        echo "$dir/etc/build.prop"
-    fi
-    return 1
+    [ -f "$dir/build.prop" ] && echo "$dir/build.prop"
+    [ -f "$dir/etc/build.prop" ] && echo "$dir/etc/build.prop"
 }
 
 function download_glmodules() {
@@ -785,10 +692,7 @@ function download_glmodules() {
 }
 
 function check_internet_connection() {
-    local idkman="$@"
-    if ! ping -w 3 google.com &>/dev/null; then
-        warns "Please connect the computer to a wifi or an ethernet connection to access online facilities." "$(string_format -u ${idkman})"
-    fi
+    ping -w 3 google.com &>/dev/null || warns "Please connect the computer to a wifi or an ethernet connection to access online facilities." "$(string_format -u $1)"
 }
 
 function fetch_file_arch() {
@@ -813,7 +717,8 @@ function fetch_file_arch() {
 function verify() {
     local file="$1"
     local fileHash="$2"
-    return $([ "$(sha512sum $file | awk '{print $1}')" = "$fileHash" ])
+    [ "$(sha512sum $file | awk '{print $1}')" = "$fileHash" ] && return 0
+    return 1
 }
 
 # stupid FUCKING function that i have to FUCKING make it to FUCKING fix my FUCKING code.
@@ -863,8 +768,7 @@ function manageCameraFeatures() {
 function parseBuildValues() {
     local file="$1"
     while IFS='=' read -r key value; do
-        echo "$key"
-        echo "${value:-<empty>}"
+        echo "$key ${value:-<empty>}"
     done < "$file"
 }
 
