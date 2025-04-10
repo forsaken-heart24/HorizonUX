@@ -86,7 +86,7 @@ function abort() {
     debugPrint "[:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p)"
+    sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) due to some reason."
     rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ./local_build/* output
     uploadGivenFileToTelegram "${thisConsoleTempLogFile}"
     exit 1
@@ -832,30 +832,34 @@ function setMakeConfigs() {
 
 function buildImage() {
     local blockPath="$1"
-    local block="$2"
-    local buildType="$3"
+    local block=$(basename "$blockPath" | sed -E 's/\.img(\..+)?$//')
     local imagePath=$(mount | grep ${blockPath} | awk '{print $1}')
+    [[ -f "$blockPath" ]] || return 1
     if echo "$blockPath" | grep -q "__rw"; then
         echo "EROFS fs detected, building an EROFS image..."
-        sudo mkfs.erofs -z lz4 --mount-point=$block ./local_build/workflow_builds/${block}.erofs.img $blockPath/
+        sudo mkfs.erofs -z lz4 --mount-point=$block ./local_build/workflow_builds/${block}_built.img $blockPath/
     else 
         echo "F2FS/EXT4 fs detected, unmounting the image.."
         sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
         echo "Successfully unmounted ${blockPath}.."
     fi
-    cp $imagePath ./local_build/workflow_builds/${block}_buildImage.img && rm $imagePath
+    cp $imagePath ./local_build/workflow_builds/${block}_built.img && rm $imagePath
     [ "$?" -ne '0' ] && abort "Failed to copy the image to the build directory, aborting this instance.."
-    echo "Successfully built ${block}_buildImage.img"
+    echo "Successfully built ${block}.img"
     return 0
 }
 
 function uploadGivenFileToTelegram() {
     local userRequestedFile="$1"
+    local optionalCaption="$2"
     [ -f "${userRequestedFile}" ] || return 1
     sendMessageToTelegramChat "Trying to upload ${userRequestedFile} to the requested chat..."
-    curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}" "https://api.telegram.org/bot${theBotToken}/sendDocument" &>output
-    if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
-        console_print "Uploaded ${userRequestedFile} to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
+    local curl_cmd=(curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}")
+    [[ -n "$optionalCaption" ]] && curl_cmd+=(-F "caption=${optionalCaption}")
+    curl_cmd+=("https://api.telegram.org/bot${theBotToken}/sendDocument")
+    "${curl_cmd[@]}" &>output
+    if [ "$(grep -o '"ok":[^,}]*' output | sed 's/"ok"://')" == "true" ]; then
+        console_print "Uploaded ${userRequestedFile} to $(grep -o '"first_name":[^,}]*' output | sed 's/"first_name"://' | xargs) successfully....."
         return 0
     fi
     warns "Failed to upload ${userRequestedFile}, please try again...."
@@ -886,4 +890,110 @@ function deviceCodenameToModel() {
             echo "A30"
         ;;
     esac
+}
+
+function setupLocalImage() {
+    local imagePath="$1"
+    local mountPath="$2"
+    local imageBlock=$(basename "$imagePath" | sed -E 's/\.img(\..+)?$//')
+    case "$(getImageFileSystem ${imagePath})" in
+        "erofs")
+            local dirt="${mountPath}__rw"
+            mkdir -p $dirt
+            sudo fuse.erofs ${imagePath} ${mountPath} || abort "Failed to mount erofs image! (${imagePath})"
+            sudo cp -a --preserve=all ${mountPath} ${dirt} || abort "Failed to copy stuffs to write into erofs fs (${imagePath})"
+            setMakeConfigs $(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR ${dirt} ./src/makeconfigs.prop
+        ;;
+        "f2fs"|"ext4")
+            sudo mount -o rw ${imagePath} ${mountPath} || abort "Failed to mount ${imageBlock} as rw, please try again"
+            setMakeConfigs $(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR ${mountPath} ./src/makeconfigs.prop
+        ;;
+        *)
+            abort "Unknown filesystem to tinker with, aborting..."
+        ;;
+    esac
+}
+
+function repackSuperFromDump() {
+    local dump_file="./dumpOfTheSuperBlock"
+    local image_dir="./local_build/super_extract/"
+    local output_img="$1"
+    local total_size=0
+    local part
+    local group
+    local img_path
+    local size=0
+    local device_size=0
+    local buffer=0
+    local cmd
+    local metadata_size=$(grep -i "Metadata max size:" "$dump_file" | grep -o '[0-9]\+')
+    local current_slot=$(grep -i "Current slot:" "$dump_file" | grep -oE "_[ab]")
+    declare -A part_to_group
+    declare -A added_groups
+    local partitions=()
+
+	# basic checks:
+	if [[ -z "${image_dir}" || -z "${output_img}" ]]; then
+        abort "❌ Invalid paths for image directory or output image."
+	elif ! command -v lpmake >/dev/null; then
+        abort "❌ lpmake not found in PATH."
+	elif [[ ! -f "$dump_file" ]]; then
+        abort "❌ Dump file not found: $dump_file"
+	elif [[ -z "$metadata_size" ]]; then
+		abort "❌ Failed to extract metadata size from dump."
+	elif [[ -z "$current_slot" ]]; then
+		abort "❌ Could not detect current slot from dump."
+	fi
+
+	# main stuffs start from here:
+    while IFS= read -r line; do
+		[[ $line == "Super partition layout:" ]] && break;
+        if [[ $line =~ ^\ {2}Name:\ (.+) ]]; then
+            part="${BASH_REMATCH[1]}"
+			[[ "$part" == *_${current_slot/_/} ]] || continue
+        elif [[ $line =~ ^\ {2}Group:\ (.+) ]]; then
+            group="${BASH_REMATCH[1]}"
+            part_to_group["$part"]="$group"
+		fi
+    done < "$dump_file"
+
+    for part in "${!part_to_group[@]}"; do
+        img_path="$image_dir/$part.img"
+        if [[ -f "$img_path" ]]; then
+            size=$(stat -c%s "$img_path")
+            total_size=$((total_size + size))
+            partitions+=("$part:$img_path:${part_to_group[$part]}")
+        fi
+    done
+
+    [[ ${#partitions[@]} -eq 0 ]] && abort "❌ No valid .img files found in $image_dir"
+
+	# dynamic buffer: 64MiB per partition
+	buffer=$((64 * 1024 * 1024 * ${#partitions[@]}))
+    device_size=$((total_size + buffer))
+
+    cmd="lpmake \
+		--metadata-size $metadata_size \
+		--super-name super \
+		--device super:$device_size"
+
+    for entry in "${partitions[@]}"; do
+        IFS=':' read -r part path group <<< "$entry"
+        if [[ -z "${added_groups[$group]}" ]]; then
+            cmd+=" --group $group:$device_size"
+            added_groups[$group]=1
+        fi
+    done
+
+    for entry in "${partitions[@]}"; do
+        IFS=':' read -r part path group <<< "$entry"
+        cmd+=" --partition $part:readonly:$group"
+        cmd+=" --image $part=\"$path\""
+    done
+	# main stuffs ends from here
+
+    cmd+=" --output \"$output_img\""
+    eval "$cmd"
+
+	[ $? -eq 0 ] || abort "❌ Failed to pack image."
 }
