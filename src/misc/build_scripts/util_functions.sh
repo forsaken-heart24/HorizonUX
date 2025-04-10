@@ -86,7 +86,7 @@ function abort() {
     debugPrint "[:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) due to some reason."
+    sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) | $1"
     rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ./local_build/* output
     uploadGivenFileToTelegram "${thisConsoleTempLogFile}"
     exit 1

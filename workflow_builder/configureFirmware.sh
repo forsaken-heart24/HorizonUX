@@ -23,6 +23,7 @@ PRIVATE_KEY_SETUP_SCRIPT_LINK="$3"
 TARGET_DEVICE="$4"
 theBotToken="$5"
 chatID="$6"
+firmwareZip="./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip"
 
 # source script to fetch functions.
 . ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
@@ -42,7 +43,9 @@ console_print "Starting to build HorizonUX on cloud..."
 console_print "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "Downloading firmware package from the web..."
-download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip"
+download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip" || abort "Failed to download the given firmware package"
+console_print "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
+sendMessageToTelegramChat "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 mv ./src/makeconfigs.prop ./src/makeconfigs.prop_
 if download_stuffs --skip "${MAKECONFIGS_LINK}" "./src/makeconfigs.prop"; then
     rm -rf ./src/makeconfigs.prop_
@@ -50,18 +53,12 @@ else
     mv ./src/makeconfigs.prop_ ./src/makeconfigs.prop
 fi
 download_stuffs --skip "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
-unzip -o "./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip" -d "./local_build/local_build_downloaded_contents/extracted_fw" &>>"$thisConsoleTempLogFile"
-for EXTRACTED_FIRMWARE_FILES in ./local_build/local_build_downloaded_contents/extracted_fw/*.md5; do
-    if echo "${EXTRACTED_FIRMWARE_FILES}" | tr '[:upper:]' '[:lower:]' | grep -q -E 'cp|bl|csc_odm_'; then
-        console_print "Skipping ${EXTRACTED_FIRMWARE_FILES} because it's useless for the build."
-        rm -rf "${EXTRACTED_FIRMWARE_FILES}"
-        continue
-    fi
-    debugPrint "Extracting tar files from $EXTRACTED_FIRMWARE_FILES..."
-    tar -xvf "$EXTRACTED_FIRMWARE_FILES" -C ./local_build/local_build_downloaded_contents/tar_files/ &>>"$thisConsoleTempLogFile" || abort "Failed to extract tar files from $EXTRACTED_FIRMWARE_FILES..."
+for specificTargetFirmwareFiles in $(unzip -l "${firmwareZip}" | grep -E 'AP|HOME_CSC' | awk '{print $4}'); do
+    unzip "${firmwareZip}" "$specificTargetFirmwareFiles" -d "./local_build/local_build_downloaded_contents/extracted_fw" &>>"$thisConsoleTempLogFile"
+    extractedPath="./local_build/local_build_downloaded_contents/extracted_fw/$(basename "$specificTargetFirmwareFiles")"
+    tar -xvf "$extractedPath" -C ./local_build/local_build_downloaded_contents/tar_files/ &>>"$thisConsoleTempLogFile" || abort "Failed to extract tar files from $specificTargetFirmwareFiles..."
+    rm -f "$extractedPath"
 done
-console_print "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
-sendMessageToTelegramChat "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 console_print "Trying to configure images..."
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
     for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
