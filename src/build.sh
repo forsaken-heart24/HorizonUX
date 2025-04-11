@@ -90,6 +90,9 @@ BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_
 BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 
+# fix:
+[ ! -n "${TARGET_BUILD_PRODUCT_NAME}" ] && TARGET_BUILD_PRODUCT_NAME="$1"
+
 # device specific customization:
 if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
 	debugPrint "build.sh: Device specific config and blobs are found, customizing the rom...."

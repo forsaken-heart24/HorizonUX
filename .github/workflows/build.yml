@@ -100,7 +100,8 @@ jobs:
       - name: Modify ROM
         run: |
           chmod +x ./src/build.sh
-          ./src/build.sh
+          ./src/build.sh \
+          "${{ github.event.inputs.target }}"
         
       - name: Pack Firmware And Upload it to Telegram
         run: |
