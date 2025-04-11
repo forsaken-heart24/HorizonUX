@@ -834,10 +834,14 @@ function setMakeConfigs() {
 }
 
 function getImageFileSystem() {
-    if file $1 | grep -q -E 'ext4|EROFS|f2fs'; then
-        string_format -l $(file $1) | grep -q "ext4" && echo ext4
-        string_format -l $(file $1) | grep -q "f2fs" && echo f2fs
-        string_format -l $(file $1) | grep -q "erofs" && echo erofs
+    local info
+    info=$(file "$1")
+    if [[ $info =~ ext4 ]]; then
+        echo ext4
+    elif [[ $info =~ f2fs ]]; then
+        echo f2fs
+    elif [[ $info =~ [eE][rR][oO][fF][sS] ]]; then
+        echo erofs
     fi
 }
 
@@ -907,10 +911,11 @@ function setupLocalImage() {
     local imagePath="$1"
     local mountPath="$2"
     local imageBlock=$(basename "$imagePath" | sed -E 's/\.img(\..+)?$//')
+    local dirt
     case "$(getImageFileSystem ${imagePath})" in
         "erofs")
             console_print "EROFS Image detected, preparing stuffs..."
-            local dirt="${mountPath}__rw"
+            dirt="${mountPath}__rw"
             mkdir -p $dirt
             sudo fuse.erofs ${imagePath} ${mountPath} || abort "Failed to mount erofs image! (${imagePath})"
             sudo cp -a --preserve=all ${mountPath} ${dirt} || abort "Failed to copy stuffs to write into erofs fs (${imagePath})"
@@ -1016,4 +1021,21 @@ function deleteUselessFirmwareFiles() {
     for uselessFirmwarePackages in boot.img.lz4 recovery.img.lz4 super.img.lz4 dtbo.img.lz4 persist.img.lz4 userdata.img.lz4 vbmeta.img.lz4 vbmeta_samsung.img.lz4 dqmdbg.img.lz4 misc.bin.lz4 meta-data/ cache.img.lz4 prism.img.lz4 optics.img.lz4; do
         [ -f "${uselessFirmwarePackages}" ] && rm -rf ./local_build/local_build_downloaded_contents/tar_files/${uselessFirmwarePackages}
     done
+}
+
+function extractStuffsByTheirFormatSpecifier() {
+    local fileToExtract="$1"
+    local outputDirectory="$2"
+    case ${opticsFile#*.} in
+        "lz4")
+            lz4 -d ${fileToExtract} ${outputDirectory} &>>$thisConsoleTempLogFile
+            setupLocalImage "${outputDirectory}"
+        ;;
+        "img")
+            setupLocalImage "${outputDirectory}"
+        ;;
+        *)
+            abort "Unknown format specifier: ${fileToExtract#*.}"
+        ;;
+    esac
 }

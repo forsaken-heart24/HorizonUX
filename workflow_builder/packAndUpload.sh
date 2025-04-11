@@ -16,64 +16,91 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# source script to fetch functions.
+# Source utility functions
 source ./misc/build_scripts/util_functions.sh
 
-# let's build shits:
-for COMMON_FIRMWARE_BLOCKS in system vendor product optics; do
+# Cleanup helpers
+cleanUpFile() {
+    [[ -f "$1" ]] && rm -f "$1"
+}
+
+# Build system/vendor/product images
+for COMMON_FIRMWARE_BLOCKS in system vendor product; do
     for IMAGES in ./local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS} ./local_build/workflow_partitions/*_${COMMON_FIRMWARE_BLOCKS}__rw; do
+        [[ -f "$IMAGES" ]] || continue
         buildImage "${IMAGES}"
     done
 done
 
-if compgen -G "./local_build/*__optics" > /dev/null; then
-    buildImage ./local_build/*__optics
-    zstd -T0 --ultra -22 "./local_build/workflow_builds/optics_built.img" -o "./optics.img.zst" && rm -f "./local_build/workflow_builds/optics_built.img"
-fi
+# Build and compress optics image
+for optics in ./local_build/workflow_builds/*__optics ./local_build/workflow_builds/*__optics__rw; do
+    [[ -f "$optics" ]] || continue
+    buildImage "${optics}"
+    zstd -T0 --ultra -22 "./local_build/workflow_builds/optics_built.img" -o "./optics.img.zst" && cleanUpFile "./local_build/workflow_builds/optics_built.img"
+done
 
-# let's compress the shits:
+# Inform user
 sendMessageToTelegramChat "Packing images into a ${PACK_IMAGE_WITH_TS_FORMAT} file..."
+
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
     for imagesToMove in ./local_build/super_extract/*_built.img; do
-        mv "$imagesToMove" "./local_build/super_extract/$(basename "$imagesToMove" | grep -oE '(system|vendor|product|optics)').img" && rm -rf "$imagesToMove"
+        [[ -f "$imagesToMove" ]] || continue
+        imageName="$(basename "$imagesToMove")"
+        partitionName="$(echo "$imageName" | grep -oE '(system|vendor|product|optics)')" || continue
+        [[ -n "$partitionName" ]] || continue
+        mv "$imagesToMove" "./local_build/super_extract/${partitionName}.img"
     done
     repackSuperFromDump "./super_new.img"
     case "${PACK_IMAGE_WITH_TS_FORMAT}" in
         "tar")
-            tar --create --file="./local_build/workflow_builds/packed_buildImages.tar" ./super_new.img && rm -f "./super_new.img"
+            tar -cf "./local_build/workflow_builds/packed_buildImages.tar" ./super_new.img && cleanUpFile "./super_new.img"
         ;;
         "zstd")
-            zstd -T0 --ultra -22 "./super_new.img" -o "./super_new.img.zst" && rm -f ./super_new.img
+            zstd -T0 --ultra -22 "./super_new.img" -o "./super_new.img.zst" && cleanUpFile "./super_new.img"
         ;;
         "zip")
-            zip -r ./local_build/workflow_builds/packed_buildImages.zip "./super_new.img" && rm -f "./super_new.img"
+            zip -q -r ./local_build/workflow_builds/packed_buildImages.zip "./super_new.img" && cleanUpFile "./super_new.img"
         ;;
     esac
-elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == false ]; then
+else
+    # Non-dynamic: move built images to extract folder
     for imagesToMove in ./local_build/workflow_builds/*_built.img; do
-        mv "$imagesToMove" "./local_build/super_extract/$(basename "$imagesToMove" | grep -oE '(system|vendor|product|optics)').img" && rm -rf "$imagesToMove"
+        [[ -f "$imagesToMove" ]] || continue
+        imageName="$(basename "$imagesToMove")"
+        partitionName="$(echo "$imageName" | grep -oE '(system|vendor|product|optics)')" || continue
+        [[ -n "$partitionName" ]] || continue
+        mv "$imagesToMove" "./local_build/super_extract/${partitionName}.img"
     done
+    # Package images
     for packedImages in ./local_build/workflow_builds/*.img; do
         [[ -f "$packedImages" ]] || continue
         case "${PACK_IMAGE_WITH_TS_FORMAT}" in
             "tar"|"zstd")
-                tar --append --file="./local_build/workflow_builds/packed_buildImages.tar" -C "$(dirname "$packedImages")" "$(basename "$packedImages")" && rm -f "$packedImages"
+                tar --append --file="./local_build/workflow_builds/packed_buildImages.tar" -C "$(dirname "$packedImages")" "$(basename "$packedImages")"
             ;;
             "zip")
-                zip -r ./local_build/workflow_builds/packed_buildImages.zip "$packedImages" && rm -f "$packedImages"
+                zip -q -r ./local_build/workflow_builds/packed_buildImages.zip "$packedImages"
             ;;
         esac
+        cleanUpFile "$packedImages"
     done
-    [[ "${PACK_IMAGE_WITH_TS_FORMAT}" == "zstd" ]] && zstd -T0 --ultra -22 "./local_build/workflow_builds/packed_buildImages.tar" -o "./local_build/workflow_builds/packed_buildImages.zst" && rm -f ./local_build/workflow_builds/packed_buildImages.tar
+    [[ "${PACK_IMAGE_WITH_TS_FORMAT}" == "zstd" ]] && \
+        zstd -T0 --ultra -22 "./local_build/workflow_builds/packed_buildImages.tar" -o "./local_build/workflow_builds/packed_buildImages.zst" && \
+        cleanUpFile "./local_build/workflow_builds/packed_buildImages.tar"
 fi
 
-# send and exit:
-sendMessageToTelegramChat "Build completed successfully at $(TZ=America/Phoenix date +%I:%M%p)"
+# Wrap up and upload
+timestamp=$(TZ=America/Phoenix date +"%b %d %I:%M %p")
+sendMessageToTelegramChat "Build completed successfully at ${timestamp}"
 sendMessageToTelegramChat "Trying to upload the build to Telegram..."
+
 uploadGivenFileToTelegram "$thisConsoleTempLogFile"
-uploadGivenFileToTelegram "./optics.img.zst" "test build for Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | tag @forsaken_heart24 if it boots, Thanks in advance!" || abort "Failed to upload the optics image to Telegram."
-if uploadGivenFileToTelegram "./local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" "test build for Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | tag @forsaken_heart24 if it boots, Thanks in advance!"; then
-    rm -rf ./local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}
+uploadGivenFileToTelegram "./optics.img.zst" "test build for Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | tag @forsaken_heart24 if it boots, Thanks in advance!" || \
+    abort "Failed to upload the optics image to Telegram."
+
+if uploadGivenFileToTelegram "./local_build/workflow_builds/packed_buildImages_${timestamp}.${PACK_IMAGE_WITH_TS_FORMAT}" \
+    "test build for Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | tag @forsaken_heart24 if it boots, Thanks in advance!"; then
+    cleanUpFile "./local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}"
     exit 0
 fi
 exit 1
