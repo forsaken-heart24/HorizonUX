@@ -18,6 +18,8 @@
 
 # fix: ./src/misc/build_scripts/util_functions.sh: line 43: $thisConsoleTempLogFile : No such file or directory
 thisConsoleTempLogFile="./local_build/logs/hux_build.log"
+# fix: touch: cannot touch './local_build/logs/hux_build.log': No such file or directory
+mkdir -p ./local_build/logs/
 theBotToken="$1"
 chatID="$2"
 touch ./local_build/logs/hux_build.log
@@ -25,7 +27,7 @@ touch ./local_build/logs/hux_build.log
 function grep_prop() {
     local variable_name="$1"
     local prop_file="$2"
-    if [[ -z "$variable_name" || -z "$prop_file" || ! -f "$prop_file" ]] && return 1
+    [[ -z "$variable_name" || -z "$prop_file" || ! -f "$prop_file" ]] && return 1
     grep -E "^${variable_name}=" "$prop_file" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"' || return 1
 }
 
