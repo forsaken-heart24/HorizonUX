@@ -24,19 +24,20 @@ rm -rf ./local_build/logs/*
 TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
 
+# jst execve ts 2 fix bugs:
+for i in ./src/makeconfigs.prop ./src/misc/build_scripts/util_functions.sh ./src/monika.conf; do
+	if [ ! -f "$i" ]; then
+		echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
+		sleep 0.5
+		exit 1
+	else
+		debugPrint "Executing ${i}.."
+		source "$i"
+	fi
+done
+
 # ok, fbans dropped!
 if [ ! -f "./cloud" ]; then
-	# Check if required files exist
-	for i in ./src/makeconfigs.prop ./src/misc/build_scripts/util_functions.sh ./src/monika.conf; do
-		if [ ! -f "$i" ]; then
-			echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m Can't find $i file, please try again later...\e[0;37m"
-			sleep 0.5
-			exit 1
-		else
-			debugPrint "Executing ${i}.."
-			source "$i"
-		fi
-	done
 	# Check dependencies
 	for dependenciesRequiredForTheBuild in java python3 zip; do
 		if [ -z "$(command -v ${dependenciesRequiredForTheBuild})" ]; then
@@ -67,9 +68,6 @@ if [ ! -f "./cloud" ]; then
 	console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
 	console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 	console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
-else
-	source ./src/monica.conf
-	source ./src/makeconfigs.prop
 fi
 
 # Locate build.prop files
