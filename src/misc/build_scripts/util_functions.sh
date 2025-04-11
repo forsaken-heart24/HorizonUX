@@ -89,7 +89,9 @@ function abort() {
     tinkerWithCSCFeaturesFile --encode
     sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) | $1"
     rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ./local_build/* output
-    uploadGivenFileToTelegram "${thisConsoleTempLogFile}"
+    uploadGivenFileToTelegram "./src/makeconfigs.prop"
+    uploadGivenFileToTelegram "./src/makeconfigs.prop_"
+    uploadGivenFileToTelegram "$thisConsoleTempLogFile"
     exit 1
 }
 
@@ -817,14 +819,6 @@ function copyDeviceBlobsSafely() {
     return 0
 }
 
-function getImageFileSystem() {
-    if file $1 | grep -q -E 'ext4|EROFS|f2fs'; then
-        string_format -l $(file $1) | grep -q "ext4" && echo ext4
-        string_format -l $(file $1) | grep -q "f2fs" && echo f2fs
-        string_format -l $(file $1) | grep -q "erofs" && echo erofs
-    fi
-}
-
 function setMakeConfigs() {
     local propVariableName="$1"
     local propValue="$2"
@@ -837,6 +831,14 @@ function setMakeConfigs() {
         echo "${propVariableName}=${propValue}" >> "${propFile}.tmp"
     fi
     mv "${propFile}.tmp" "$propFile"
+}
+
+function getImageFileSystem() {
+    if file $1 | grep -q -E 'ext4|EROFS|f2fs'; then
+        string_format -l $(file $1) | grep -q "ext4" && echo ext4
+        string_format -l $(file $1) | grep -q "f2fs" && echo f2fs
+        string_format -l $(file $1) | grep -q "erofs" && echo erofs
+    fi
 }
 
 function buildImage() {
