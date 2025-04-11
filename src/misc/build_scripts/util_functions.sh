@@ -25,12 +25,8 @@ touch ./local_build/logs/hux_build.log
 function grep_prop() {
     local variable_name="$1"
     local prop_file="$2"
-    [[ -z "$variable_name" || -z "$prop_file" ]] && return 1
-    if [ ! -f "$prop_file" ]; then
-        echo "Error: Property file '$prop_file' not found." >&2
-        return 1
-    fi
-    grep "^${variable_name}=" "$prop_file" | cut -d '=' -f 2- | tr -d '"' 2>>$thisConsoleTempLogFile
+    if [[ -z "$variable_name" || -z "$prop_file" || ! -f "$prop_file" ]] && return 1
+    grep -E "^${variable_name}=" "$prop_file" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"' || return 1
 }
 
 function download_stuffs() {

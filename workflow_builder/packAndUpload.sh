@@ -98,7 +98,7 @@ uploadGivenFileToTelegram "$thisConsoleTempLogFile"
 uploadGivenFileToTelegram "./optics.img.zst" "test build for Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | tag @forsaken_heart24 if it boots, Thanks in advance!" || \
     abort "Failed to upload the optics image to Telegram."
 
-if uploadGivenFileToTelegram "./local_build/workflow_builds/packed_buildImages_${timestamp}.${PACK_IMAGE_WITH_TS_FORMAT}" \
+if uploadGivenFileToTelegram "./local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}" \
     "test build for Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | tag @forsaken_heart24 if it boots, Thanks in advance!"; then
     cleanUpFile "./local_build/workflow_builds/packed_buildImages.${PACK_IMAGE_WITH_TS_FORMAT}"
     exit 0
