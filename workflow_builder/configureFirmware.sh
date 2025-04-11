@@ -178,6 +178,3 @@ uploadGivenFileToTelegram "./src/makeconfigs.prop_"
 uploadGivenFileToTelegram "./src/target/${TARGET_DEVICE}/buildTargetProperties.conf"
 uploadGivenFileToTelegram "$thisConsoleTempLogFile"
 sendMessageToTelegramChat "Uploaded stuffs to telegram.."
-
-# execve the builder script:
-./src/build.sh
