@@ -505,11 +505,12 @@ function string_format() {
 }
 
 function generate_random_hash() {
-    local how_much
-    how_much=$(echo "$1")
-    [ "$#" == "1" ] || abort "Not enough / more than enough arguments..."
+    local how_much="$1"
+    local byte_count=$(( (how_much + 1) / 2 ))
+    local hex=$(head -c "$byte_count" /dev/urandom | xxd -p | tr -d '\n')
+    [[ $# -eq 1 ]] || abort "generate_random_hash(): Expected 1 argument, got $#"
     debugPrint "generate_random_hash(): Requested random seed: ${how_much}"
-    timeout 0.1 cat /dev/urandom | xxd -p | head -n 1 | cut -c 1-${how_much}
+    echo "${hex:0:how_much}"
 }
 
 function fetch_rom_arch() {
