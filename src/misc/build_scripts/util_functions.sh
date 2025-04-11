@@ -922,6 +922,7 @@ function setupLocalImage() {
             setMakeConfigs $(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR ${mountPath} ./src/makeconfigs.prop
         ;;
         *)
+            console_print "fs: $(getImageFileSystem ${imagePath}) | Image path: ${imagePath}"
             abort "Unknown filesystem to tinker with, aborting..."
         ;;
     esac
