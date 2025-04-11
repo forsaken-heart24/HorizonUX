@@ -37,7 +37,7 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == true ]; then
     for imagesToMove in ./local_build/super_extract/*_built.img; do
         mv "$imagesToMove" "./local_build/super_extract/$(basename "$imagesToMove" | grep -oE '(system|vendor|product|optics)').img" && rm -rf "$imagesToMove"
     done
-    repackSuperFromDump "./local_build/super_extract/" "./super_new.img"
+    repackSuperFromDump "./super_new.img"
     case "${PACK_IMAGE_WITH_TS_FORMAT}" in
         "tar")
             tar --create --file="./local_build/workflow_builds/packed_buildImages.tar" ./super_new.img && rm -f "./super_new.img"

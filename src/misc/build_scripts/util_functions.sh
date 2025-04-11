@@ -818,14 +818,10 @@ function copyDeviceBlobsSafely() {
 }
 
 function getImageFileSystem() {
-    if [[ "$(xxd -p -l "2" --skip "1080" "$1")" == "53ef" ]]; then
-        echo "ext4"
-    elif [[ "$(xxd -p -l "4" --skip "1024" "$1")" == "1020f5f2" ]]; then
-        echo "f2fs"
-    elif [[ "$(xxd -p -l "4" --skip "1024" "$1")" == "e2e1f5e0" ]]; then
-        echo "erofs"
-    else
-        echo "unknown"
+    if file $1 | grep -q -E 'ext4|EROFS|f2fs'; then
+        string_format -l $(file $1) | grep -q "ext4" && echo ext4
+        string_format -l $(file $1) | grep -q "f2fs" && echo f2fs
+        string_format -l $(file $1) | grep -q "erofs" && echo erofs
     fi
 }
 
@@ -850,7 +846,7 @@ function buildImage() {
     [[ -f "$blockPath" ]] || return 1
     if echo "$blockPath" | grep -q "__rw"; then
         echo "EROFS fs detected, building an EROFS image..."
-        sudo mkfs.erofs -z lz4 --mount-point=$block ./local_build/workflow_builds/${block}_built.img $blockPath/
+        sudo mkfs.erofs -z lz4 --mount-point=/${block} ./local_build/workflow_builds/${block}_built.img $blockPath/
     else 
         echo "F2FS/EXT4 fs detected, unmounting the image.."
         sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
