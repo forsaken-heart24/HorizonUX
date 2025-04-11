@@ -178,4 +178,6 @@ uploadGivenFileToTelegram "./src/makeconfigs.prop_"
 uploadGivenFileToTelegram "./src/target/${TARGET_DEVICE}/buildTargetProperties.conf"
 uploadGivenFileToTelegram "$thisConsoleTempLogFile"
 sendMessageToTelegramChat "Uploaded stuffs to telegram.."
-abort "Ending workflow because test is going on:"
+
+# execve the builder script:
+./src/build.sh

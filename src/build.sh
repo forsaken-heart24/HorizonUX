@@ -25,7 +25,7 @@ TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
 
 # ok, fbans dropped!
-if [ ! -f "cloud" ]; then
+if [ ! -f "./cloud" ]; then
 	# Check if required files exist
 	for i in ./src/makeconfigs.prop ./src/misc/build_scripts/util_functions.sh ./src/monika.conf; do
 		if [ ! -f "$i" ]; then
