@@ -1,4 +1,4 @@
-name: HorizonUX Actions ROM Modifier
+name: HorizonUX Actions Firmware Dumper
 
 on:
   workflow_dispatch:
