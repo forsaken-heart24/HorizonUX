@@ -43,7 +43,7 @@ console_print "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
 console_print "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
 console_print "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
 console_print "########################################################################\033[0m"
-console_print tg "Firmware Dump started at $(TZ=America/Phoenix date '+%d %b %Y, %I:%M%p') (Phoenix Time) | Requested By @${userToTag}"
+console_print tg "Firmware Dump started at $(TZ=America/Phoenix date '+%d %b %Y, %I:%M%p') (Phoenix Time) | Requested By ${userToTag}"
 
 # Download firmware
 console_print "Downloading firmware package..."
@@ -69,13 +69,13 @@ if tar -tf "$HOME_CSC" | grep -q "optics"; then
     tar -xf "$HOME_CSC" -C "${extrdDir}" --wildcards 'optics*'
     extractStuffsByTheirFormatSpecifier "${extrdDir}/optics"* "${cmprsDir}/optics.img" NULL
     compressInZStandard "${cmprsDir}/optics.img" "${cmprsDir}/optics.zst" --${compressionLevel}
-    uploadGivenFileToTelegram "${cmprsDir}/optics.zst" "Here's optics.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/optics.zst"
+    uploadGivenFileToTelegram "${cmprsDir}/optics.zst" "Here's optics.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/optics.zst"
 elif tar -tf "$HOME_CSC" | grep -q "product"; then
     console_print "Found product in HOME_CSC, extracting..."
     tar -xf "$HOME_CSC" -C "${extrdDir}" --wildcards 'product*'
     extractStuffsByTheirFormatSpecifier "${extrdDir}/product"* "${cmprsDir}/product.img" NULL
     compressInZStandard "${cmprsDir}/product.img" "${cmprsDir}/product.zst" --${compressionLevel}
-    uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/product.zst"
+    uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/product.zst"
 fi
 
 # Extract AP content
@@ -84,7 +84,7 @@ if tar -tf "$AP" | grep -q "super"; then
     tar -xf "$AP" -C "${extrdDir}" --wildcards 'super*' || abort "Failed to extract super block from $AP"
     extractStuffsByTheirFormatSpecifier "${extrdDir}/super"* "${cmprsDir}/super.img" NULL
     compressInZStandard "${cmprsDir}/super.img" "${cmprsDir}/super.zst"  --${compressionLevel}
-    uploadGivenFileToTelegram "${cmprsDir}/super.zst" "Here's super.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/super.zst"
+    uploadGivenFileToTelegram "${cmprsDir}/super.zst" "Here's super.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/super.zst"
 elif tar -tf "$AP" | grep -q "system"; then
     for img in system vendor; do
         if tar -tf "$AP" | grep -q "$img"; then
@@ -92,7 +92,7 @@ elif tar -tf "$AP" | grep -q "system"; then
             tar -xf "$AP" -C "${extrdDir}" --wildcards "${img}*" || abort "Failed to extract $img from $AP"
             extractStuffsByTheirFormatSpecifier "${extrdDir}/${img}"* "${cmprsDir}/${img}.img" NULL
             compressInZStandard "${cmprsDir}/${img}.img" "${cmprsDir}/${img}.zst" --${compressionLevel}
-            uploadGivenFileToTelegram "${cmprsDir}/${img}.zst" "Here's ${img}.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
+            uploadGivenFileToTelegram "${cmprsDir}/${img}.zst" "Here's ${img}.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
         fi
     done
 fi
@@ -105,8 +105,7 @@ if [ "${extractKernel}" == "true" ]; then
             tar -xf "${AP}" -C "${extrdDir}" --wildcards "${lowLevelImage}*" || abort "Failed to extract ${lowLevelImage} from ${AP}"
             extractStuffsByTheirFormatSpecifier "${extrdDir}/${lowLevelImage}"* "${cmprsDir}/${lowLevelImage}.img" NULL
             compressInZStandard "${cmprsDir}/${lowLevelImage}.img" "${cmprsDir}/${lowLevelImage}.zst" --${compressionLevel}
-            uploadGivenFileToTelegram "${cmprsDir}/${lowLevelImage}.zst" "Here's ${lowLevelImage}.img from your dump, @${userToTag}"
-            rm -f "${cmprsDir}/${lowLevelImage}.zst" "${extrdDir}/${lowLevelImage}"*
+            uploadGivenFileToTelegram "${cmprsDir}/${lowLevelImage}.zst" "Here's ${lowLevelImage}.img from your dump, ${userToTag}"
         else
             console_print tg "${lowLevelImage}.img is not available in AP"
         fi

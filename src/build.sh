@@ -70,6 +70,9 @@ console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 
+# check:
+[[ ! -f "${SYSTEM_DIR}" || ! -f "${VENDOR_DIR}" ]] && abort "System or vendor partition is not a valid partition!"
+
 # Locate build.prop files
 HORIZON_PRODUCT_PROPERTY_FILE=$(check_build_prop "${PRODUCT_DIR}")
 HORIZON_SYSTEM_PROPERTY_FILE=$(check_build_prop "${SYSTEM_DIR}")
