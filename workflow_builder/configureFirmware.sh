@@ -144,11 +144,3 @@ rmdir $opticsMountPath &>/dev/null
 for mounted_partitions in $(ls ./local_build/workflow_partitions/); do
     ls $mounted_partitions &>>$thisConsoleTempLogFile
 done
-
-# log:
-setMakeConfigs TARGET_BUILD_PRODUCT_NAME "${TARGET_DEVICE}" ./src/makeconfigs.prop
-uploadGivenFileToTelegram "./src/makeconfigs.prop"
-uploadGivenFileToTelegram "./src/makeconfigs.prop_"
-uploadGivenFileToTelegram "./src/target/${TARGET_DEVICE}/buildTargetProperties.conf"
-uploadGivenFileToTelegram "$thisConsoleTempLogFile"
-sendMessageToTelegramChat "Uploaded stuffs to telegram.."

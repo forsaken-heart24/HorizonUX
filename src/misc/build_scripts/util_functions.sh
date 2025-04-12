@@ -813,32 +813,39 @@ function setMakeConfigs() {
 }
 
 function getImageFileSystem() {
-    local info
-    info=$(file "$1")
-    if [[ $info =~ ext4 ]]; then
-        echo ext4
-    elif [[ $info =~ f2fs ]]; then
-        echo f2fs
-    elif [[ $info =~ [eE][rR][oO][fF][sS] ]]; then
-        echo erofs
+    local image="$1"
+    local info=$(file -b "$image")
+    if [[ "$info" =~ ext4 ]]; then
+        echo "ext4"
+    elif [[ "$info" =~ f2fs ]]; then
+        echo "f2fs"
+    elif [[ "$info" =~ [Ee][Rr][Oo][Ff][Ss] ]]; then
+        echo "erofs"
+    else
+        echo "unknown"
     fi
 }
 
 function buildImage() {
     local blockPath="$1"
     local block=$(basename "$blockPath" | sed -E 's/\.img(\..+)?$//')
-    local imagePath=$(mount | grep ${blockPath} | awk '{print $1}')
+    local imagePath=$(mount | grep "${blockPath}" | awk '{print $1}')
     [[ -f "$blockPath" ]] || return 1
-    if echo "$blockPath" | grep -q "__rw"; then
+    mkdir -p ./local_build/workflow_builds/
+    if [[ "$blockPath" =~ __rw$ ]]; then
         echo "EROFS fs detected, building an EROFS image..."
-        sudo mkfs.erofs -z lz4 --mount-point=/${block} ./local_build/workflow_builds/${block}_built.img $blockPath/
+        sudo mkfs.erofs -z lz4 --mount-point=/"${block}" "./local_build/workflow_builds/${block}_built.img" "${blockPath}/" || \
+            abort "Failed to build EROFS image from ${blockPath}"
     else 
-        echo "F2FS/EXT4 fs detected, unmounting the image.."
-        sudo umount "${blockPath}" || abort "Failed to unmount the image, aborting this instance.."
-        echo "Successfully unmounted ${blockPath}.."
+        echo "F2FS/EXT4 fs detected, unmounting the image..."
+        sudo umount "${blockPath}" || abort "Failed to unmount ${blockPath}, aborting this instance..."
+        echo "Successfully unmounted ${blockPath}."
     fi
-    cp $imagePath ./local_build/workflow_builds/${block}_built.img && rm $imagePath
-    [ "$?" -ne '0' ] && abort "Failed to copy the image to the build directory, aborting this instance.."
+    if [[ -f "$imagePath" ]]; then
+        cp "$imagePath" "./local_build/workflow_builds/${block}_built.img" || \
+            abort "Failed to copy the image to the build directory."
+        rm "$imagePath"
+    fi
     echo "Successfully built ${block}.img"
     return 0
 }
@@ -892,25 +899,29 @@ function deviceCodenameToModel() {
 function setupLocalImage() {
     local imagePath="$1"
     local mountPath="$2"
-    local imageBlock=$(basename "$imagePath" | sed -E 's/\.img(\..+)?$//')
+    local imageBlock="$(basename "$imagePath" | sed -E 's/\.img(\..+)?$//')"
     local dirt
-    case "$(getImageFileSystem ${imagePath})" in
+    local fsType
+
+    fsType="$(getImageFileSystem "${imagePath}")"
+    console_print "Detected filesystem: ${fsType}"
+
+    case "$fsType" in
         "erofs")
-            console_print "EROFS Image detected, preparing stuffs..."
+            console_print "EROFS image detected, preparing for mount..."
             dirt="${mountPath}__rw"
-            mkdir -p $dirt
-            sudo fuse.erofs ${imagePath} ${mountPath} || abort "Failed to mount erofs image! (${imagePath})"
-            sudo cp -a --preserve=all ${mountPath} ${dirt} || abort "Failed to copy stuffs to write into erofs fs (${imagePath})"
-            setMakeConfigs $(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR ${dirt} ./src/makeconfigs.prop
+            mkdir -p "$dirt"
+            sudo fuse.erofs "${imagePath}" "${mountPath}" || abort "Failed to mount EROFS image: ${imagePath}"
+            sudo cp -a --preserve=all "${mountPath}/." "${dirt}/" || abort "Failed to copy contents to writable directory: ${dirt}"
+            setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${dirt}" ./src/makeconfigs.prop
         ;;
         "f2fs"|"ext4")
-            console_print "$(getImageFileSystem ${imagePath}) Image detected, preparing stuffs..."
-            sudo mount -o rw ${imagePath} ${mountPath} || abort "Failed to mount ${imageBlock} as rw, please try again"
-            setMakeConfigs $(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR ${mountPath} ./src/makeconfigs.prop
+            console_print "${fsType} image detected, attempting read-write mount..."
+            sudo mount -o rw "${imagePath}" "${mountPath}" || abort "Failed to mount ${imageBlock} as read-write"
+            setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${mountPath}" ./src/makeconfigs.prop
         ;;
         *)
-            console_print "fs: $(getImageFileSystem ${imagePath}) | Image path: ${imagePath}"
-            abort "Unknown filesystem to tinker with, aborting..."
+            abort "Filesystem type '${fsType}' not supported. Image path: ${imagePath}"
         ;;
     esac
 }

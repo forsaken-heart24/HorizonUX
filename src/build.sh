@@ -17,7 +17,7 @@
 #
 
 # misc variables
-BUILD_USERNAME="$(string_format --upper "$(id -un | cut -c 1-1)")$(id -un | cut -c 2-200)"
+BUILD_USERNAME="$(tr '[:lower:]' '[:upper:]' <<< "$(id -un | cut -c1-1)")$(id -un | cut -c2-)"
 thisConsoleTempLogFile="./local_build/logs/hux_build.log"
 rm -rf ./local_build/logs/*
 TMPDIR="$(mktemp -d)"
