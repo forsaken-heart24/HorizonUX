@@ -203,63 +203,44 @@ function build_and_sign() {
 
 function catch_duplicates_in_xml() {
     local feature_code="$1"
-    local file="$2" 
-    
-    # Convert feature_code to uppercase
-    feature_code="$(echo "${feature_code}" | tr '[:lower:]' '[:upper:]')"
-
-    # Initialize count
-    count=0
-    
-    # Count occurrences of the feature_code in the file
-    while IFS= read -r line; do
-        if echo "$line" | grep -q "${feature_code}"; then
-        count=$((count + 1))
-        fi
-    done < "${file}"
-    
-    # no need to explain tbh
-    echo "${count}"
+    local file="$2"
+    grep -c "${feature_code}" "$file"
 }
 
 function add_float_xml_values() {
     local feature_code="$(string_format -u "$1")"
-    local feature_code_value="$2"
-    
-    # check if we have duplicates or not, if we have anything extra, call the catch_duplicates_in_xml to do the job lol.
+    local feature_code_value="$2"   
+    # Check if the feature_code already exists in the XML file
     if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == "0" ]; then
-        {
-            while IFS= read -r line; do
-                if [[ "${line}" == "<SecFloatingFeatureSet>" ]]; then
-                    echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
-                else
-                    echo "${line}"
-                fi
-            done
-        } < "${BUILD_TARGET_FLOATING_FEATURE_PATH}" > "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+        # Insert the new feature code into the XML under <SecFloatingFeatureSet>
+        xmlstarlet ed \
+            -L \
+            -s "/SecFloatingFeatureSet" \
+            -t elem \
+            -n "${feature_code}" \
+            -v "${feature_code_value}" \
+            "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     else
+        # If the feature code already exists, call a function to modify the XML
         change_xml_values "${feature_code}" "${feature_code_value}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     fi
 }
 
 function add_csc_xml_values() {
-    local feature_code="$(string_format -u "$1")"
+    local feature_code
+    feature_code="$(string_format -u "$1")"
     local feature_code_value="$2"
-
-    # write it to the path
     for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
         if [ -f "$EXPECTED_CSC_FEATURE_XML_PATH" ]; then
             if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == "0" ]; then
-                {
-                    while IFS= read -r line; do
-                        if [[ "${line}" == "<SamsungMobileFeature>" ]]; then
-                            echo "    <${feature_code}>${feature_code_value}</${feature_code}>"
-                        else
-                            echo "${line}"
-                        fi
-                    done
-                } < "${EXPECTED_CSC_FEATURE_XML_PATH}" > "${EXPECTED_CSC_FEATURE_XML_PATH}"
-            else 
+                xmlstarlet ed \
+                    -L \
+                    -s "/SamsungMobileFeature" \
+                    -t elem \
+                    -n "${feature_code}" \
+                    -v "${feature_code_value}" \
+                    "$EXPECTED_CSC_FEATURE_XML_PATH"
+            else
                 change_xml_values "${feature_code}" "${feature_code_value}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
             fi
         fi
@@ -304,7 +285,7 @@ function tinkerWithCSCFeaturesFile() {
 }
 
 function change_xml_values() {
-    local feature_code="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
+    local feature_code="$1"
     local feature_code_value="$2"
     local file="$3"
 
@@ -313,23 +294,23 @@ function change_xml_values() {
     [ -z "$file" ] && abort "Error: No XML file specified!"
     [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!"
 
-    # uhrm achshually!
-    if grep -q "${feature_code}=" "$file"; then
-        if ! grep -q "${feature_code}=\"${feature_code_value}\"" "$file"; then
-            sed -i.bak "s|\(${feature_code}=\)\"[^\"]*\"|\1\"${feature_code_value}\"|g" "$file"
-            debugPrint "change_xml_values(): Updated ${feature_code} to ${feature_code_value} in $file"
-        else
-            debugPrint "change_xml_values(): ${feature_code} is already set to ${feature_code_value}, skipping."
-        fi
-    elif grep -qi "<${feature_code}>" "$file"; then
-        if ! grep -q "<${feature_code}>${feature_code_value}</${feature_code}>" "$file"; then
-            sed -i.bak "s|<${feature_code}>[^<]*</${feature_code}>|<${feature_code}>${feature_code_value}</${feature_code}>|g" "$file"
-            debugPrint "change_xml_values(): Updated <${feature_code}> value to ${feature_code_value}"
-        else
-            debugPrint "change_xml_values(): <${feature_code}> is already set to ${feature_code_value}, skipping."
-        fi
+    # Check if the feature code is already set to the desired value
+    if xmlstarlet sel -t -v "count(//${feature_code}[text() = '${feature_code_value}'])" "$file" | grep -q '1'; then
+        debugPrint "change_xml_values(): ${feature_code} is already set to ${feature_code_value}, skipping."
+        return
+    fi
+
+    # If the feature code is an attribute (e.g., feature_code="value"), update it
+    if xmlstarlet sel -t -v "count(//@${feature_code})" "$file" | grep -q '[1-9]'; then
+        xmlstarlet ed -L -u "//*[@${feature_code}]" -v "${feature_code_value}" "$file"
+        debugPrint "change_xml_values(): Updated ${feature_code} to ${feature_code_value} in $file"
+    
+    # If the feature code is an element (e.g., <feature_code>value</feature_code>), update it
+    elif xmlstarlet sel -t -v "count(//${feature_code})" "$file" | grep -q '[1-9]'; then
+        xmlstarlet ed -L -u "//${feature_code}" -v "${feature_code_value}" "$file"
+        debugPrint "change_xml_values(): Updated <${feature_code}> value to ${feature_code_value} in $file"
     else
-        debugPrint "change_xml_values(): No matching ${feature_code} or ${manifest_attr} found. Skipping modification."
+        debugPrint "change_xml_values(): No matching ${feature_code} found. Skipping modification."
     fi
 }
 
@@ -370,6 +351,7 @@ function remove_attributes() {
     # Create output file
     touch "$OUTPUT_FILE"
     # Start writing new XML
+    {
     {
         # Read the input XML file line by line
         while IFS='' read -r line; do
@@ -742,34 +724,21 @@ function manageCameraFeatures() {
     local extvalues="$3"
     local afterThisAttribute="$4"
     local XMLFile
+
+    # handle args:
     if [ "${arg}" == "--add" ]; then
         XMLFile="$5"
-        # fixes confilcts
+        # First, remove any existing feature (to avoid conflicts)
         manageCameraFeatures --remove "${featureName}" "${XMLFile}"
-        {
-            while IFS= read -r line; do
-                if echo "${line}" | awk '{print $2}' | grep -q ${afterThisAttribute}; then
-                    echo -e "\t    <local name=${featureName} ${extvalues}/>"
-                else
-                    echo -e "\t${line}"
-                fi
-            done
-            echo -e "\t</resources>"
-        } < "${XMLFile}" > ${XMLFile}_tmp
+        # Add new feature after the specified attribute
+        xmlstarlet ed -L -s "//resources/*[name()='${afterThisAttribute}']" -t elem -n "${featureName}" -v "${extvalues}" "$XMLFile"
+        echo "</resources>" >> "$XMLFile"  # Ensure the resources close tag is still added.
     elif [ "${arg}" == "--remove" ]; then
         XMLFile="$3"
-        {
-            while IFS= read -r line; do
-                if echo "${line}" | grep -q ${featureName}; then
-                    continue
-                else
-                    echo -e "\t${line}"
-                fi
-            done
-            echo -e "\t</resources>"
-        } < "${XMLFile}" > ${XMLFile}_tmp
+        # Remove the feature from the XML
+        xmlstarlet ed -L -d "//resources/*[name()='${featureName}']" "$XMLFile"
+        echo "</resources>" >> "$XMLFile"  # Ensure the resources close tag is still added.
     fi
-    mv  ${XMLFile}_tmp ${XMLFile}
 }
 
 function parseBuildValues() {
@@ -822,9 +791,20 @@ function setMakeConfigs() {
     local propVariableName="$1"
     local propValue="$2"
     local propFile="$3"
-    if grep -q "^${propVariableName}=" "$propFile"; then
-        awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" \
-            '{ if ($0 ~ pat) print value; else print $0; }' "$propFile" > "${propFile}.tmp"
+    if grep -qE "^${propVariableName}=" "$propFile"; then
+        awk -v key="$propVariableName" -v val="$propValue" '
+        BEGIN { updated=0 }
+        {
+            if ($0 ~ "^" key "=") {
+                print key "=" val
+                updated=1
+            } else {
+                print
+            }
+        }
+        END {
+            if (!updated) print key "=" val
+        }' "$propFile" > "${propFile}.tmp"
     else
         cp "$propFile" "${propFile}.tmp"
         echo "${propVariableName}=${propValue}" >> "${propFile}.tmp"

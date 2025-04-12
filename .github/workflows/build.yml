@@ -81,7 +81,7 @@ jobs:
 
       - name: Install Dependencies and Setup Environment
         run: |
-          sudo apt install -y zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3
+          sudo apt install -y zstd zip tar xxd unzip wget curl erofs-utils lz4 gcc python3 xmlstarlet
           for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds/ super_extract/; do
             mkdir -p "./local_build/$i"
           done

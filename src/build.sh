@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 # Copyright (C) 2025 Luna
 #
@@ -37,38 +36,35 @@ for i in ./src/makeconfigs.prop ./src/misc/build_scripts/util_functions.sh ./src
 done
 
 # ok, fbans dropped!
-if [ ! -f "./cloud" ]; then
-	# Check dependencies
-	for dependenciesRequiredForTheBuild in java python3 zip; do
-		if [ -z "$(command -v ${dependenciesRequiredForTheBuild})" ]; then
-			abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
-		fi
-	done
-	# mako mako mako mako those who know💀
-	for i in system/product/priv-app system/product/etc system/product/overlay \
-			system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
-			system/etc/init/ tmp/hux/; do
-		mkdir -p "./local_build/$i"
-		debugPrint "Making ./local_build/${i} directory.."
-	done
-	clear
-	echo -e "\033[0;31m########################################################################"
-	echo -e "   _  _     _   _            _                _   ___  __"
-	echo -e " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
-	echo -e "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
-	echo -e "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
-	echo -e "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
-	echo -e "                                                         "
-	echo -e "########################################################################\033[0m"
-	console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
-	console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
-	console_print "The Current Username : $BUILD_USERNAME"
-	console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
-	console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
-	console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
-	console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
-	console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
-fi
+for dependenciesRequiredForTheBuild in java python3 zip; do
+	if [ -z "$(command -v ${dependenciesRequiredForTheBuild})" ]; then
+		abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
+	fi
+done
+# mako mako mako mako those who know💀
+for i in system/product/priv-app system/product/etc system/product/overlay \
+		system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
+		system/etc/init/ tmp/hux/; do
+	mkdir -p "./local_build/$i"
+	debugPrint "Making ./local_build/${i} directory.."
+done
+clear
+echo -e "\033[0;31m########################################################################"
+echo -e "   _  _     _   _            _                _   ___  __"
+echo -e " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
+echo -e "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
+echo -e "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
+echo -e "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
+echo -e "                                                         "
+echo -e "########################################################################\033[0m"
+console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
+console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
+console_print "The Current Username : $BUILD_USERNAME"
+console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
+console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
+console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
+console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
+console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 
 # Locate build.prop files
 HORIZON_PRODUCT_PROPERTY_FILE=$(check_build_prop "${PRODUCT_DIR}")
