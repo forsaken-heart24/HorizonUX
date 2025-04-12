@@ -1003,18 +1003,20 @@ function deleteUselessFirmwareFiles() {
 
 function extractStuffsByTheirFormatSpecifier() {
     local fileToExtract="$1"
-    local outputDirectory="$2"
-    local skipMounts="$3"
-    case ${opticsFile#*.} in
-        "lz4")
-            lz4 -d ${fileToExtract} ${outputDirectory} &>>$thisConsoleTempLogFile
-            [ -z "${skipMounts}" ] && setupLocalImage "${outputDirectory}"
+    local outputPath="$2"
+    local skipMounts="${3:-}"
+    local extension="${fileToExtract##*.}"
+    case "$extension" in
+        lz4)
+            console_print "Decompressing LZ4 image: $fileToExtract"
+            lz4 -d "$fileToExtract" "$outputPath" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
+            [[ -z "$skipMounts" ]] && setupLocalImage "$outputPath"
         ;;
-        "img")
-            [ -z "${skipMounts}" ] && setupLocalImage "${outputDirectory}"
+        img)
+            [[ -z "$skipMounts" ]] && setupLocalImage "$outputPath"
         ;;
         *)
-            abort "Unknown format specifier: ${fileToExtract#*.}"
+            abort "Unknown format specifier: .$extension (File: $fileToExtract)"
         ;;
     esac
 }
