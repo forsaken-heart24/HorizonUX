@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2025 Luna
+# Copyright (C) 2025 Luna <luna.realm.io.bennett24@outlook.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -144,32 +144,6 @@ rmdir $opticsMountPath &>/dev/null
 for mounted_partitions in $(ls ./local_build/workflow_partitions/); do
     ls $mounted_partitions &>>$thisConsoleTempLogFile
 done
-
-# Try to locate system floating_feature.xml
-for systemPath in ./local_build/workflow_partitions/*__system ./local_build/workflow_partitions/*__system__rw; do
-    if [ -f "$systemPath/etc/floating_feature.xml" ]; then
-        systemFloatingFeature="$systemPath/etc/floating_feature.xml"
-        break
-    fi
-done
-
-# Try to locate vendor floating_feature.xml
-for vendorPath in ./local_build/workflow_partitions/*__vendor ./local_build/workflow_partitions/*__vendor__rw; do
-    if [ -f "$vendorPath/etc/floating_feature.xml" ]; then
-        vendorFloatingFeature="$vendorPath/etc/floating_feature.xml"
-        break
-    fi
-done
-
-# Apply configs depending on SDK version
-case "${BUILD_TARGET_SDK_VERSION}" in
-    28|29|30)
-        [ -n "$vendorFloatingFeature" ] && setMakeConfigs "BUILD_TARGET_FLOATING_FEATURE_PATH" "$vendorFloatingFeature"
-        ;;
-    31|32|33|34|35|36|37)
-        [ -n "$systemFloatingFeature" ] && setMakeConfigs "BUILD_TARGET_FLOATING_FEATURE_PATH" "$systemFloatingFeature"
-        ;;
-esac
 
 # log:
 setMakeConfigs TARGET_BUILD_PRODUCT_NAME "${TARGET_DEVICE}" ./src/makeconfigs.prop

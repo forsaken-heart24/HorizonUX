@@ -22,6 +22,7 @@ thisConsoleTempLogFile="./local_build/logs/hux_build.log"
 rm -rf ./local_build/logs/*
 TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
+[ ! -f "${thisConsoleTempLogFile}" ] && touch $thisConsoleTempLogFile
 
 # jst execve ts 2 fix bugs:
 for i in ./src/makeconfigs.prop ./src/misc/build_scripts/util_functions.sh ./src/monika.conf; do
@@ -41,6 +42,7 @@ for dependenciesRequiredForTheBuild in java python3 zip; do
 		abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
 	fi
 done
+
 # mako mako mako mako those who know💀
 for i in system/product/priv-app system/product/etc system/product/overlay \
 		system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
@@ -48,6 +50,8 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 	mkdir -p "./local_build/$i"
 	debugPrint "Making ./local_build/${i} directory.."
 done
+
+# bruh
 clear
 echo -e "\033[0;31m########################################################################"
 echo -e "   _  _     _   _            _                _   ___  __"
@@ -88,6 +92,16 @@ BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROP
 
 # fix:
 [ ! -n "${TARGET_BUILD_PRODUCT_NAME}" ] && TARGET_BUILD_PRODUCT_NAME="$1"
+
+# floating feature conf depending on SDK version:
+case "${BUILD_TARGET_SDK_VERSION}" in
+    28|29|30)
+    	setMakeConfigs "BUILD_TARGET_FLOATING_FEATURE_PATH" "${VENDOR_DIR}/etc/floating_feature.xml" ./src/target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf
+    ;;
+    31|32|33|34|35|36|37)
+		setMakeConfigs "BUILD_TARGET_FLOATING_FEATURE_PATH" "${SYSTEM_DIR}/etc/floating_feature.xml" ./src/target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf
+    ;;
+esac
 
 # device specific customization:
 if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
