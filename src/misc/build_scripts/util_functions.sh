@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2025 Luna
+# Copyright (C) 2025 Luna <luna.realm.io.bennett24@outlook.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -351,7 +351,6 @@ function remove_attributes() {
     # Create output file
     touch "$OUTPUT_FILE"
     # Start writing new XML
-    {
     {
         # Read the input XML file line by line
         while IFS='' read -r line; do
