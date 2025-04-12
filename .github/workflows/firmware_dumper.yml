@@ -15,6 +15,9 @@ on:
       userToTag:
         description: 'Enter your / their Telegram User ID to tag'
         required: true
+      topicID:
+        description: 'Enter your / their Telegram Topic ID (only if you have enabled them)'
+        required: false
       kernel_image:
         description: 'Do you want kernel and recovery image?'
         default: 'false'
@@ -75,4 +78,5 @@ jobs:
             "${{ github.event.inputs.telegram_bot_token }}" \
             "${{ github.event.inputs.telegram_chat_id }}" \
             "${{ github.event.inputs.kernel_image }}" \
-            "${{ github.event.inputs.userToTag }}"
+            "${{ github.event.inputs.userToTag }}" \
+            "${{ github.event.inputs.topicID }}"

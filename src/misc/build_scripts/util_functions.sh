@@ -22,6 +22,7 @@ thisConsoleTempLogFile="./local_build/logs/hux_build.log"
 mkdir -p ./local_build/logs/
 theBotToken="$1"
 chatID="$2"
+topicID="$3"
 touch ./local_build/logs/hux_build.log
 
 function grep_prop() {

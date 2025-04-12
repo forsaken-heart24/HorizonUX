@@ -22,6 +22,7 @@ theBotToken="$2"
 chatID="$3"
 extractKernel="$4"
 userToTag="$5"
+topicID="$6"
 
 # Paths
 firmwareZip="./local_build/downloads/firmware.zip"
@@ -31,7 +32,7 @@ cmprsDir="./local_build/cmprs"
 mkdir -p "${extrdDir}" "${cmprsDir}" "./local_build/downloads" "./local_build/logs"
 
 # Source script to fetch functions
-. ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
+. ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}" ${topicID}
 
 # Header
 console_print "\033[0;31m########################################################################"
