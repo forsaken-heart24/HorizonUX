@@ -20,6 +20,8 @@
 TARGET_DEVICE_FULL_FIRMWARE_LINK="$1"
 theBotToken="$2"
 chatID="$3"
+extractKernel="$4"
+userToTag="$5"
 
 # Paths
 firmwareZip="./local_build/downloads/firmware.zip"
@@ -39,7 +41,7 @@ console_print "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
 console_print "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
 console_print "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
 console_print "########################################################################\033[0m"
-console_print tg "Firmware Dump started at $(TZ=America/Phoenix date '+%d %b %Y, %I:%M%p') (Phoenix Time)"
+console_print tg "Firmware Dump started at $(TZ=America/Phoenix date '+%d %b %Y, %I:%M%p') (Phoenix Time) | Requested By @${userToTag}"
 
 # Download firmware
 console_print "Downloading firmware package..."
@@ -61,39 +63,55 @@ AP=$(find "${extrdDir}" -type f -name 'AP*.tar.md5' | head -n1)
 
 # Extract HOME_CSC content
 if tar -tf "$HOME_CSC" | grep -q "optics"; then
-    console_print tg "Found optics in HOME_CSC, extracting..."
+    console_print "Found optics in HOME_CSC, extracting..."
     tar -xf "$HOME_CSC" -C "${extrdDir}" --wildcards 'optics*'
     extractStuffsByTheirFormatSpecifier "${extrdDir}/optics"* "${cmprsDir}/optics.img" NULL
     zstd -T0 --ultra -22 "${cmprsDir}/optics.img" -o "${cmprsDir}/optics.zst"
-    uploadGivenFileToTelegram "${cmprsDir}/optics.zst" && rm -f "${cmprsDir}/optics.zst"
+    uploadGivenFileToTelegram "${cmprsDir}/optics.zst" "Here's optics.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/optics.zst"
 elif tar -tf "$HOME_CSC" | grep -q "product"; then
-    console_print tg "Found product in HOME_CSC, extracting..."
+    console_print "Found product in HOME_CSC, extracting..."
     tar -xf "$HOME_CSC" -C "${extrdDir}" --wildcards 'product*'
     extractStuffsByTheirFormatSpecifier "${extrdDir}/product"* "${cmprsDir}/product.img" NULL
     zstd -T0 --ultra -22 "${cmprsDir}/product.img" -o "${cmprsDir}/product.zst"
-    uploadGivenFileToTelegram "${cmprsDir}/product.zst" && rm -f "${cmprsDir}/product.zst"
+    uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/product.zst"
 fi
 
 # Extract AP content
 if tar -tf "$AP" | grep -q "super"; then
     console_print "Found super in AP, extracting..."
-    tar -xf "$AP" -C "${extrdDir}" --wildcards 'super*'
+    tar -xf "$AP" -C "${extrdDir}" --wildcards 'super*' || abort "Failed to extract super block from $AP"
     extractStuffsByTheirFormatSpecifier "${extrdDir}/super"* "${cmprsDir}/super.img" NULL
-    zstd -T0 --ultra -22 "${cmprsDir}/super.img" -o "${cmprsDir}/super.zst"
-    uploadGivenFileToTelegram "${cmprsDir}/super.zst" && rm -f "${cmprsDir}/super.zst"
+    zstd -T0 --ultra -22 "${cmprsDir}/super.img" -o "${cmprsDir}/super.zst" || abort "Failed to compress super.img as a zstd archive!"
+    uploadGivenFileToTelegram "${cmprsDir}/super.zst" "Here's super.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/super.zst"
 elif tar -tf "$AP" | grep -q "system"; then
     for img in system vendor; do
         if tar -tf "$AP" | grep -q "$img"; then
             console_print "Found ${img} in AP, extracting..."
-            tar -xf "$AP" -C "${extrdDir}" --wildcards "${img}*"
+            tar -xf "$AP" -C "${extrdDir}" --wildcards "${img}*" || abort "Failed to extract $img from $AP"
             extractStuffsByTheirFormatSpecifier "${extrdDir}/${img}"* "${cmprsDir}/${img}.img" NULL
-            zstd -T0 --ultra -22 "${cmprsDir}/${img}.img" -o "${cmprsDir}/${img}.zst"
-            uploadGivenFileToTelegram "${cmprsDir}/${img}.zst" && rm -f "${cmprsDir}/${img}.zst"
-            rm -f "${extrdDir}/${img}"*
+            zstd -T0 --ultra -22 "${cmprsDir}/${img}.img" -o "${cmprsDir}/${img}.zst" || abort "Failed to compress ${img}.img as a zstd archive!"
+            uploadGivenFileToTelegram "${cmprsDir}/${img}.zst" "Here's ${img}.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
         fi
     done
 fi
 
-console_print tg "Firmware dump and upload complete!"
+# Extract boot / kernel and recovery:
+if [ "${extractKernel}" == "true" ]; then
+    for lowLevelImage in boot recovery; do
+        if tar -tf "${AP}" | grep -q "${lowLevelImage}"; then
+            console_print "Found ${lowLevelImage} in AP, extracting..."
+            tar -xf "${AP}" -C "${extrdDir}" --wildcards "${lowLevelImage}*" || abort "Failed to extract ${lowLevelImage} from ${AP}"
+            extractStuffsByTheirFormatSpecifier "${extrdDir}/${lowLevelImage}"* "${cmprsDir}/${lowLevelImage}.img" NULL
+            zstd -T0 --ultra -22 "${cmprsDir}/${lowLevelImage}.img" -o "${cmprsDir}/${lowLevelImage}.zst" || abort "Failed to compress ${lowLevelImage}.img!"
+            uploadGivenFileToTelegram "${cmprsDir}/${lowLevelImage}.zst" "Here's ${lowLevelImage}.img from your dump, @${userToTag}"
+            rm -f "${cmprsDir}/${lowLevelImage}.zst" "${extrdDir}/${lowLevelImage}"*
+        else
+            console_print tg "${lowLevelImage}.img is not available in AP"
+        fi
+    done
+fi
+
+console_print "Firmware dump and upload complete!"
+uploadGivenFileToTelegram "${thisConsoleTempLogFile}" "Script logs, check this file if you are concerned! Thank you!"
 rm -rf ./local_build/
 exit 0

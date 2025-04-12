@@ -12,10 +12,20 @@ on:
       telegram_chat_id:
         description: 'Enter your Telegram chat ID'
         required: true
+      userToTag:
+        description: 'Enter your / their Telegram User ID to tag'
+        required: true
+      kernel_image:
+        description: 'Do you want kernel and recovery image?'
+        default: 'false'
+        type: choice
+        options:
+          - true
+          - false
       cleanup_disk:
         description: 'Do you want to clean the disk before building?'
         required: true
-        default: 'false'
+        default: 'true'
         type: choice
         options:
           - true
@@ -63,4 +73,6 @@ jobs:
           ./workflow_builder/firmwareDumper.sh \
             "${{ github.event.inputs.firmware_url }}" \
             "${{ github.event.inputs.telegram_bot_token }}" \
-            "${{ github.event.inputs.telegram_chat_id }}" 
+            "${{ github.event.inputs.telegram_chat_id }}" \
+            "${{ github.event.inputs.kernel_image }}" \
+            "${{ github.event.inputs.userToTag }}"

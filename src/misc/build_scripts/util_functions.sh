@@ -845,14 +845,15 @@ function buildImage() {
 function uploadGivenFileToTelegram() {
     local userRequestedFile="$1"
     local optionalCaption="$2"
+    local curl_cmd=(curl -s -F "chat_id=${chatID}" -F "document=@${userRequestedFile}")
     [ -f "${userRequestedFile}" ] || return 1
     sendMessageToTelegramChat "Trying to upload ${userRequestedFile} to the requested chat..."
-    local curl_cmd=(curl -F "chat_id=${chatID}" -F "document=@${userRequestedFile}")
     [[ -n "$optionalCaption" ]] && curl_cmd+=(-F "caption=${optionalCaption}")
+    [[ -n "$topicID" ]] && curl_cmd+=(-F "message_thread_id=${topicID}")
     curl_cmd+=("https://api.telegram.org/bot${theBotToken}/sendDocument")
     "${curl_cmd[@]}" &>output
     if [ "$(grep -o '"ok":[^,}]*' output | sed 's/"ok"://')" == "true" ]; then
-        console_print "Uploaded ${userRequestedFile} to $(grep -o '"first_name":[^,}]*' output | sed 's/"first_name"://' | xargs) successfully....."
+        console_print "Uploaded ${userRequestedFile} successfully....."
         return 0
     fi
     warns "Failed to upload ${userRequestedFile}, please try again...."
@@ -861,16 +862,18 @@ function uploadGivenFileToTelegram() {
 
 function sendMessageToTelegramChat() {
     local messageToBeSent="$1"
-    if [ -z "${theBotToken}" ]; then
-        console_print "${messageToBeSent}"
+    [ -z "${theBotToken}" ] && return 1
+    local post_data=(
+        -d "chat_id=${chatID}"
+        -d "text=${messageToBeSent}"
+    )
+    [[ -n "$topicID" ]] && post_data+=(-d "message_thread_id=${topicID}")
+    curl -s -X POST "https://api.telegram.org/bot${theBotToken}/sendMessage" "${post_data[@]}" &>output
+    if [ "$(grep -o '"ok":[^,}]*' output | sed 's/"ok"://')" == "true" ]; then
+        debugPrint "Sent message successfully....."
         return 0
     fi
-    curl -s -X POST "https://api.telegram.org/bot${theBotToken}/sendMessage" -d "chat_id=${chatID}" -d "text=${messageToBeSent}" &>output
-    if [ "$(cat output | grep -o '"ok":[^,}]*' | sed 's/"ok"://')" == "true" ]; then
-        debugPrint "Sent message to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs) successfully....."
-        return 0
-    fi
-    debugPrint "Failed to send message to $(cat output | grep -o '"first_name":[^,}]*' | sed 's/"first_name"://' | xargs)"
+    debugPrint "Failed to send message."
     return 1
 }
 
