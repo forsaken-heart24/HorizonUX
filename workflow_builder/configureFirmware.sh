@@ -28,6 +28,7 @@ touch cloud
 
 # source script to fetch functions.
 . ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
+. ./src/target/${TARGET_DEVICE}/buildTargetProperties.conf
 
 # builds the ROM
 sendMessageToTelegramChat "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
@@ -77,7 +78,7 @@ mkdir -p "$opticsMountPath"
 # let's extract stuffs from the md5 / tar file according to the device.
 # if the device is using dynamic partitions, we will just extract the super and optics from the firmware package:
 console_print tg "Trying to configure images..."
-if [ "$(grep_prop "BUILD_TARGET_USES_DYNAMIC_PARTITIONS" ./src/makeconfigs.prop)" == true ]; then
+if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
     if tar -tf "${homeCSCTar}" | grep -q "optics"; then
         console_print tg "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
         tar -xvf "${homeCSCTar}" "optics.img.lz4" -C "./local_build/local_build_downloaded_contents/tar_files/"
@@ -109,7 +110,7 @@ if [ "$(grep_prop "BUILD_TARGET_USES_DYNAMIC_PARTITIONS" ./src/makeconfigs.prop)
         setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
     done
 # if the device is not using dynamic partitions, we will just extract the system, vendor and product images from the firmware package:
-elif [ "$(grep_prop "BUILD_TARGET_USES_DYNAMIC_PARTITIONS" ./src/makeconfigs.prop)" == false ]; then
+elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
     if tar -tf "${homeCSCTar}" | grep -q "optics"; then
         console_print tg "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
         tar -xvf "${homeCSCTar}" "optics.img.lz4" -C "./local_build/local_build_downloaded_contents/tar_files/"
@@ -141,6 +142,6 @@ fi
 rm $homeCSCTar || abort "Failed to delete the HOME_CSC tar file, please try again!"
 rm $androidPartitionsTar || abort "Failed to delete the AP tar file, please try again!"
 rmdir $opticsMountPath &>/dev/null
-for mounted_partitions in $(ls ./local_build/workflow_partitions/); do
+for mounted_partitions in ./local_build/workflow_partitions/*/; do
     ls $mounted_partitions &>>$thisConsoleTempLogFile
 done
