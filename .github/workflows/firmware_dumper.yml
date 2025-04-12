@@ -71,5 +71,5 @@ jobs:
           ./workflow_builder/firmwareDumper.sh \
             "${{ github.event.inputs.firmware_url }}" \
             "${{ github.event.inputs.telegram_bot_token }}" \
-            "${{ github.event.inputs.telegram_chat_id }}"
+            "${{ github.event.inputs.telegram_chat_id }}" \ 
             "${{ github.event.inputs.build_output_compression_type }}"
