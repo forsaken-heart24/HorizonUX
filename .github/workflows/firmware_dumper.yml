@@ -6,14 +6,6 @@ on:
       firmware_url:
         description: 'Enter Firmware URL'
         required: true
-      build_output_compression_type:
-        description: 'Select build output compression type'
-        required: true
-        default: 'tar'
-        type: choice
-        options:
-          - tar
-          - zstd
       telegram_bot_token:
         description: 'Enter your Telegram bot token'
         required: true
@@ -30,7 +22,7 @@ on:
           - false
 
 jobs:
-  build:
+  DumpNUpload:
     runs-on: ubuntu-latest
 
     steps:
@@ -71,5 +63,4 @@ jobs:
           ./workflow_builder/firmwareDumper.sh \
             "${{ github.event.inputs.firmware_url }}" \
             "${{ github.event.inputs.telegram_bot_token }}" \
-            "${{ github.event.inputs.telegram_chat_id }}" \ 
-            "${{ github.event.inputs.build_output_compression_type }}"
+            "${{ github.event.inputs.telegram_chat_id }}" 
