@@ -16,8 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-set -euo pipefail
-
 # Arguments
 TARGET_DEVICE_FULL_FIRMWARE_LINK="$1"
 theBotToken="$2"

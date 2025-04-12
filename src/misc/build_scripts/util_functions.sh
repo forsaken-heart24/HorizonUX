@@ -534,7 +534,7 @@ function fetch_rom_arch() {
 }
 
 function debugPrint() {
-    if [ ! -z "${DEBUG_SCRIPT}" ]; then
+    if [ -n "${DEBUG_SCRIPT}" ]; then
         console_print "$@"
     else
         echo "[$(date +%H:%M%p)] - $@" >> ${thisConsoleTempLogFile}
