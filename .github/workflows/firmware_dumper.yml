@@ -18,6 +18,15 @@ on:
       topicID:
         description: 'Enter your / their Telegram Topic ID (only if you have enabled them)'
         required: false
+      compressionLevel:
+        description: 'Select your preferred compression rate (select low for a quicker dump)'
+        required: true
+        default: 'low'
+        type: choice
+        options:
+          - low
+          - mid
+          - ultra
       kernel_image:
         description: 'Do you want kernel and recovery image?'
         default: 'false'
@@ -79,4 +88,5 @@ jobs:
             "${{ github.event.inputs.telegram_chat_id }}" \
             "${{ github.event.inputs.kernel_image }}" \
             "${{ github.event.inputs.userToTag }}" \
-            "${{ github.event.inputs.topicID }}"
+            "${{ github.event.inputs.topicID }}" \
+            "${{ github.event.inputs.compressionLevel }}"

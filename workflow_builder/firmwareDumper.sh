@@ -23,6 +23,7 @@ chatID="$3"
 extractKernel="$4"
 userToTag="$5"
 topicID="$6"
+compressionLevel="$7"
 
 # Paths
 firmwareZip="./local_build/downloads/firmware.zip"
@@ -67,13 +68,13 @@ if tar -tf "$HOME_CSC" | grep -q "optics"; then
     console_print "Found optics in HOME_CSC, extracting..."
     tar -xf "$HOME_CSC" -C "${extrdDir}" --wildcards 'optics*'
     extractStuffsByTheirFormatSpecifier "${extrdDir}/optics"* "${cmprsDir}/optics.img" NULL
-    zstd -T0 --ultra -22 "${cmprsDir}/optics.img" -o "${cmprsDir}/optics.zst"
+    compressInZStandard "${cmprsDir}/optics.img" "${cmprsDir}/optics.zst" --${compressionLevel}
     uploadGivenFileToTelegram "${cmprsDir}/optics.zst" "Here's optics.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/optics.zst"
 elif tar -tf "$HOME_CSC" | grep -q "product"; then
     console_print "Found product in HOME_CSC, extracting..."
     tar -xf "$HOME_CSC" -C "${extrdDir}" --wildcards 'product*'
     extractStuffsByTheirFormatSpecifier "${extrdDir}/product"* "${cmprsDir}/product.img" NULL
-    zstd -T0 --ultra -22 "${cmprsDir}/product.img" -o "${cmprsDir}/product.zst"
+    compressInZStandard "${cmprsDir}/product.img" "${cmprsDir}/product.zst" --${compressionLevel}
     uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/product.zst"
 fi
 
@@ -82,7 +83,7 @@ if tar -tf "$AP" | grep -q "super"; then
     console_print "Found super in AP, extracting..."
     tar -xf "$AP" -C "${extrdDir}" --wildcards 'super*' || abort "Failed to extract super block from $AP"
     extractStuffsByTheirFormatSpecifier "${extrdDir}/super"* "${cmprsDir}/super.img" NULL
-    zstd -T0 --ultra -22 "${cmprsDir}/super.img" -o "${cmprsDir}/super.zst" || abort "Failed to compress super.img as a zstd archive!"
+    compressInZStandard "${cmprsDir}/super.img" "${cmprsDir}/super.zst"  --${compressionLevel}
     uploadGivenFileToTelegram "${cmprsDir}/super.zst" "Here's super.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/super.zst"
 elif tar -tf "$AP" | grep -q "system"; then
     for img in system vendor; do
@@ -90,7 +91,7 @@ elif tar -tf "$AP" | grep -q "system"; then
             console_print "Found ${img} in AP, extracting..."
             tar -xf "$AP" -C "${extrdDir}" --wildcards "${img}*" || abort "Failed to extract $img from $AP"
             extractStuffsByTheirFormatSpecifier "${extrdDir}/${img}"* "${cmprsDir}/${img}.img" NULL
-            zstd -T0 --ultra -22 "${cmprsDir}/${img}.img" -o "${cmprsDir}/${img}.zst" || abort "Failed to compress ${img}.img as a zstd archive!"
+            compressInZStandard "${cmprsDir}/${img}.img" "${cmprsDir}/${img}.zst" --${compressionLevel}
             uploadGivenFileToTelegram "${cmprsDir}/${img}.zst" "Here's ${img}.img from your dump, @${userToTag}" && rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
         fi
     done
@@ -103,7 +104,7 @@ if [ "${extractKernel}" == "true" ]; then
             console_print "Found ${lowLevelImage} in AP, extracting..."
             tar -xf "${AP}" -C "${extrdDir}" --wildcards "${lowLevelImage}*" || abort "Failed to extract ${lowLevelImage} from ${AP}"
             extractStuffsByTheirFormatSpecifier "${extrdDir}/${lowLevelImage}"* "${cmprsDir}/${lowLevelImage}.img" NULL
-            zstd -T0 --ultra -22 "${cmprsDir}/${lowLevelImage}.img" -o "${cmprsDir}/${lowLevelImage}.zst" || abort "Failed to compress ${lowLevelImage}.img!"
+            compressInZStandard "${cmprsDir}/${lowLevelImage}.img" "${cmprsDir}/${lowLevelImage}.zst" --${compressionLevel}
             uploadGivenFileToTelegram "${cmprsDir}/${lowLevelImage}.zst" "Here's ${lowLevelImage}.img from your dump, @${userToTag}"
             rm -f "${cmprsDir}/${lowLevelImage}.zst" "${extrdDir}/${lowLevelImage}"*
         else

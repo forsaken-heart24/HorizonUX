@@ -1024,3 +1024,31 @@ function extractStuffsByTheirFormatSpecifier() {
         ;;
     esac
 }
+
+
+function compressInZStandard() {
+    local fileToCompress="$1"
+    local outputPath="$2"
+    local levelArg="$3"
+    local compressionLevel="-3"
+    case "$levelArg" in
+        --low)
+            compressionLevel="-3"
+            ;;
+        --mid)
+            compressionLevel="-10"
+            ;;
+        --ultra)
+            compressionLevel="--ultra -22"
+            ;;
+        *)
+            console_print "Unknown compression level: $levelArg. Using --low (-3) by default."
+            ;;
+    esac
+    if [[ ! -f "$fileToCompress" || ! -f ${outputPath} ]]; then
+        abort "usage: compressInZStandard <file> <output path> <--low|--mid|--ultra>"
+        return 1
+    fi
+    console_print "Compressing $fileToCompress to $outputPath with level $levelArg..."
+    zstd -T0 $compressionLevel "$fileToCompress" -o "$outputPath" || abort "Failed to compress $fileToCompress as a zstd archive!"
+}
