@@ -1004,13 +1004,14 @@ function deleteUselessFirmwareFiles() {
 function extractStuffsByTheirFormatSpecifier() {
     local fileToExtract="$1"
     local outputDirectory="$2"
+    local skipMounts="$3"
     case ${opticsFile#*.} in
         "lz4")
             lz4 -d ${fileToExtract} ${outputDirectory} &>>$thisConsoleTempLogFile
-            setupLocalImage "${outputDirectory}"
+            [ -z "${skipMounts}" ] && setupLocalImage "${outputDirectory}"
         ;;
         "img")
-            setupLocalImage "${outputDirectory}"
+            [ -z "${skipMounts}" ] && setupLocalImage "${outputDirectory}"
         ;;
         *)
             abort "Unknown format specifier: ${fileToExtract#*.}"

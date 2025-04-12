@@ -18,6 +18,7 @@
 
 # Source utility functions
 source ./misc/build_scripts/util_functions.sh
+PACK_IMAGE_WITH_TS_FORMAT="$1"
 
 # Cleanup helpers
 cleanUpFile() {
