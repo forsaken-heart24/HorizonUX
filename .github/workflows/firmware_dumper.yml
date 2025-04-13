@@ -89,4 +89,4 @@ jobs:
             "${{ github.event.inputs.kernel_image }}" \
             "${{ github.event.inputs.userToTag }}" \
             "${{ github.event.inputs.topicID }}" \
-            "${{ github.event.inputs.compressionLevel }}"
+            --"${{ github.event.inputs.compressionLevel }}"
