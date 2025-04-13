@@ -82,7 +82,7 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
     if tar -tf "${homeCSCTar}" | grep -q "optics"; then
         console_print tg "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
         tar -xvf "${homeCSCTar}" "optics.img.lz4" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/optics* ./local_build/local_build_downloaded_contents/tar_files/optics.img
+        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/$(tar -tf "${androidPartitionsTar}" | grep "optics") ./local_build/local_build_downloaded_contents/tar_files/optics.img
         setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
     else
         # if it's not there, we will just use the optics.img from the super.img
@@ -90,8 +90,8 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
     fi
     if [ ! -f "./local_build/local_build_downloaded_contents/tar_files/optics.img" ] && tar -tf "${androidPartitionsTar}" | grep -q "optics"; then
         console_print tg "Optics image is found in the AP tar file, will use the optics.img from there!"
-        tar -xvf "${androidPartitionsTar}" "$(tar -tf "${androidPartitionsTar}" | grep -q "optics")" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/optics* ./local_build/local_build_downloaded_contents/tar_files/optics.img
+        tar -xvf "${androidPartitionsTar}" "$(tar -tf "${androidPartitionsTar}" | grep "optics")" -C "./local_build/local_build_downloaded_contents/tar_files/"
+        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/$(tar -tf "${androidPartitionsTar}" | grep "optics") ./local_build/local_build_downloaded_contents/tar_files/optics.img
         setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
     else
         # if it's not there, we will just end this session;
@@ -99,7 +99,7 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
     fi
     [ -f "./local_build/local_build_downloaded_contents/tar_files/optics.img" ] && console_print tg "Extracted optics.img image successfully!"
     tar -xvf "${androidPartitionsTar}" "$(tar -tf "${androidPartitionsTar}" | grep "super")" -C "./local_build/local_build_downloaded_contents/tar_files/"
-    extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/super* ./local_build/local_build_downloaded_contents/tar_files/super.img
+    extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/$(tar -tf "${androidPartitionsTar}" | grep "super") ./local_build/local_build_downloaded_contents/tar_files/super.img
     mkdir -p ./local_build/super_extract
     lpdump "super.img" > dumpOfTheSuperBlock
     lpunpack "super.img" "./local_build/super_extract/" &>>"$thisConsoleTempLogFile"
@@ -113,13 +113,13 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
 elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
     if tar -tf "${homeCSCTar}" | grep -q "optics"; then
         console_print tg "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
-        tar -xvf "${homeCSCTar}" "optics.img.lz4" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/optics* ./local_build/local_build_downloaded_contents/tar_files/optics.img
+        tar -xvf "${homeCSCTar}" "$(tar -tf "${homeCSCTar}" | grep "optics")" -C "./local_build/local_build_downloaded_contents/tar_files/"
+        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/$(tar -tf "${homeCSCTar}" | grep "optics") ./local_build/local_build_downloaded_contents/tar_files/optics.img
         setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
     else
         console_print tg "Optics is not a partition, so, we are using product for the CSC feature modifications..."
-        tar -xvf "${homeCSCTar}" "$(tar -tf "${homeCSCTar}" | grep -q "product")" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/product* ./local_build/local_build_downloaded_contents/tar_files/product.img
+        tar -xvf "${homeCSCTar}" "$(tar -tf "${homeCSCTar}" | grep "product")" -C "./local_build/local_build_downloaded_contents/tar_files/"
+        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/$(tar -tf "${homeCSCTar}" | grep "product") ./local_build/local_build_downloaded_contents/tar_files/product.img
         mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__product.img"
         mkdir -p "${mountPath}"
         setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/product.img" "${mountPath}"
@@ -127,8 +127,8 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
     for systemPartitions in system vendor optics; do
         if tar -tf "${androidPartitionsTar}" | grep -q "${systemPartitions}"; then
             console_print tg "Found ${systemPartitions} image in the AP tar file, extracting it now..."
-            tar -xvf "${androidPartitionsTar}" "$(tar -tf "${androidPartitionsTar}" | grep -q "${systemPartitions}")" -C "./local_build/local_build_downloaded_contents/tar_files/"
-            extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/${systemPartitions}* ./local_build/local_build_downloaded_contents/tar_files/${systemPartitions}.img
+            tar -xvf "${androidPartitionsTar}" "$(tar -tf "${androidPartitionsTar}" | grep "${systemPartitions}")" -C "./local_build/local_build_downloaded_contents/tar_files/"
+            extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/$(tar -tf "${androidPartitionsTar}" | grep "${androidPartitionsTar}") ./local_build/local_build_downloaded_contents/tar_files/${systemPartitions}.img
             mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__$(basename "${COMMON_FIRMWARE_BLOCKS}").img"
             mkdir -p "$mountPath"
             setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/${systemPartitions}.img" "${mountPath}"
