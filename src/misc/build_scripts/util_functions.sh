@@ -89,7 +89,6 @@ function abort() {
     sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) | $1"
     rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ./local_build/* output
     uploadGivenFileToTelegram "./src/makeconfigs.prop"
-    uploadGivenFileToTelegram "./src/makeconfigs.prop_"
     uploadGivenFileToTelegram "$thisConsoleTempLogFile"
     exit 1
 }
@@ -889,13 +888,13 @@ function setupLocalImage() {
             console_print "EROFS image detected, preparing for mount..."
             dirt="${mountPath}__rw"
             mkdir -p "$dirt"
-            sudo fuse.erofs "${imagePath}" "${mountPath}" || abort "Failed to mount EROFS image: ${imagePath}"
+            sudo fuse.erofs "${imagePath}" "${mountPath}" 2>>$thisConsoleTempLogFile || abort "Failed to mount EROFS image: ${imagePath}"
             sudo cp -a --preserve=all "${mountPath}/." "${dirt}/" || abort "Failed to copy contents to writable directory: ${dirt}"
             setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${dirt}" ./src/makeconfigs.prop
         ;;
         "f2fs"|"ext4")
             console_print "${fsType} image detected, attempting read-write mount..."
-            sudo mount -o rw "${imagePath}" "${mountPath}" || abort "Failed to mount ${imageBlock} as read-write"
+            sudo mount -o rw "${imagePath}" "${mountPath}" 2>>$thisConsoleTempLogFile || abort "Failed to mount ${imageBlock} as read-write"
             setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${mountPath}" ./src/makeconfigs.prop
         ;;
         *)
