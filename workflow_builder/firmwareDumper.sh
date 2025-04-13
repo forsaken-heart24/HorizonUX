@@ -86,8 +86,12 @@ if tar -tf "$AP" | grep -q "super"; then
     console_print "Found super in AP, extracting..."
     tar -xf "$AP" -C "${extrdDir}" --wildcards 'super*' || abort "Failed to extract super block from $AP"
     extractStuffsByTheirFormatSpecifier "${extrdDir}/super"* "${cmprsDir}/super.img" NULL
-    compressInZStandard "${cmprsDir}/super.img" "${cmprsDir}/super.zst"  --${compressionLevel}
-    uploadGivenFileToTelegram "${cmprsDir}/super.zst" "Here's super.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/super.zst"
+    compressInZStandard "${cmprsDir}/super.img" "${cmprsDir}/super.zst" --${compressionLevel}
+    for f in "${cmprsDir}/super.zst" "${cmprsDir}/super.zst.part_"*; do
+        [[ -f "$f" ]] && uploadGivenFileToTelegram "$f" "Here's a part of super.img from your dump, ${userToTag}"
+    done
+    rm -f ${cmprsDir}/super.zst ${cmprsDir}/super.zst.part_
+    sendMessageToTelegramChat "To merge the split. run this command in a bash shell \`\`\`cat \"super.zst\" \"super.zst.part_\" > \"super_full.zst\"\`\`\`"
 elif tar -tf "$AP" | grep -q "system"; then
     for img in system vendor; do
         if tar -tf "$AP" | grep -q "$img"; then

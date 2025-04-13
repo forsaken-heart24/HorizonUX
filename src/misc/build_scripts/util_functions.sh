@@ -1040,7 +1040,10 @@ function compressInZStandard() {
     local fileToCompress="$1"
     local outputPath="$2"
     local levelArg="$3"
+    local splitThreshold=$((1800 * 1024 * 1024)) # 1.8 GiB
     local compressionLevel
+    local fileSize
+    local baseOutput
     [[ -z "$fileToCompress" || -z "$outputPath" || -z "$levelArg" ]] && abort "Usage: compressInZStandard <file> <output path> <--low|--mid|--ultra>"
     [[ ! -f "$fileToCompress" ]] && abort "Error: '$fileToCompress' does not exist or is not a file."
     case "$levelArg" in
@@ -1060,4 +1063,10 @@ function compressInZStandard() {
     esac
     console_print "Compressing $fileToCompress to $outputPath with level $levelArg..."
     zstd -T0 $compressionLevel "$fileToCompress" -o "$outputPath" || abort "Failed to compress $fileToCompress as a zstd archive!"
+    fileSize=$(stat -c%s "$outputPath")
+    if (( fileSize > splitThreshold )); then
+        console_print "Compressed file exceeds 1.8 GiB, splitting for Telegram compatibility..."
+        split -b $splitThreshold "$outputPath" "${outputPath}.part_" || abort "Failed to split oversized compressed file!"
+        rm -f "$outputPath"
+    fi
 }
