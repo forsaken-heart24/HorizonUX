@@ -1070,3 +1070,28 @@ function compressInZStandard() {
         rm -f "$outputPath"
     fi
 }
+
+function magiskboot() {
+    local localMachineArchitecture=$(uname -m)
+    case "${localMachineArchitecture}" in 
+        "i686")
+            ./src/dependencies/bin/magiskbootX32 "$@"
+        ;;
+        "x86_64")
+            ./src/dependencies/bin/magiskbootX64 "$@"
+        ;;
+        "armv7l")
+            ./src/dependencies/bin/magiskbootA32 "$@"
+        ;;
+        "aarch64"|"armv8l")
+            ./src/dependencies/bin/magiskbootA64 "$@"
+        ;;
+        *)
+            abort "Undefined architecture $(uname -m)"
+        ;;
+    esac
+}
+
+function avbtool() {
+    python3 ./src/dependencies/bin/avbtool "$@"
+}

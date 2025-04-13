@@ -37,7 +37,7 @@ for i in ./src/makeconfigs.prop ./src/misc/build_scripts/util_functions.sh ./src
 done
 
 # ok, fbans dropped!
-for dependenciesRequiredForTheBuild in java python3 zip; do
+for dependenciesRequiredForTheBuild in java python3 zip lz4; do
 	if [ -z "$(command -v ${dependenciesRequiredForTheBuild})" ]; then
 		abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
 	fi
