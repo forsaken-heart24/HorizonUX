@@ -55,7 +55,7 @@ for specificFirmwareFile in $(unzip -Z1 "${firmwareZip}" | grep -E 'AP|HOME_CSC'
     console_print tg "Unpacking firmware: ${specificFirmwareFile}"
     unzip -q "${firmwareZip}" "${specificFirmwareFile}" -d "${extrdDir}" >> "$thisConsoleTempLogFile" || abort "Failed to extract $specificFirmwareFile"
 done
-rm -f "${firmwareZip}" || abort "Failed to delete ${firmwareZip}"
+rm -f "${firmwareZip}" >> "$thisConsoleTempLogFile" || abort "Failed to delete ${firmwareZip}"
 
 # Find real paths
 HOME_CSC=$(find "${extrdDir}" -type f -name 'HOME_CSC_*.tar.md5' | head -n1)
@@ -77,6 +77,9 @@ elif tar -tf "$HOME_CSC" | grep -q "product"; then
     compressInZStandard "${cmprsDir}/product.img" "${cmprsDir}/product.zst" --${compressionLevel}
     uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/product.zst"
 fi
+
+# erase HOME_CSC for storage:
+rm -rf ${HOME_CSC}
 
 # Extract AP content
 if tar -tf "$AP" | grep -q "super"; then
@@ -111,6 +114,9 @@ if [ "${extractKernel}" == "true" ]; then
         fi
     done
 fi
+
+# erase AP for storage:
+rm -rf ${AP}
 
 console_print "Firmware dump and upload complete!"
 uploadGivenFileToTelegram "${thisConsoleTempLogFile}" "Script logs, check this file if you are concerned! Thank you!"

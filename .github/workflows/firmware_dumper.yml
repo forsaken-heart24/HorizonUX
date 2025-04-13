@@ -76,6 +76,7 @@ jobs:
         run: |
           sudo apt install -y zstd tar unzip erofs-utils lz4
           for i in downloads extrd cmprs; do
+            rm -rf $i  
             mkdir -p "./local_build/$i"
           done
 
