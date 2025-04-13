@@ -68,8 +68,8 @@ done
 rm -rf ${firmwareZip} || abort "Failed to delete the base firmware package for cleanup, please try again!"
 
 # used these variables for future proof!
-homeCSCTar=./local_build/local_build_downloaded_contents/extracted_fw/HOME_CSC*
-androidPartitionsTar=./local_build/local_build_downloaded_contents/extracted_fw/AP_*
+homeCSCTar=$(find "./local_build/local_build_downloaded_contents/extracted_fw/" -type f -name 'HOME_CSC_*.tar.md5' | head -n1)
+androidPartitionsTar=$(find "./local_build/local_build_downloaded_contents/extracted_fw/" -type f -name 'AP*.tar.md5' | head -n1)
 
 # for mounting optics:
 opticsMountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__optics"
