@@ -161,10 +161,10 @@ fi
 if boolReturn $BUILD_TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES; then
 	console_print "Patching bluetooth...."
 	[ -f "$SYSTEM_DIR/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found, copy and put them in a random directory and try again.."
-	HEX_PATCH "$SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052"
+	magiskboot hexpatch "$SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052"
 fi
 
-boolReturn $BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED && . ${SCRIPTS[2]}
+boolReturn $BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH && . ${SCRIPTS[2]}
 
 if boolReturn $TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES; then
 	console_print "Adding custom setup wizard text...."

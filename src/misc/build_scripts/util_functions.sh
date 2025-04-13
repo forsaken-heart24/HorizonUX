@@ -438,28 +438,6 @@ EOF
     clear
 }
 
-HEX_PATCH() {
-    local FILE="$1"
-    local FROM="$2"
-    local TO="$3"
-
-    if xxd -p "$FILE" | tr -d \\n | tr -d " " | grep -q "$TO"; then
-        warns "the patches were already applied to the file, no need to apply them again.." "HEX_PATCHER"
-        return 0
-    fi
-
-    if ! xxd -p "$FILE" | tr -d \\n | tr -d " " | grep -q "$FROM"; then
-        warns "No need to patch the file cuz the file was perfect..." "HEX_PATCHER"
-        return 1
-    fi
-
-	# hmm, understandable :/
-    console_print "Patching the bluetooth system file..."
-    xxd -p "$FILE" | tr -d \\n | tr -d " " | sed "s/$FROM/$TO/" | xxd -r -p > "$FILE.tmp"
-  	mv "$FILE.tmp" "${HORIZON_SYSTEM_DIR}/lib64/libbluetooth_jni.so" && console_print "Patched successfully, the file was moved to \"patched_resources/system/lib64/libbluetooth_jni.so\" folder.."
-    abort "Failed to patch the bluetooth lib, please try again.."
-}
-
 function existance() {
     local file="$1"
     # grrrrrrrrrrrrrr

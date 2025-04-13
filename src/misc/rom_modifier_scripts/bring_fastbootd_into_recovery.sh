@@ -40,6 +40,7 @@ hexPatches=(
 command -v lz4 || abort "Please install lz4 to proceed"
 mkdir -p ./local_build/custom_recovery_with_fastbootd/ramdisk
 cd ./local_build/custom_recovery_with_fastbootd/
+[ ! -f "${RECOVERY_IMAGE_PATH}" ] && abort "The recovery image is not found in the path you've provided, please provide the exact path and try again..."
 
 # unpack the image and patch it:
 magiskboot unpack ${RECOVERY_IMAGE_PATH} &>>$thisConsoleTempLogFile || abort "Failed to unpack the given recovery image"
