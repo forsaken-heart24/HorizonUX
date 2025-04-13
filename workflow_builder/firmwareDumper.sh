@@ -55,6 +55,7 @@ for specificFirmwareFile in $(unzip -Z1 "${firmwareZip}" | grep -E 'AP|HOME_CSC'
     console_print tg "Unpacking firmware: ${specificFirmwareFile}"
     unzip -q "${firmwareZip}" "${specificFirmwareFile}" -d "${extrdDir}" >> "$thisConsoleTempLogFile" || abort "Failed to extract $specificFirmwareFile"
 done
+
 rm -f "${firmwareZip}" >> "$thisConsoleTempLogFile" || abort "Failed to delete ${firmwareZip}"
 
 # Find real paths
@@ -64,48 +65,53 @@ AP=$(find "${extrdDir}" -type f -name 'AP*.tar.md5' | head -n1)
 [ -f "$AP" ] || abort "AP archive not found!"
 
 # Extract HOME_CSC content
-if tar -tf "$HOME_CSC" | grep -q "optics"; then
+if tar -tf "${HOME_CSC}" | grep -q "optics"; then
     console_print "Found optics in HOME_CSC, extracting..."
-    tar -xf "$HOME_CSC" -C "${extrdDir}" --wildcards 'optics*'
+    tar -xf "${HOME_CSC}" -C "${extrdDir}" --wildcards 'optics*'
     extractStuffsByTheirFormatSpecifier "${extrdDir}/optics"* "${cmprsDir}/optics.img" NULL
-    compressInZStandard "${cmprsDir}/optics.img" "${cmprsDir}/optics.zst" --${compressionLevel}
-    uploadGivenFileToTelegram "${cmprsDir}/optics.zst" "Here's optics.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/optics.zst"
-elif tar -tf "$HOME_CSC" | grep -q "product"; then
+    compressInZStandard "${cmprsDir}/optics.img" "${cmprsDir}/optics.zst" "--${compressionLevel}"
+    uploadGivenFileToTelegram "${cmprsDir}/optics.zst" "Here's optics.img from your dump, ${userToTag}"
+    rm -f "${cmprsDir}/optics.zst"
+elif tar -tf "${HOME_CSC}" | grep -q "product"; then
     console_print "Found product in HOME_CSC, extracting..."
-    tar -xf "$HOME_CSC" -C "${extrdDir}" --wildcards 'product*'
+    tar -xf "${HOME_CSC}" -C "${extrdDir}" --wildcards 'product*'
     extractStuffsByTheirFormatSpecifier "${extrdDir}/product"* "${cmprsDir}/product.img" NULL
     compressInZStandard "${cmprsDir}/product.img" "${cmprsDir}/product.zst" --${compressionLevel}
-    uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/product.zst"
+    uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, ${userToTag}"
+    rm -f "${cmprsDir}/product.zst"
 fi
 
 # erase HOME_CSC for storage:
 rm -rf ${HOME_CSC}
 
 # Extract AP content
-if tar -tf "$AP" | grep -q "super"; then
+if tar -tf "${AP}" | grep -q "super"; then
     console_print "Found super in AP, extracting..."
     tar -xf "$AP" -C "${extrdDir}" --wildcards 'super*' || abort "Failed to extract super block from $AP"
     extractStuffsByTheirFormatSpecifier "${extrdDir}/super"* "${cmprsDir}/super.img" NULL
     compressInZStandard "${cmprsDir}/super.img" "${cmprsDir}/super.zst" --${compressionLevel}
-    for f in "${cmprsDir}/super.zst" "${cmprsDir}/super.zst.part_"*; do
+    for f in "${cmprsDir}"/super.*; do
         [[ -f "$f" ]] && uploadGivenFileToTelegram "$f" "Here's a part of super.img from your dump, ${userToTag}"
     done
-    rm -f ${cmprsDir}/super.zst ${cmprsDir}/super.zst.part_
-    sendMessageToTelegramChat "To merge the split. run this command in a bash shell \`\`\`cat \"super.zst\" \"super.zst.part_\" > \"super_full.zst\"\`\`\`"
-elif tar -tf "$AP" | grep -q "system"; then
+    rm -f "${cmprsDir}/super.zst" "${cmprsDir}/super.zst.part_"
+    sendMessageToTelegramChat "To merge the split, run this command in a bash shell: \`\`\`cat super.zst super.zst.(ex: aa or ab) > super_full.zst\`\`\`"
+else
     for img in system vendor; do
         if tar -tf "$AP" | grep -q "$img"; then
             console_print "Found ${img} in AP, extracting..."
             tar -xf "$AP" -C "${extrdDir}" --wildcards "${img}*" || abort "Failed to extract $img from $AP"
             extractStuffsByTheirFormatSpecifier "${extrdDir}/${img}"* "${cmprsDir}/${img}.img" NULL
             compressInZStandard "${cmprsDir}/${img}.img" "${cmprsDir}/${img}.zst" --${compressionLevel}
-            uploadGivenFileToTelegram "${cmprsDir}/${img}.zst" "Here's ${img}.img from your dump, ${userToTag}" && rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
+            for part in "${cmprsDir}/${img}.zst"*; do
+                [[ -f "$part" ]] && uploadGivenFileToTelegram "$part" "Here's a part of ${img}.img from your dump, ${userToTag}"
+            done
+            rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
         fi
     done
 fi
 
 # Extract boot / kernel and recovery:
-if [ "${extractKernel}" == "true" ]; then
+if [[ "${extractKernel}" == "true" ]]; then
     for lowLevelImage in boot recovery; do
         if tar -tf "${AP}" | grep -q "${lowLevelImage}"; then
             console_print "Found ${lowLevelImage} in AP, extracting..."

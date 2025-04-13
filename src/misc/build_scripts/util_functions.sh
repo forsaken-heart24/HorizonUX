@@ -1040,7 +1040,7 @@ function compressInZStandard() {
     local fileToCompress="$1"
     local outputPath="$2"
     local levelArg="$3"
-    local splitThreshold=$((1800 * 1024 * 1024)) # 1.8 GiB
+    local splitThreshold=943718400
     local compressionLevel
     local fileSize
     local baseOutput
@@ -1066,7 +1066,7 @@ function compressInZStandard() {
     fileSize=$(stat -c%s "$outputPath")
     if (( fileSize > splitThreshold )); then
         console_print "Compressed file exceeds 1.8 GiB, splitting for Telegram compatibility..."
-        split -b $splitThreshold "$outputPath" "${outputPath}.part_" || abort "Failed to split oversized compressed file!"
+        split -b $splitThreshold "$outputPath" "${outputPath}" || abort "Failed to split oversized compressed file!"
         rm -f "$outputPath"
     fi
 }
