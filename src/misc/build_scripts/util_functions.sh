@@ -894,7 +894,7 @@ function setupLocalImage() {
         ;;
         "f2fs"|"ext4")
             console_print "${fsType} image detected, attempting read-write mount..."
-            sudo mount -o rw "${imagePath}" "${mountPath}" 2>>$thisConsoleTempLogFile || abort "Failed to mount ${imageBlock} as read-write"
+            sudo mount -o rw "${imagePath}" "${mountPath}" || abort "Failed to mount ${imageBlock} as read-write"
             setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${mountPath}" ./src/makeconfigs.prop
         ;;
         *)
@@ -996,7 +996,7 @@ function deleteUselessFirmwareFiles() {
 function extractStuffsByTheirFormatSpecifier() {
     local fileToExtract="$1"
     local outputPath="$2"
-    local skipMounts="${3:-}"
+    local skipMounts="$3"
     local extension="${fileToExtract##*.}"
     case "$extension" in
         lz4)

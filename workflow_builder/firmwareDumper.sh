@@ -47,6 +47,7 @@ console_print tg "Firmware Dump started at $(TZ=America/Phoenix date '+%d %b %Y,
 
 # Download firmware
 console_print "Downloading firmware package..."
+echo "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" | grep -q -E "samfw"|"dl.samfwpremium.cloud" || abort "Only samfw.com firmware packages are supported!"
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "${firmwareZip}" || abort "Failed to download firmware."
 console_print tg "Firmware package finished downloading at $(TZ=America/Phoenix date '+%I:%M%p')"
 
@@ -68,14 +69,14 @@ AP=$(find "${extrdDir}" -type f -name 'AP*.tar.md5' | head -n1)
 if tar -tf "${HOME_CSC}" | grep -q "optics"; then
     console_print "Found optics in HOME_CSC, extracting..."
     tar -xf "${HOME_CSC}" -C "${extrdDir}" --wildcards 'optics*'
-    extractStuffsByTheirFormatSpecifier "${extrdDir}/optics"* "${cmprsDir}/optics.img" NULL
+    lz4 -d "${extrdDir}/optics.img.lz4" "${cmprsDir}/optics.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
     compressInZStandard "${cmprsDir}/optics.img" "${cmprsDir}/optics.zst" "--${compressionLevel}"
     uploadGivenFileToTelegram "${cmprsDir}/optics.zst" "Here's optics.img from your dump, ${userToTag}"
     rm -f "${cmprsDir}/optics.zst"
 elif tar -tf "${HOME_CSC}" | grep -q "product"; then
     console_print "Found product in HOME_CSC, extracting..."
     tar -xf "${HOME_CSC}" -C "${extrdDir}" --wildcards 'product*'
-    extractStuffsByTheirFormatSpecifier "${extrdDir}/product"* "${cmprsDir}/product.img" NULL
+    lz4 -d "${extrdDir}/product.img.lz4" "${cmprsDir}/product.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
     compressInZStandard "${cmprsDir}/product.img" "${cmprsDir}/product.zst" --${compressionLevel}
     uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, ${userToTag}"
     rm -f "${cmprsDir}/product.zst"
@@ -88,9 +89,9 @@ rm -rf ${HOME_CSC}
 if tar -tf "${AP}" | grep -q "super"; then
     console_print "Found super in AP, extracting..."
     tar -xf "$AP" -C "${extrdDir}" --wildcards 'super*' || abort "Failed to extract super block from $AP"
-    extractStuffsByTheirFormatSpecifier "${extrdDir}/super"* "${cmprsDir}/super.img" NULL
+    lz4 -d "${extrdDir}/super.img.lz4" "${cmprsDir}/super.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
     compressInZStandard "${cmprsDir}/super.img" "${cmprsDir}/super.zst" --${compressionLevel}
-    for f in "${cmprsDir}"/super.*; do
+    for f in ${cmprsDir}/super.*; do
         [[ -f "$f" ]] && uploadGivenFileToTelegram "$f" "Here's a part of super.img from your dump, ${userToTag}"
     done
     rm -f "${cmprsDir}/super.zst" "${cmprsDir}/super.zst.part_"
@@ -100,9 +101,9 @@ else
         if tar -tf "$AP" | grep -q "$img"; then
             console_print "Found ${img} in AP, extracting..."
             tar -xf "$AP" -C "${extrdDir}" --wildcards "${img}*" || abort "Failed to extract $img from $AP"
-            extractStuffsByTheirFormatSpecifier "${extrdDir}/${img}"* "${cmprsDir}/${img}.img" NULL
+            lz4 -d "${extrdDir}/${img}.img.lz4" "${cmprsDir}/${img}.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
             compressInZStandard "${cmprsDir}/${img}.img" "${cmprsDir}/${img}.zst" --${compressionLevel}
-            for part in "${cmprsDir}/${img}.zst"*; do
+            for part in ${cmprsDir}/${img}.zst*; do
                 [[ -f "$part" ]] && uploadGivenFileToTelegram "$part" "Here's a part of ${img}.img from your dump, ${userToTag}"
             done
             rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
@@ -116,7 +117,7 @@ if [[ "${extractKernel}" == "true" ]]; then
         if tar -tf "${AP}" | grep -q "${lowLevelImage}"; then
             console_print "Found ${lowLevelImage} in AP, extracting..."
             tar -xf "${AP}" -C "${extrdDir}" --wildcards "${lowLevelImage}*" || abort "Failed to extract ${lowLevelImage} from ${AP}"
-            extractStuffsByTheirFormatSpecifier "${extrdDir}/${lowLevelImage}"* "${cmprsDir}/${lowLevelImage}.img" NULL
+            lz4 -d "${extrdDir}/${lowLevelImage}.img.lz4" "${cmprsDir}/${lowLevelImage}.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
             compressInZStandard "${cmprsDir}/${lowLevelImage}.img" "${cmprsDir}/${lowLevelImage}.zst" --${compressionLevel}
             uploadGivenFileToTelegram "${cmprsDir}/${lowLevelImage}.zst" "Here's ${lowLevelImage}.img from your dump, ${userToTag}"
         else
