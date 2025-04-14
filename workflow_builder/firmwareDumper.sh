@@ -71,14 +71,14 @@ if tar -tf "${HOME_CSC}" | grep -q "optics"; then
     tar -xf "${HOME_CSC}" -C "${extrdDir}" --wildcards 'optics*'
     lz4 -d "${extrdDir}/optics.img.lz4" "${cmprsDir}/optics.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
     compressInZStandard "${cmprsDir}/optics.img" "${cmprsDir}/optics.zst" "--${compressionLevel}"
-    uploadGivenFileToTelegram "${cmprsDir}/optics.zst" "Here's optics.img from your dump, ${userToTag}"
+    uploadToGoFile "${cmprsDir}/optics.zst" --tg "Here's the link to" "your optics.img from your dump, ${userToTag}"
     rm -f "${cmprsDir}/optics.zst"
 elif tar -tf "${HOME_CSC}" | grep -q "product"; then
     console_print "Found product in HOME_CSC, extracting..."
     tar -xf "${HOME_CSC}" -C "${extrdDir}" --wildcards 'product*'
     lz4 -d "${extrdDir}/product.img.lz4" "${cmprsDir}/product.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
     compressInZStandard "${cmprsDir}/product.img" "${cmprsDir}/product.zst" --${compressionLevel}
-    uploadGivenFileToTelegram "${cmprsDir}/product.zst" "Here's product.img from your dump, ${userToTag}"
+    uploadToGoFile "${cmprsDir}/product.zst" --tg "Here's the link to" "product.img from your dump, ${userToTag}"
     rm -f "${cmprsDir}/product.zst"
 fi
 
@@ -92,11 +92,10 @@ if tar -tf "${AP}" | grep -q "super"; then
     lz4 -d "${extrdDir}/super.img.lz4" "${cmprsDir}/super.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
     compressInZStandard "${cmprsDir}/super.img" "${cmprsDir}/super.zst" --${compressionLevel}
     for f in ${cmprsDir}/super.zst*; do
-        [[ -f "$f" ]] && uploadGivenFileToTelegram "$f" "Here's a part of super.img from your dump, ${userToTag}"
-        sleep 25
+        [[ -f "$f" ]] && uploadToGoFile "${f}" --tg "Here's the link to" "super.img from your dump, ${userToTag}"
+        sleep 10
     done
     rm -f ${cmprsDir}/super.zst*
-    sendMessageToTelegramChat "To merge the split, run this command in a bash shell: \`\`\`cat super.zst super.zst.(ex: aa or ab) > super_full.zst\`\`\`"
 else
     for img in system vendor; do
         if tar -tf "$AP" | grep -q "$img"; then
@@ -105,8 +104,8 @@ else
             lz4 -d "${extrdDir}/${img}.img.lz4" "${cmprsDir}/${img}.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
             compressInZStandard "${cmprsDir}/${img}.img" "${cmprsDir}/${img}.zst" --${compressionLevel}
             for part in ${cmprsDir}/${img}.zst*; do
-                [[ -f "$part" ]] && uploadGivenFileToTelegram "$part" "Here's a part of ${img}.img from your dump, ${userToTag}"
-                sleep 25
+                [[ -f "$part" ]] && uploadToGoFile "${part}" --tg "Here's the link to" "${img}.img from your dump, ${userToTag}"
+                sleep 10
             done
             rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
         fi

@@ -43,14 +43,14 @@ function download_stuffs() {
         return 1
     else
         for ((tries = 1; tries <= 4; tries++)); do
-            console_print tg "📥 Trying to download requested file | Attempt: $tries"
+            console_print "📥 Trying to download requested file | Attempt: $tries"
             if aria2c -x 8 -s 8 -o "${save_path}" "${link}" &>>"$thisConsoleTempLogFile"; then
-                console_print tg "✅ Successfully downloaded file after $tries attempt(s)"
+                console_print "✅ Successfully downloaded file after $tries attempt(s)"
                 return 0
             fi
-            console_print tg "❌ Failed to download the file | Attempt: $tries"
+            console_print "❌ Failed to download the file | Attempt: $tries"
         done
-        console_print tg "⚠️ Failed to download the file after $((tries - 1)) attempts."
+        console_print "⚠️ Failed to download the file after $((tries - 1)) attempts."
         exit 1
     fi
 }
@@ -832,7 +832,7 @@ function uploadGivenFileToTelegram() {
     local optionalCaption="$2"
     local curl_cmd=(curl -s -F "chat_id=${chatID}" -F "document=@${userRequestedFile}")
     [ -f "${userRequestedFile}" ] || return 1
-    sendMessageToTelegramChat "Trying to upload ${userRequestedFile} to the requested chat..."
+    console_print "Trying to upload ${userRequestedFile} to the requested chat..."
     [[ -n "$optionalCaption" ]] && curl_cmd+=(-F "caption=${optionalCaption}")
     [[ -n "$topicID" ]] && curl_cmd+=(-F "message_thread_id=${topicID}")
     curl_cmd+=("https://api.telegram.org/bot${theBotToken}/sendDocument")
@@ -851,6 +851,7 @@ function sendMessageToTelegramChat() {
     local post_data=(
         -d "chat_id=${chatID}"
         -d "text=${messageToBeSent}"
+        -d "parse_mode=HTML"
     )
     [[ -n "$topicID" ]] && post_data+=(-d "message_thread_id=${topicID}")
     curl -s -X POST "https://api.telegram.org/bot${theBotToken}/sendMessage" "${post_data[@]}" &>output
@@ -1017,7 +1018,7 @@ function compressInZStandard() {
     local fileToCompress="$1"
     local outputPath="$2"
     local levelArg="$3"
-    local splitThreshold=943718400
+    local splitThreshold=1887436800
     local compressionLevel
     local fileSize
     local baseOutput
@@ -1071,4 +1072,18 @@ function magiskboot() {
 
 function avbtool() {
     python3 ./src/dependencies/bin/avbtool "$@"
+}
+
+function uploadToGoFile() {
+    local fileToUpload="$1"
+    local receiver="$2"
+    local message="$3"
+    local linkText="$4"
+    local link
+    [ -z "${fileToUpload}" ] && abort "usage: uploadToGoFile <file>"
+    curl -S -X POST "https://upload.gofile.io/uploadfile" -F "file=@${fileToUpload}" > link
+    link=$(cat link | grep -o '"downloadPage":[^,}]*' | sed 's/"downloadPage"://' | xargs)
+    [ -z "${link}" ] && abort "Failed to upload the file!"
+    [ "${receiver}" == "--tg" ] && { sendMessageToTelegramChat "${message} <a href="${link}">${linkText}</a>"; return 0; }
+    echo "$link"
 }
