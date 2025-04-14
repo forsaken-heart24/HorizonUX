@@ -1087,3 +1087,17 @@ function uploadToGoFile() {
     [ "${receiver}" == "--tg" ] && { sendMessageToTelegramChat "${message} <a href="${link}">${linkText}</a>"; return 0; }
     echo "$link"
 }
+
+function extract_partition_image() {
+    local tarball="$1"
+    local imageName="$2"
+    local destImage="$3"
+    local foundPath
+    local extractedName=$(tar -tf "${tarball}" | grep -i "${imageName}" | head -n1)
+    [ -z "$extractedName" ] && return 1
+    tar -xvf "${tarball}" "${extractedName}" -C "./local_build/local_build_downloaded_contents/tar_files/" &>>"$thisConsoleTempLogFile"
+    foundPath=$(find "./local_build/local_build_downloaded_contents/tar_files/" -iname "$(basename "$extractedName")" | head -n1)
+    [ -z "$foundPath" ] && return 1
+    lz4 -d "$foundPath" "$destImage" &>>"$thisConsoleTempLogFile" || return 1
+    return 0
+}
