@@ -87,7 +87,7 @@ function abort() {
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
     sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) | $1"
-    rm -rf $TMPDIR ${BUILD_TARGET_FLOATING_FEATURE_PATH}.bak ./local_build/* output
+    rm -rf $TMPDIR ./local_build/* output
     uploadGivenFileToTelegram "./src/makeconfigs.prop"
     uploadGivenFileToTelegram "$thisConsoleTempLogFile"
     exit 1

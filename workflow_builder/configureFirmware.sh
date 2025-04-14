@@ -44,7 +44,7 @@ console_print "#################################################################
 console_print "Starting to build HorizonUX on cloud..."
 console_print "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
-echo "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" | grep -q -E "samfw"|"dl.samfwpremium.cloud" || abort "Only samfw.com firmware packages are supported!"
+echo "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" | grep -qE "samfw|samfwpremium" || abort "Only samfw.com firmware packages are supported!"
 console_print "Downloading firmware package from the web..."
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip" || abort "Failed to download the given firmware package"
 console_print tg "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
@@ -118,14 +118,12 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
         console_print tg "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
         opticsInTar=$(tar -tf "${homeCSCTar}" | grep "optics")
         tar -xvf "${homeCSCTar}" "${opticsInTar}" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/${opticsInTar} ./local_build/local_build_downloaded_contents/tar_files/optics.img
         lz4 -d ./local_build/local_build_downloaded_contents/tar_files/${opticsInTar} ./local_build/local_build_downloaded_contents/tar_files/optics.img || abort "Failed to decompress optics from tar file!"
         setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
     else
         console_print tg "Optics is not a partition, so, we are using product for the CSC feature modifications..."
         productInTar=$(tar -tf "${homeCSCTar}" | grep "optics")
         tar -xvf "${homeCSCTar}" "${productInTar}" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        extractStuffsByTheirFormatSpecifier ./local_build/local_build_downloaded_contents/tar_files/${productInTar} ./local_build/local_build_downloaded_contents/tar_files/product.img
         lz4 -d ./local_build/local_build_downloaded_contents/tar_files/${productInTar} ./local_build/local_build_downloaded_contents/tar_files/product.img || abort "Failed to decompress product from tar file!"
         mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__product.img"
         mkdir -p "${mountPath}"

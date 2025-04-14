@@ -47,7 +47,7 @@ console_print tg "Firmware Dump started at $(TZ=America/Phoenix date '+%d %b %Y,
 
 # Download firmware
 console_print "Downloading firmware package..."
-echo "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" | grep -q -E "samfw"|"dl.samfwpremium.cloud" || abort "Only samfw.com firmware packages are supported!"
+echo "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" | grep -qE "samfw|samfwpremium" || abort "Only samfw.com firmware packages are supported!"
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "${firmwareZip}" || abort "Failed to download firmware."
 console_print tg "Firmware package finished downloading at $(TZ=America/Phoenix date '+%I:%M%p')"
 
