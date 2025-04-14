@@ -46,10 +46,9 @@ console_print "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=Ame
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
 echo "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" | grep -qE "samfw|samfwpremium" || abort "Only samfw.com firmware packages are supported!"
 console_print "Downloading firmware package from the web..."
-download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip" || abort "Failed to download the given firmware package"
-console_print tg "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
+download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "${firmwareZip}" || abort "Failed to download the given firmware package"
+console_print "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 
-# unnessasary gutter>
 mv ./src/makeconfigs.prop ./src/makeconfigs.prop_
 if download_stuffs --skip "${MAKECONFIGS_LINK}" "./src/makeconfigs.prop"; then
     rm -rf ./src/makeconfigs.prop_
@@ -57,50 +56,43 @@ else
     mv ./src/makeconfigs.prop_ ./src/makeconfigs.prop
 fi
 download_stuffs --skip "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
-# <unnessasary gutter
 
-# unpack the firmware and do a cleanup:
 for specificTargetFirmwareFiles in $(unzip -l "${firmwareZip}" | grep -E 'AP|HOME_CSC' | awk '{print $4}'); do
-    console_print tg "Unpacking firmware | ${specificTargetFirmwareFiles}"
+    console_print "Unpacking firmware | ${specificTargetFirmwareFiles}"
     unzip "${firmwareZip}" "$specificTargetFirmwareFiles" -d "./local_build/local_build_downloaded_contents/extracted_fw" &>>"$thisConsoleTempLogFile"
 done
-
-# remove the whole firmware package for cleanup:
 rm -rf ${firmwareZip} || abort "Failed to delete the base firmware package for cleanup, please try again!"
 
-# used these variables for future proof!
 homeCSCTar=$(find "./local_build/local_build_downloaded_contents/extracted_fw/" -type f -name 'HOME_CSC_*.tar.md5' | head -n1)
 androidPartitionsTar=$(find "./local_build/local_build_downloaded_contents/extracted_fw/" -type f -name 'AP*.tar.md5' | head -n1)
-
-# for mounting optics:
 opticsMountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__optics"
 mkdir -p "$opticsMountPath"
 
-# let's extract stuffs from the md5 / tar file according to the device.
-# if the device is using dynamic partitions, we will just extract the super and optics from the firmware package:
-console_print tg "Trying to configure images..."
+console_print "Trying to configure images..."
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
     if tar -tf "${homeCSCTar}" | grep -q "optics"; then
-        console_print tg "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
-        opticsInTar=$(tar -tf "${homeCSCTar}" | grep "optics")
+        console_print "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
+        opticsInTar=$(tar -tf "${homeCSCTar}" | grep -E "(^|/)(optics(\.img)?\.lz4)$")
         tar -xvf "${homeCSCTar}" "${opticsInTar}" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        lz4 -d ./local_build/local_build_downloaded_contents/tar_files/${opticsInTar} ./local_build/local_build_downloaded_contents/tar_files/optics.img || abort "Failed to decompress ${opticsInTar}"
+        [ ! -f "./local_build/local_build_downloaded_contents/tar_files/${opticsInTar}" ] && abort "Failed to extract optics image!"
+        lz4 -d "./local_build/local_build_downloaded_contents/tar_files/${opticsInTar}" "./local_build/local_build_downloaded_contents/tar_files/optics.img" || abort "Failed to decompress optics"
         setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
     else
-        # if it's not there, we will just use the optics.img from the super.img
-        console_print tg "Optics image not found in the HOME_CSC tar file, will use the optics.img from the super.img instead..."
+        console_print "Optics image not found in the HOME_CSC tar file, will use the optics.img from the super.img instead..."
     fi
+
     if [ ! -f "./local_build/local_build_downloaded_contents/tar_files/optics.img" ] && tar -tf "${androidPartitionsTar}" | grep -q "optics"; then
-        console_print tg "Optics image is found in the AP tar file, will use the optics.img from there!"
-        opticsInTar=$(tar -tf "${androidPartitionsTar}" | grep "optics")
+        console_print "Optics image is found in the AP tar file, will use the optics.img from there!"
+        opticsInTar=$(tar -tf "${androidPartitionsTar}" | grep -E "(^|/)(optics(\.img)?\.lz4)$")
         tar -xvf "${androidPartitionsTar}" "${opticsInTar}" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        lz4 -d ./local_build/local_build_downloaded_contents/tar_files/${opticsInTar} ./local_build/local_build_downloaded_contents/tar_files/optics.img || abort "Failed to decompress ${opticsInTar}"
+        [ ! -f "./local_build/local_build_downloaded_contents/tar_files/${opticsInTar}" ] && abort "Failed to extract optics image!"
+        lz4 -d "./local_build/local_build_downloaded_contents/tar_files/${opticsInTar}" "./local_build/local_build_downloaded_contents/tar_files/optics.img" || abort "Failed to decompress optics"
         setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
     else
-        # if it's not there, we will just end this session;
         [ ! -f "./local_build/local_build_downloaded_contents/tar_files/optics.img" ] && abort "Optics image not found in the AP tar file"
     fi
-    [ -f "./local_build/local_build_downloaded_contents/tar_files/optics.img" ] && console_print tg "Extracted optics.img image successfully!"
+
+    [ -f "./local_build/local_build_downloaded_contents/tar_files/optics.img" ] && console_print "Extracted optics.img image successfully!"
     tar -xvf "${androidPartitionsTar}" "$(tar -tf "${androidPartitionsTar}" | grep "super")" -C "./local_build/local_build_downloaded_contents/tar_files/"
     lz4 -d ./local_build/local_build_downloaded_contents/tar_files/$(tar -tf "${androidPartitionsTar}" | grep "super") ./local_build/local_build_downloaded_contents/tar_files/super.img || abort "Failed to decompress super.img"
     mkdir -p ./local_build/super_extract
@@ -112,17 +104,16 @@ if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
         mkdir -p "$mountPath"
         setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
     done
-# if the device is not using dynamic partitions, we will just extract the system, vendor and product images from the firmware package:
 elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
     if tar -tf "${homeCSCTar}" | grep -q "optics"; then
-        console_print tg "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
-        opticsInTar=$(tar -tf "${homeCSCTar}" | grep "optics")
+        console_print "Optics image is found in the HOME_CSC tar file, will use the optics.img from there!"
+        opticsInTar=$(tar -tf "${homeCSCTar}" | grep -E "(^|/)(optics(\.img)?\.lz4)$")
         tar -xvf "${homeCSCTar}" "${opticsInTar}" -C "./local_build/local_build_downloaded_contents/tar_files/"
-        lz4 -d ./local_build/local_build_downloaded_contents/tar_files/${opticsInTar} ./local_build/local_build_downloaded_contents/tar_files/optics.img || abort "Failed to decompress optics from tar file!"
+        lz4 -d "./local_build/local_build_downloaded_contents/tar_files/${opticsInTar}" "./local_build/local_build_downloaded_contents/tar_files/optics.img" || abort "Failed to decompress optics from tar file!"
         setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
     else
-        console_print tg "Optics is not a partition, so, we are using product for the CSC feature modifications..."
-        productInTar=$(tar -tf "${homeCSCTar}" | grep "optics")
+        console_print "Optics is not a partition, so, we are using product for the CSC feature modifications..."
+        productInTar=$(tar -tf "${homeCSCTar}" | grep "product")
         tar -xvf "${homeCSCTar}" "${productInTar}" -C "./local_build/local_build_downloaded_contents/tar_files/"
         lz4 -d ./local_build/local_build_downloaded_contents/tar_files/${productInTar} ./local_build/local_build_downloaded_contents/tar_files/product.img || abort "Failed to decompress product from tar file!"
         mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__product.img"
@@ -131,20 +122,19 @@ elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
     fi
     for systemPartitions in system vendor optics; do
         if tar -tf "${androidPartitionsTar}" | grep -q "${systemPartitions}"; then
-            console_print tg "Found ${systemPartitions} image in the AP tar file, extracting it now..."
+            console_print "Found ${systemPartitions} image in the AP tar file, extracting it now..."
             androidPartitionsinTar=$(tar -tf "${androidPartitionsTar}" | grep "${systemPartitions}")
             tar -xvf "${androidPartitionsTar}" "${androidPartitionsinTar}" -C "./local_build/local_build_downloaded_contents/tar_files/"
             lz4 -d ./local_build/local_build_downloaded_contents/tar_files/${androidPartitionsinTar} ./local_build/local_build_downloaded_contents/tar_files/${systemPartitions}.img || abort "Failed to decompress ${systemPartitions} from ${androidPartitionsinTar}"
-            mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__$(basename "${COMMON_FIRMWARE_BLOCKS}").img"
+            mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${systemPartitions}.img"
             mkdir -p "$mountPath"
             setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/${systemPartitions}.img" "${mountPath}"
         else
-            console_print tg "No ${systemPartitions} image found in the AP tar file, please try again!"
+            console_print "No ${systemPartitions} image found in the AP tar file, please try again!"
         fi
     done
 fi
 
-# do cleanup:
 rm $homeCSCTar || abort "Failed to delete the HOME_CSC tar file, please try again!"
 rm $androidPartitionsTar || abort "Failed to delete the AP tar file, please try again!"
 rmdir $opticsMountPath &>/dev/null

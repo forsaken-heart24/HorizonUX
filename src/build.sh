@@ -100,9 +100,11 @@ BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROP
 case "${BUILD_TARGET_SDK_VERSION}" in
     28|29|30)
     	setMakeConfigs "BUILD_TARGET_FLOATING_FEATURE_PATH" "${VENDOR_DIR}/etc/floating_feature.xml" ./src/target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf
+    	setMakeConfigs "BUILD_TARGET_FLOATING_FEATURE_PATH" "${VENDOR_DIR}/etc/floating_feature.xml" ./src/target/${TARGET_BUILD_PRODUCT_NAME}/genericTargetProperties.conf
     ;;
     31|32|33|34|35|36|37)
 		setMakeConfigs "BUILD_TARGET_FLOATING_FEATURE_PATH" "${SYSTEM_DIR}/etc/floating_feature.xml" ./src/target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf
+    	setMakeConfigs "BUILD_TARGET_FLOATING_FEATURE_PATH" "${SYSTEM_DIR}/etc/floating_feature.xml" ./src/target/${TARGET_BUILD_PRODUCT_NAME}/genericTargetProperties.conf
     ;;
 esac
 
