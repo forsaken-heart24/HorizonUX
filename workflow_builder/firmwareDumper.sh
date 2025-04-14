@@ -49,11 +49,11 @@ console_print tg "Firmware Dump started at $(TZ=America/Phoenix date '+%d %b %Y,
 console_print "Downloading firmware package..."
 echo "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" | grep -qE "samfw|samfwpremium" || abort "Only samfw.com firmware packages are supported!"
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "${firmwareZip}" || abort "Failed to download firmware."
-console_print tg "Firmware package finished downloading at $(TZ=America/Phoenix date '+%I:%M%p')"
+console_print "Firmware package finished downloading at $(TZ=America/Phoenix date '+%I:%M%p')"
 
 # Unzip AP and HOME_CSC
 for specificFirmwareFile in $(unzip -Z1 "${firmwareZip}" | grep -E 'AP|HOME_CSC'); do
-    console_print tg "Unpacking firmware: ${specificFirmwareFile}"
+    console_print "Unpacking firmware: ${specificFirmwareFile}"
     unzip -q "${firmwareZip}" "${specificFirmwareFile}" -d "${extrdDir}" >> "$thisConsoleTempLogFile" || abort "Failed to extract $specificFirmwareFile"
 done
 
@@ -91,10 +91,11 @@ if tar -tf "${AP}" | grep -q "super"; then
     tar -xf "$AP" -C "${extrdDir}" --wildcards 'super*' || abort "Failed to extract super block from $AP"
     lz4 -d "${extrdDir}/super.img.lz4" "${cmprsDir}/super.img" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
     compressInZStandard "${cmprsDir}/super.img" "${cmprsDir}/super.zst" --${compressionLevel}
-    for f in ${cmprsDir}/super.*; do
+    for f in ${cmprsDir}/super.zst*; do
         [[ -f "$f" ]] && uploadGivenFileToTelegram "$f" "Here's a part of super.img from your dump, ${userToTag}"
+        sleep 25
     done
-    rm -f "${cmprsDir}/super.zst" "${cmprsDir}/super.zst.part_"
+    rm -f ${cmprsDir}/super.zst*
     sendMessageToTelegramChat "To merge the split, run this command in a bash shell: \`\`\`cat super.zst super.zst.(ex: aa or ab) > super_full.zst\`\`\`"
 else
     for img in system vendor; do
@@ -105,6 +106,7 @@ else
             compressInZStandard "${cmprsDir}/${img}.img" "${cmprsDir}/${img}.zst" --${compressionLevel}
             for part in ${cmprsDir}/${img}.zst*; do
                 [[ -f "$part" ]] && uploadGivenFileToTelegram "$part" "Here's a part of ${img}.img from your dump, ${userToTag}"
+                sleep 25
             done
             rm -f "${cmprsDir}/${img}.zst" "${extrdDir}/${img}"*
         fi
@@ -121,7 +123,7 @@ if [[ "${extractKernel}" == "true" ]]; then
             compressInZStandard "${cmprsDir}/${lowLevelImage}.img" "${cmprsDir}/${lowLevelImage}.zst" --${compressionLevel}
             uploadGivenFileToTelegram "${cmprsDir}/${lowLevelImage}.zst" "Here's ${lowLevelImage}.img from your dump, ${userToTag}"
         else
-            console_print tg "${lowLevelImage}.img is not available in AP"
+            console_print "${lowLevelImage}.img is not available in AP"
         fi
     done
 fi
