@@ -24,6 +24,7 @@ TARGET_DEVICE="$4"
 theBotToken="$5"
 chatID="$6"
 firmwareZip="./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip"
+extractedOptics="./local_build/local_build_downloaded_contents/tar_files/optics.img.lz4"
 touch cloud
 
 . ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
@@ -61,7 +62,7 @@ for specificTargetFirmwareFiles in $(unzip -l "${firmwareZip}" | grep -E 'AP|HOM
     unzip "${firmwareZip}" "$specificTargetFirmwareFiles" -d "./local_build/local_build_downloaded_contents/extracted_fw" &>>"$thisConsoleTempLogFile"
 done
 
-rm -rf ${firmwareZip} || abort "Failed to delete the base firmware package for cleanup, please try again!"
+rm -f "${firmwareZip}" || abort "Failed to delete the base firmware package for cleanup, please try again!"
 
 homeCSCTar=$(find "./local_build/local_build_downloaded_contents/extracted_fw/" -type f -name 'HOME_CSC_*.tar.md5' | head -n1)
 androidPartitionsTar=$(find "./local_build/local_build_downloaded_contents/extracted_fw/" -type f -name 'AP*.tar.md5' | head -n1)
@@ -69,47 +70,39 @@ androidPartitionsTar=$(find "./local_build/local_build_downloaded_contents/extra
 opticsMountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__optics"
 mkdir -p "$opticsMountPath"
 console_print tg "Trying to configure images..."
+
+# Try optics first from HOME_CSC, fallback to AP
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
-    if extract_partition_image "${homeCSCTar}" "optics" "./local_build/local_build_downloaded_contents/tar_files/optics.img"; then
-        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
-    elif extract_partition_image "${androidPartitionsTar}" "optics" "./local_build/local_build_downloaded_contents/tar_files/optics.img"; then
-        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
+    if tar -xf "${homeCSCTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*optics.img.lz4'; then
+        lz4 -d "${extractedOptics}" "${extractedOptics%.lz4}" && setupLocalImage "${extractedOptics%.lz4}" "${opticsMountPath}" || abort "Failed to extract and mount optics image!"
+    elif tar -xf "${androidPartitionsTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*optics.img.lz4'; then
+        lz4 -d "${extractedOptics}" "${extractedOptics%.lz4}" && setupLocalImage "${extractedOptics%.lz4}" "${opticsMountPath}" || abort "Failed to extract and mount optics image!"
     else
         abort "Failed to extract optics image!"
     fi
-
-    tar -xvf "${androidPartitionsTar}" "$(tar -tf "${androidPartitionsTar}" | grep "super")" -C "./local_build/local_build_downloaded_contents/tar_files/"
-    lz4 -d ./local_build/local_build_downloaded_contents/tar_files/$(tar -tf "${androidPartitionsTar}" | grep "super") ./local_build/local_build_downloaded_contents/tar_files/super.img || abort "Failed to decompress super.img"
+    # prepare mounting super.img
+    tar -xf "${androidPartitionsTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*super.img.lz4'
+    lz4 -d ./local_build/local_build_downloaded_contents/tar_files/super.img.lz4 ./local_build/local_build_downloaded_contents/tar_files/super.img || abort "Failed to decompress super.img"
     mkdir -p ./local_build/super_extract
-    lpdump "super.img" > dumpOfTheSuperBlock
-    lpunpack "super.img" "./local_build/super_extract/" &>>"$thisConsoleTempLogFile"
-
-    for COMMON_FIRMWARE_BLOCKS in ./local_build/super_extract/system.img ./local_build/super_extract/vendor.img ./local_build/super_extract/product.img; do
-        [ -f "${COMMON_FIRMWARE_BLOCKS}" ] || continue
-        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__$(basename "${COMMON_FIRMWARE_BLOCKS}").img"
+    lpdump "./local_build/local_build_downloaded_contents/tar_files/super.img" > dumpOfTheSuperBlock
+    lpunpack "./local_build/local_build_downloaded_contents/tar_files/super.img" "./local_build/super_extract/" &>>"$thisConsoleTempLogFile"
+    for COMMON_FIRMWARE_BLOCKS in ./local_build/super_extract/*.img; do
+        echo "$(basename "${COMMON_FIRMWARE_BLOCKS}")" | grep -qE "system.img|vendor.img|product.img" || continue
+        partitionName="$(basename "${COMMON_FIRMWARE_BLOCKS}" .img)"
+        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${partitionName}"
         mkdir -p "$mountPath"
         setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
     done
-
-elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
-    if extract_partition_image "${homeCSCTar}" "optics" "./local_build/local_build_downloaded_contents/tar_files/optics.img"; then
-        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/optics.img" "${opticsMountPath}"
-    else
-        console_print tg "Optics is not a partition, falling back to product..."
-        extract_partition_image "${homeCSCTar}" "product" "./local_build/local_build_downloaded_contents/tar_files/product.img"
-        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__product.img"
-        mkdir -p "${mountPath}"
-        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/product.img" "${mountPath}"
-    fi
-
-    for systemPartitions in system vendor optics; do
-        if extract_partition_image "${androidPartitionsTar}" "${systemPartitions}" "./local_build/local_build_downloaded_contents/tar_files/${systemPartitions}.img"; then
-            mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${systemPartitions}.img"
-            mkdir -p "$mountPath"
-            setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/${systemPartitions}.img" "${mountPath}"
-        else
-            console_print tg "No ${systemPartitions} image found in the AP tar file."
-        fi
+else
+    # prepare mounting system.img and vendor.img
+    tar -xf "${androidPartitionsTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*system.img.lz4' '*vendor.img.lz4'
+    tar -xf "${homeCSCTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*product.img.lz4'
+    for lz4Files in system vendor product; do
+        [ -f "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img.lz4" ] && lz4 -d "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img.lz4" "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img" || abort "Failed to decompress ${lz4Files}.img"
+        rm -rf "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img.lz4" || abort "Failed to delete ${lz4Files}.img.lz4 to free up space!"
+        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${lz4Files}.img"
+        mkdir -p "$mountPath"
+        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img" "${mountPath}"
     done
 fi
 

@@ -86,10 +86,9 @@ function abort() {
     debugPrint "[:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    sendMessageToTelegramChat "Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) | $1"
+    sendMessageToTelegramChat "$1 | Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) "
     rm -rf $TMPDIR ./local_build/* output
-    uploadGivenFileToTelegram "./src/makeconfigs.prop"
-    uploadGivenFileToTelegram "$thisConsoleTempLogFile"
+    uploadGivenFileToTelegram "./local_build/logs/hux_build.log"
     exit 1
 }
 
@@ -831,7 +830,11 @@ function uploadGivenFileToTelegram() {
     local userRequestedFile="$1"
     local optionalCaption="$2"
     local curl_cmd=(curl -s -F "chat_id=${chatID}" -F "document=@${userRequestedFile}")
-    [ -f "${userRequestedFile}" ] || return 1
+    if [ ! -f "${userRequestedFile}" ]; then
+        return 1
+    elif [ "$(stat -c%s "${userRequestedFile}")" -ge "50000000" ]; then
+        uploadToGoFile "${userRequestedFile}" --tg " " "${optionalCaption}"
+    fi
     console_print "Trying to upload ${userRequestedFile} to the requested chat..."
     [[ -n "$optionalCaption" ]] && curl_cmd+=(-F "caption=${optionalCaption}")
     [[ -n "$topicID" ]] && curl_cmd+=(-F "message_thread_id=${topicID}")
@@ -895,7 +898,7 @@ function setupLocalImage() {
         ;;
         "f2fs"|"ext4")
             console_print "${fsType} image detected, attempting read-write mount..."
-            sudo mount -o rw "${imagePath}" "${mountPath}" || abort "Failed to mount ${imageBlock} as read-write"
+            sudo mount -o loop,rw "${imagePath}" "${mountPath}" || abort "Failed to mount ${imageBlock} as read-write"
             setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${mountPath}" ./src/makeconfigs.prop
         ;;
         *)
@@ -988,32 +991,6 @@ function repackSuperFromDump() {
 	[ $? -eq 0 ] || abort "❌ Failed to pack image."
 }
 
-function deleteUselessFirmwareFiles() {
-    for uselessFirmwarePackages in boot.img.lz4 recovery.img.lz4 super.img.lz4 dtbo.img.lz4 persist.img.lz4 userdata.img.lz4 vbmeta.img.lz4 vbmeta_samsung.img.lz4 dqmdbg.img.lz4 misc.bin.lz4 meta-data/ cache.img.lz4 prism.img.lz4 optics.img.lz4; do
-        [ -f "${uselessFirmwarePackages}" ] && rm -rf ./local_build/local_build_downloaded_contents/tar_files/${uselessFirmwarePackages}
-    done
-}
-
-function extractStuffsByTheirFormatSpecifier() {
-    local fileToExtract="$1"
-    local outputPath="$2"
-    local skipMounts="$3"
-    local extension="${fileToExtract##*.}"
-    case "$extension" in
-        lz4)
-            console_print "Decompressing LZ4 image: $fileToExtract"
-            lz4 -d "$fileToExtract" "$outputPath" &>>"$thisConsoleTempLogFile" || abort "Failed to decompress $fileToExtract"
-            [[ -z "$skipMounts" ]] && setupLocalImage "$outputPath"
-        ;;
-        img)
-            [[ -z "$skipMounts" ]] && setupLocalImage "$outputPath"
-        ;;
-        *)
-            abort "Unknown format specifier: .$extension (File: $fileToExtract)"
-        ;;
-    esac
-}
-
 function compressInZStandard() {
     local fileToCompress="$1"
     local outputPath="$2"
@@ -1086,18 +1063,4 @@ function uploadToGoFile() {
     [ -z "${link}" ] && abort "Failed to upload the file!"
     [ "${receiver}" == "--tg" ] && { sendMessageToTelegramChat "${message} <a href="${link}">${linkText}</a>"; return 0; }
     echo "$link"
-}
-
-function extract_partition_image() {
-    local tarball="$1"
-    local imageName="$2"
-    local destImage="$3"
-    local foundPath
-    local extractedName=$(tar -tf "${tarball}" | grep -i "${imageName}" | head -n1)
-    [ -z "$extractedName" ] && return 1
-    tar -xvf "${tarball}" "${extractedName}" -C "./local_build/local_build_downloaded_contents/tar_files/" &>>"$thisConsoleTempLogFile"
-    foundPath=$(find "./local_build/local_build_downloaded_contents/tar_files/" -iname "$(basename "$extractedName")" | head -n1)
-    [ -z "$foundPath" ] && return 1
-    lz4 -d "$foundPath" "$destImage" &>>"$thisConsoleTempLogFile" || return 1
-    return 0
 }
