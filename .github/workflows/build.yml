@@ -86,17 +86,29 @@ jobs:
             mkdir -p "./local_build/$i"
           done
 
+      - name: Clone LonelyFool's lpunpack_and_lpmake Repository to fetch Android Development Tools.
+        run: |
+          git clone --branch android11 --single-branch https://github.com/LonelyFool/lpunpack_and_lpmake/
+          
+      - name: Setup LonelyFool's Android Development Tools.
+        run: |
+          mkdir -p ./bin
+          cd lpunpack_and_lpmake
+          chmod +x ./lpunpack_and_lpmake/make.sh
+          ./make.sh
+          export PATH="./bin/:${PATH}"
+          
       - name: Download And Configure Firmware 
         run: |
           chmod +x ./workflow_builder/configureFirmware.sh
           ./workflow_builder/configureFirmware.sh \
-            "${{ github.event.inputs.firmware_url }}" \
-            "${{ github.event.inputs.makeconfig }}" \
-            "${{ github.event.inputs.private_key_setup_link }}" \
-            "${{ github.event.inputs.target }}" \
-            "${{ github.event.inputs.telegram_bot_token }}" \
-            "${{ github.event.inputs.telegram_chat_id }}"
-  
+          "${{ github.event.inputs.firmware_url }}" \
+          "${{ github.event.inputs.makeconfig }}" \
+          "${{ github.event.inputs.private_key_setup_link }}" \
+          "${{ github.event.inputs.target }}" \
+          "${{ github.event.inputs.telegram_bot_token }}" \
+          "${{ github.event.inputs.telegram_chat_id }}"
+              
       - name: Modify ROM
         run: |
           chmod +x ./src/build.sh
