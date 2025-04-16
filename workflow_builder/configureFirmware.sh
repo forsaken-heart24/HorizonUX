@@ -16,17 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# exec to get the fucnctions and variables
-. ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
-. ./src/target/${TARGET_DEVICE}/buildTargetProperties.conf
 
-# args
+# args | exec to get the fucnctions and variables
 TARGET_DEVICE_FULL_FIRMWARE_LINK="$1"
 MAKECONFIGS_LINK="$2"
 PRIVATE_KEY_SETUP_SCRIPT_LINK="$3"
 TARGET_DEVICE="$4"
 theBotToken="$5"
 chatID="$6"
+. ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
+. ./src/target/${TARGET_DEVICE}/buildTargetProperties.conf
 firmwareZip="./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip"
 extractedOptics="./local_build/local_build_downloaded_contents/tar_files/optics.img.lz4"
 opticsMountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__optics"
