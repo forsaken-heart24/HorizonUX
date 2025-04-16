@@ -94,7 +94,7 @@ jobs:
         run: |
           mkdir -p ./bin
           cd lpunpack_and_lpmake
-          chmod +x ./lpunpack_and_lpmake/make.sh
+          chmod +x ./make.sh
           ./make.sh
           export PATH="./bin/:${PATH}"
           
