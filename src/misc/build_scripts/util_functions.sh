@@ -790,16 +790,12 @@ function setMakeConfigs() {
 
 function getImageFileSystem() {
     local image="$1"
-    local info=$(file -b "$image")
-    if [[ "$info" =~ ext4 ]]; then
-        echo "ext4"
-    elif [[ "$info" =~ f2fs ]]; then
-        echo "f2fs"
-    elif [[ "$info" =~ [Ee][Rr][Oo][Ff][Ss] ]]; then
-        echo "erofs"
-    else
-        echo "unknown"
-    fi
+    for knownFileSystems in F2FS ext4 EROFS; do
+        file ${image} | grep -q $knownFileSystems && string_format --lower "${knownFileSystems}" && return 0
+    done
+    # reached this far means: undefined / unsupported filesystem.
+    echo "undefined"
+    return 1
 }
 
 function buildImage() {
