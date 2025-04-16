@@ -16,6 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# exec to get the fucnctions and variables
+. ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
+. ./src/target/${TARGET_DEVICE}/buildTargetProperties.conf
+
 # args
 TARGET_DEVICE_FULL_FIRMWARE_LINK="$1"
 MAKECONFIGS_LINK="$2"
@@ -25,11 +29,11 @@ theBotToken="$5"
 chatID="$6"
 firmwareZip="./local_build/local_build_downloaded_contents/firmware_${TARGET_DEVICE}.zip"
 extractedOptics="./local_build/local_build_downloaded_contents/tar_files/optics.img.lz4"
+opticsMountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__optics"
+mkdir -p "$opticsMountPath"
 touch cloud
 
-. ./src/misc/build_scripts/util_functions.sh "${theBotToken}" "${chatID}"
-. ./src/target/${TARGET_DEVICE}/buildTargetProperties.conf
-
+# banner and etc here:
 sendMessageToTelegramChat "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 sendMessageToTelegramChat "Requested Device: Samsung Galaxy $(deviceCodenameToModel "${TARGET_DEVICE}") (${TARGET_DEVICE}) | test_workflow=true"
 console_print "\033[0;31m########################################################################"
@@ -43,73 +47,77 @@ console_print "#################################################################
 console_print "Starting to build HorizonUX on cloud..."
 console_print "Build started at $(TZ=America/Phoenix date +%d\ %b\ %Y), $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
-
 echo "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" | grep -qE "samfw|samfwpremium" || abort "Only samfw.com firmware packages are supported!"
 console_print "Downloading firmware package from the web..."
 download_stuffs "${TARGET_DEVICE_FULL_FIRMWARE_LINK}" "${firmwareZip}" || abort "Failed to download the given firmware package"
 console_print tg "Finished fetching packages at $(TZ=America/Phoenix date +%I:%M%p) (Phoenix Standard Time)"
 
+# setup custom makeconfigs.prop file if can:
 mv ./src/makeconfigs.prop ./src/makeconfigs.prop_
 if download_stuffs --skip "${MAKECONFIGS_LINK}" "./src/makeconfigs.prop"; then
     rm -rf ./src/makeconfigs.prop_
 else
     mv ./src/makeconfigs.prop_ ./src/makeconfigs.prop
 fi
+
+# setup setup_private_key.sh to sign the ROM with a private key used by an individual if available
 download_stuffs --skip "${PRIVATE_KEY_SETUP_SCRIPT_LINK}" "./setup_private_key.sh" && . "./setup_private_key.sh"
 
+# unpack the fw package and delete it to save space
 for specificTargetFirmwareFiles in $(unzip -l "${firmwareZip}" | grep -E 'AP|HOME_CSC' | awk '{print $4}'); do
     console_print tg "Unpacking firmware | ${specificTargetFirmwareFiles}"
     unzip "${firmwareZip}" "$specificTargetFirmwareFiles" -d "./local_build/local_build_downloaded_contents/extracted_fw" &>>"$thisConsoleTempLogFile"
 done
-
 rm -f "${firmwareZip}" || abort "Failed to delete the base firmware package for cleanup, please try again!"
 
+# use these variable to identify the HOME_CSC and AP_ file:
 homeCSCTar=$(find "./local_build/local_build_downloaded_contents/extracted_fw/" -type f -name 'HOME_CSC_*.tar.md5' | head -n1)
 androidPartitionsTar=$(find "./local_build/local_build_downloaded_contents/extracted_fw/" -type f -name 'AP*.tar.md5' | head -n1)
 
-opticsMountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__optics"
-mkdir -p "$opticsMountPath"
-console_print tg "Trying to configure images..."
+# let's extract optics / product and then proceed to extract super / system
+console_print "Extracting images from the firmware archive..."
+tar -xf "${homeCSCTar}" 'optics.img.lz4' -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
+tar -xf "${homeCSCTar}" 'product.img.lz4' -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
+tar -xf "${androidPartitionsTar}" 'super.img.lz4' -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
+for androidPartitions in system vendor; do
+    tar -xf "${androidPartitionsTar}" "${androidPartitions}.img.lz4" -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
+done
 
-# Try optics first from HOME_CSC, fallback to AP
+# take the info dump, push it to dumpOfTheSuperBlock and then extract the super.img
+# this is only for dynamic partitions, if the device uses static partitions, the if statement will skip this step
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
-    if tar -xf "${homeCSCTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*optics.img.lz4'; then
-        lz4 -d "${extractedOptics}" "${extractedOptics%.lz4}" && setupLocalImage "${extractedOptics%.lz4}" "${opticsMountPath}" || abort "Failed to extract and mount optics image!"
-    elif tar -xf "${androidPartitionsTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*optics.img.lz4'; then
-        lz4 -d "${extractedOptics}" "${extractedOptics%.lz4}" && setupLocalImage "${extractedOptics%.lz4}" "${opticsMountPath}" || abort "Failed to extract and mount optics image!"
-    else
-        abort "Failed to extract optics image!"
-    fi
-    # prepare mounting super.img
-    tar -xf "${androidPartitionsTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*super.img.lz4'
-    lz4 -d ./local_build/local_build_downloaded_contents/tar_files/super.img.lz4 ./local_build/local_build_downloaded_contents/tar_files/super.img || abort "Failed to decompress super.img"
+    console_print "Treble Device w/ Dynamic Partitions detected!"
+    console_print "Extracting super.img and other images from the firmware archive..."
     mkdir -p ./local_build/super_extract
-    lpdump "./local_build/local_build_downloaded_contents/tar_files/super.img" > dumpOfTheSuperBlock
-    lpunpack "./local_build/local_build_downloaded_contents/tar_files/super.img" "./local_build/super_extract/" &>>"$thisConsoleTempLogFile"
-    for COMMON_FIRMWARE_BLOCKS in ./local_build/super_extract/*.img; do
+    lpdump "./local_build/local_build_downloaded_contents/tar_files/super.img" > ./dumpOfTheSuperBlock
+    lpunpack "./local_build/local_build_downloaded_contents/tar_files/super.img" "./local_build/super_extract/" &>>$thisConsoleTempLogFile
+    for COMMON_FIRMWARE_BLOCKS in ./local_build/super_extract/*.img; do 
         echo "$(basename "${COMMON_FIRMWARE_BLOCKS}")" | grep -qE "system.img|vendor.img|product.img" || continue
-        partitionName="$(basename "${COMMON_FIRMWARE_BLOCKS}" .img)"
-        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${partitionName}"
+        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__$(basename "${COMMON_FIRMWARE_BLOCKS}" .img)"
         mkdir -p "$mountPath"
         setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
     done
-else
-    # prepare mounting system.img and vendor.img
-    tar -xf "${androidPartitionsTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*system.img.lz4' '*vendor.img.lz4'
-    tar -xf "${homeCSCTar}" --wildcards -C ./local_build/local_build_downloaded_contents/tar_files/ '*product.img.lz4'
-    for lz4Files in system vendor product; do
-        [ -f "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img.lz4" ] && lz4 -d "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img.lz4" "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img" || abort "Failed to decompress ${lz4Files}.img"
-        rm -rf "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img.lz4" || abort "Failed to delete ${lz4Files}.img.lz4 to free up space!"
-        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${lz4Files}.img"
+# if the device uses static partitions, we will mount the extracted optics.img and product.img
+# and then extract the rest of the images from the AP tar file
+elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
+    for staticPartitions in system vendor; do
+        console_print "Extracting ${staticPartitions}, from this legacy firmware archive..."
+        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${staticPartitions}"
         mkdir -p "$mountPath"
-        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/${lz4Files}.img" "${mountPath}"
+        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/${staticPartitions}.img.lz4" "${mountPath}"
     done
+else
+    abort "Unable to determine if the device uses dynamic partitions or not!"
 fi
 
+# TODO: Cleanup:
 rm -f "${homeCSCTar}" || abort "Failed to delete the HOME_CSC tar file, please try again!"
 rm -f "${androidPartitionsTar}" || abort "Failed to delete the AP tar file, please try again!"
 rmdir "$opticsMountPath" &>/dev/null
 
+# for logging:
 for mounted_partitions in ./local_build/workflow_partitions/*/; do
     ls "$mounted_partitions" &>>"$thisConsoleTempLogFile"
 done
+
+# now the build.sh will handle the rest of the process, so we will just call it in yml file.
