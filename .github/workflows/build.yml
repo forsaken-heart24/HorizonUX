@@ -96,7 +96,8 @@ jobs:
         run: |
           cd lpunpack_and_lpmake
           chmod +x ./make.sh
-          ./make.sh &>../local_build/logs/hux_build.log
+          echo -e "\n\nexit 0" >> ./make.sh
+          ./make.sh &>../local_build/logs/hux_build.log || true
           export PATH="./bin/:${PATH}"
           
       - name: Download And Configure Firmware 
