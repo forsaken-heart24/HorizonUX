@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:compileSdkVersion="34"
+    android:compileSdkVersionCodename="14"
+    package="horizonux.a23_device_cutout__auto_generated_rro_vendor__"
+    platformBuildVersionCode="34"
+    platformBuildVersionName="14">
+    <application
+        android:extractNativeLibs="false"
+        android:usesNonSdkApi="true"/>
+    <overlay
+        android:isStatic="true"
+        android:priority="0"
+        android:targetPackage="android"/>
+</manifest>

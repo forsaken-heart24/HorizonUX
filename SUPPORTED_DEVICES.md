@@ -7,6 +7,8 @@
     **Maintainer:** [Luna](https://github.com/forsaken-heart24)
 - **Samsung Galaxy S20 FE (r8q)**
      **Maintainer:** [Robin](https://github.com/SAKMOTO)
+- **Samsung Galaxy A23 (a23)**
+     **Maintainer:** [Prettysir](https://github.com/Prettysir)
 
 ## Notes:
 - This list is subject to change as new devices are added or deprecated.
