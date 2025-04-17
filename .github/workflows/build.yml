@@ -81,18 +81,19 @@ jobs:
 
       - name: Install Dependencies and Setup Environment
         run: |
-          sudo apt install -y erofs-utils xmlstarlet
+          sudo apt install -y erofs-utils xmlstarlet python3 
           for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds/ super_extract/; do
             mkdir -p "./local_build/$i"
           done
           touch ./local_build/logs/hux_build.log
-          
-          - name: Clone LonelyFool's lpunpack_and_lpmake Repository to fetch Android Development Tools.
-          run: |
+  
+      - name: Clone LonelyFool's lpunpack_and_lpmake Repository to fetch Android Development Tools
+        run: |
           git clone --branch android11 --single-branch https://github.com/LonelyFool/lpunpack_and_lpmake/
+          echo
           
-          - name: Setup LonelyFool's Android Development Tools.
-          run: |
+      - name: Setup LonelyFool's Android Development Tools.
+        run: |
           cd lpunpack_and_lpmake
           mkdir -p ./bin
           chmod +x ./make.sh
