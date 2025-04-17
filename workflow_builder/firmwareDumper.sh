@@ -42,6 +42,7 @@ console_print " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
 console_print "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
 console_print "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
 console_print "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
+console_print "                                                         "
 console_print "########################################################################\033[0m"
 console_print tg "Firmware Dump started at $(TZ=America/Phoenix date '+%d %b %Y, %I:%M%p') (Phoenix Time) | Requested By ${userToTag}"
 

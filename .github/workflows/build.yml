@@ -98,7 +98,9 @@ jobs:
           chmod +x ./make.sh
           echo -e "\n\nexit 0" >> ./make.sh
           ./make.sh &>../local_build/logs/hux_build.log || true
-          export PATH="./bin/:${PATH}"
+          for precompiledBinaries in ./bin/*; do
+              mv $precompiledBinaries ./src/dependencies/bin/
+          done
           
       - name: Download And Configure Firmware 
         run: |

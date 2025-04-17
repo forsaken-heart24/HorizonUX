@@ -126,7 +126,7 @@ function default_language_configuration() {
     if [[ ! "$country" =~ ^[A-Z]{2,3}$ ]]; then
         abort "Invalid country code: $country"
     fi
-    for EXPECTED_CUSTOMER_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/customer.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
+    for EXPECTED_CUSTOMER_XML_PATH in $PRODUCT_DIR/omc/*/conf/customer.xml $OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
         [ -f "$EXPECTED_CUSTOMER_XML_PATH" ] || continue
         # Skip modification if the values are already correct
         if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$EXPECTED_CUSTOMER_XML_PATH" && grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$EXPECTED_CUSTOMER_XML_PATH"; then
@@ -229,7 +229,7 @@ function add_csc_xml_values() {
     local feature_code
     feature_code="$(string_format -u "$1")"
     local feature_code_value="$2"
-    for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+    for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
         if [ -f "$EXPECTED_CSC_FEATURE_XML_PATH" ]; then
             if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == "0" ]; then
                 xmlstarlet ed \
@@ -256,7 +256,7 @@ function tinkerWithCSCFeaturesFile() {
     # handle arg
     case "${action}" in
         --decode)
-            for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+            for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
 	            [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
                 if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>$thisConsoleTempLogFile; then
                     debugPrint "CSC feature file successfully decoded."
@@ -267,7 +267,7 @@ function tinkerWithCSCFeaturesFile() {
             debugPrint "CSC feature file successfully decoded."
         ;;
         --encode)
-            for EXPECTED_CSC_FEATURE_XML_PATH in $HORIZON_PRODUCT_DIR/omc/*/conf/cscfeature.xml $HORIZON_OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+            for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
 	            [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
                 if java -jar "$decoder_jar" -e -i "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" -o "${EXPECTED_CSC_FEATURE_XML_PATH}" &>$thisConsoleTempLogFile; then
                     debugPrint "CSC feature file successfully encoded."
@@ -475,7 +475,7 @@ function fetch_rom_arch() {
     local arg="$1"
 
     # Find build.prop file containing architecture info
-    for file in "$HORIZON_SYSTEM_DIR/build.prop" "$HORIZON_SYSTEM_EXT_DIR/build.prop" "$HORIZON_PRODUCT_DIR/build.prop"; do
+    for file in "$SYSTEM_DIR/build.prop" "$SYSTEM_EXT_DIR/build.prop" "$PRODUCT_DIR/build.prop"; do
         if grep -q "ro.product.cpu.abi" "$file"; then
             arch_file="$file"
             break
@@ -1059,4 +1059,20 @@ function uploadToGoFile() {
     [ -z "${link}" ] && abort "Failed to upload the file!"
     [ "${receiver}" == "--tg" ] && { sendMessageToTelegramChat "${message} <a href="${link}">${linkText}</a>"; return 0; }
     echo "$link"
+}
+
+function lpdump() {
+    ./src/dependencies/bin/lpdump "$@"
+}
+
+function lpunpack() {
+    ./src/dependencies/bin/lpunpack "$@"
+}
+
+function lpmake() {
+    ./src/dependencies/bin/lpmake "$@"
+}
+
+function lpadd() {
+    ./src/dependencies/bin/lpadd "$@"
 }

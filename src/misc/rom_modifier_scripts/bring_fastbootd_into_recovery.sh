@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2025 Luna <luna.realm.io.bennett24@outlook.com>
+# Copyright (C) 2025 Luna <luna.realm.io.bennett24@outlook.com> & Ravindu Deshan <Droidcasts@protonmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,3 +68,4 @@ if ask "Do you want a tar to get this flashed via odin?"; then
     tar -cvf "fastbootd-patched-recovery.tar" ./recovery_patched.img.lz4
     console_print "Odin tar file is located at ./recovery_patched.img.lz4"
 fi
+cd ../../
