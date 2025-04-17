@@ -61,7 +61,7 @@
 - **TARGET_BUILD_FORCE_DISABLE_SETUP_WIZARD**: Disables Setup Wizard - for enterprise or trusted use case only, i'm not responsible for legal actions against you!
 - **TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN**: Brings Game Launcher into the homescreen.
 - **TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS**: The battery health level thing, like the one from iPhone. Thnx to UN1CA!
-- **BRINGUP_CN_SMARTMANAGER_DEVICE**: Brings Chinese version of Smartmanager and Device Care, thnx @saadelasfur [Only works on OneUI 6.1, OneUI 6.1.1 & OneUI 7.*]
+- **BRINGUP_CN_SMARTMANAGER_DEVICE**: Brings Chinese version of Smartmanager and Device Care, thnx @saadelasfur (Load Chinese applications with your own risk!) [Only works on UI6 and UI7]
 
 ## Language & Locale
 - **SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD**: Sets default language and region for the first boot, fill these variables to switch to your language **NEW_DEFAULT_LANGUAGE_ON_PRODUCT** **NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT**
@@ -86,6 +86,8 @@
 - **TARGET_BUILD_BRING_NEWGEN_ASSISTANT**: For android <= 11, brings assistant 2.0
 - **RECOVERY_IMAGE_PATH**: To be filled by the builder if they want to patch their device's recovery.
 - **TARGET_INCLUDE_HORIZONUX_ELLEN**: Ellen, a script that spoofs and does some misc jobs when the device is booting. (kinda like a "tweaker" but it doesn't do anything to performance)
+- **TARGET_BUILD_MAKE_DEODEXED_ROM**: Deodex'es the rom. Learn about deodex'ing here: <a href="https://xdaforums.com/t/complete-guide-what-is-odex-and-deodex-rom.2200349">What is ODEX and DEODEX in Custom ROMS</a>
+- **TARGET_INCLUDE_SAFETYCORESTUB**: Safetycore stub app made by me, include this if you really want to, <a href="https://www.reddit.com/r/technology/comments/1iy19yt/a_new_android_feature_is_scanning_your_photos_for/">learn about it from here</a>
 
 ---
 

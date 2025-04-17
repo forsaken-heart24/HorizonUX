@@ -156,6 +156,12 @@ TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH=false
 # bring dolby sound effects on games. (if supported + if the hw is capable of doing this)
 TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES=false
 
+# deodex'es the rom. learn about deodex'ing here: https://xdaforums.com/t/complete-guide-what-is-odex-and-deodex-rom.2200349/
+TARGET_BUILD_MAKE_DEODEXED_ROM=false
+
+# safetycore stub app made by me, include this if you really want to
+TARGET_INCLUDE_SAFETYCORESTUB=false
+
 ############################################# Exclusive HorizonUX Features #############################################
 # this feature includes an prop level workaround that is used to avoid smoky distortion specifically to those LDAC Bluetooth earphones and DAC's under $30 (probably), this sets special re-sampling tweaks in the system level.
 TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER=false

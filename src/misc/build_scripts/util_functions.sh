@@ -439,7 +439,7 @@ EOF
 function existance() {
     local file="$1"
     # grrrrrrrrrrrrrr
-    [ -e "$file" ] && return 0
+    [ -f "$file" ] && return 0
     return 1
 }
 
@@ -571,6 +571,8 @@ function check_build_prop() {
 }
 
 function download_glmodules() {
+    # test internet connection before anything:
+    check_internet_connection "GOODLOCK_MODULES" || return 1
     local i
     local SequenceValue
     local MaximumSDKVersion=35
@@ -657,7 +659,8 @@ function download_glmodules() {
 }
 
 function check_internet_connection() {
-    ping -w 3 google.com &>/dev/null || warns "Please connect the computer to a wifi or an ethernet connection to access online facilities." "$(string_format -u $1)"
+    ping -w 3 google.com &>/dev/null || warns "Please connect the computer to a wifi or an ethernet connection to access online facilities." "$(string_format -u $1)" && return 1
+    return 0
 }
 
 function fetch_file_arch() {
