@@ -1,0 +1,21 @@
+--- dumpstate_35.rc	2025-04-17 13:34:00.988397400 +0000
++++ dumpstate_35_patched.rc	2025-04-17 13:35:26.247737400 +0000
+@@ -51,11 +51,9 @@
+     oneshot
+     user root
+ 
+-# bugreport service(using key combination)
+-service bugreport_key /system/bin/dumpstate -m -k -z -p
+-    class main
+-    disabled
+-    oneshot
+-    group sdcard_rw
+-    keycodes 114 115 116
+-    user root
++# horizon changes:
++on property:sys.boot_completed=1
++    stop bugreportd
++    stop bugreportm
++    stop dumpstate
++    stop dumpstatez
+\ No newline at end of file

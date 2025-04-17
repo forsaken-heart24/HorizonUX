@@ -432,7 +432,9 @@ if [ "$TARGET_REMOVE_USELESS_VENDOR_STUFFS" == "true" ]; then
         fi
         rm -rf "${VENDOR_DIR}/overlay/AccentColorBlack" "${VENDOR_DIR}/overlay/AccentColorCinnamon" "${VENDOR_DIR}/overlay/AccentColorGreen" \
         "${VENDOR_DIR}/overlay/AccentColorOcean" "${VENDOR_DIR}/overlay/AccentColorOrchid" "${VENDOR_DIR}/overlay/AccentColorPurple" \
-        "${VENDOR_DIR}/etc/init/boringssl_self_test.rc" "${VENDOR_DIR}/overlay/AccentColorSpace" &> "$thisConsoleTempLogFile"
+        "${VENDOR_DIR}/etc/init/boringssl_self_test.rc" "${VENDOR_DIR}/etc/init/dumpstate-default.rc" "${VENDOR_DIR}/etc/init/vendor_flash_recovery.rc" \
+		"${VENDOR_DIR}/etc/vintf/manifest/dumpstate-default.xml"
+		"${VENDOR_DIR}/overlay/AccentColorSpace" &> "$thisConsoleTempLogFile"
         if [ "${TARGET_DISABLE_FILE_BASED_ENCRYPTION}" == "true" ]; then
             for fstab__ in $VENDOR_DIR/etc/fstab.*; do
                 sed -i -e 's/^\([^#].*\)fileencryption=[^,]*\(.*\)$/# &\n\1encryptable\2/g' ${fstab__}
@@ -506,6 +508,18 @@ if [ "$TARGET_BUILD_REMOVE_SYSTEM_LOGGING" == "true" ]; then
 			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[9]}"
 			apply_diff_patches "$SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[3]}"
 			apply_diff_patches "$SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[12]}"
+		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 33 ]]; then
+			apply_diff_patches "$SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[24]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[26]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[27]}"
+		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 34 ]]; then
+			apply_diff_patches "$SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[28]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[30]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[31]}"
+		elif [[ "${BUILD_TARGET_SDK_VERSION}" -eq 35 ]]; then
+			apply_diff_patches "$SYSTEM_DIR/etc/init/atrace.rc" "${DIFF_UNIFIED_PATCHES[32]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[34]}"
+			apply_diff_patches "$SYSTEM_DIR/etc/init/logd.rc" "${DIFF_UNIFIED_PATCHES[35]}"
 		fi
 	fi
 fi
@@ -770,10 +784,20 @@ case "${BUILD_TARGET_SDK_VERSION}" in
         apply_diff_patches "$VENDOR_DIR/etc/init/wifi.rc" "${DIFF_UNIFIED_PATCHES[17]}"
         apply_diff_patches "$SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[16]}"
     ;;
+	33)
+        apply_diff_patches "$SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[25]}"
+	;;
+	34)
+        apply_diff_patches "$SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[29]}"
+	;;
+	35)
+        apply_diff_patches "$SYSTEM_DIR/etc/init/bootchecker.rc" "${DIFF_UNIFIED_PATCHES[33]}"
+	;;
 esac
+
 [[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "30" ]] && apply_diff_patches "$SYSTEM_DIR/etc/init/freecess.rc" "${DIFF_UNIFIED_PATCHES[22]}"
-[[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "31" ]] && apply_diff_patches "$SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[21]}"
-[[ "${BUILD_TARGET_SDK_VERSION}" -ge "29" && "${BUILD_TARGET_SDK_VERSION}" -le "33" ]] && apply_diff_patches "$SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
+[[ "${BUILD_TARGET_SDK_VERSION}" -ge "28" && "${BUILD_TARGET_SDK_VERSION}" -le "34" ]] && apply_diff_patches "$SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[21]}"
+[[ "${BUILD_TARGET_SDK_VERSION}" -ge "29" && "${BUILD_TARGET_SDK_VERSION}" -le "35" ]] && apply_diff_patches "$SYSTEM_DIR/etc/restart_radio_process.sh" "${DIFF_UNIFIED_PATCHES[19]}"
 if ask "Do you want to add a stub app for missing activities?"; then
 	mkdir -p "$SYSTEM_DIR/app/HorizonStub/"
 	build_and_sign "./src/horizon/packages/HorizonStub" "$SYSTEM_DIR/app/HorizonStub/"

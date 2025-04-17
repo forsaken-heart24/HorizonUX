@@ -85,16 +85,16 @@ jobs:
           for i in system/product/priv-app system/product/etc system/product/overlay system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ system/etc/init/ tmp/hux/ local_build_downloaded_contents/ local_build_downloaded_contents/extracted_fw local_build_downloaded_contents/tar_files/ workflow_partitions/ workflow_builds/ super_extract/; do
             mkdir -p "./local_build/$i"
           done
-          mkdir -p ./bin
           touch ./local_build/logs/hux_build.log
-
-      - name: Clone LonelyFool's lpunpack_and_lpmake Repository to fetch Android Development Tools.
-        run: |
+          
+          - name: Clone LonelyFool's lpunpack_and_lpmake Repository to fetch Android Development Tools.
+          run: |
           git clone --branch android11 --single-branch https://github.com/LonelyFool/lpunpack_and_lpmake/
           
-      - name: Setup LonelyFool's Android Development Tools.
-        run: |
+          - name: Setup LonelyFool's Android Development Tools.
+          run: |
           cd lpunpack_and_lpmake
+          mkdir -p ./bin
           chmod +x ./make.sh
           echo -e "\n\nexit 0" >> ./make.sh
           ./make.sh &>../local_build/logs/hux_build.log || true

@@ -1,0 +1,11 @@
+--- logd_34.rc	2025-04-17 14:24:13.382293400 +0000
++++ logd_34_edited.rc	2025-04-17 14:24:43.010524300 +0000
+@@ -32,5 +32,8 @@
+     chown logd logd /dev/event-log-tags
+     chmod 0644 /dev/event-log-tags
+ 
++# horizon changes:
+ on property:sys.boot_completed=1
+     start logd-auditctl
++    stop logd
++

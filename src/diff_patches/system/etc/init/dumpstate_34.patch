@@ -1,0 +1,14 @@
+--- dumpstate_34.rc	2025-04-17 14:16:04.604832000 +0000
++++ dumpstate_34_edited.rc	2025-04-17 14:16:52.647567100 +0000
+@@ -49,3 +49,11 @@
+     class main
+     disabled
+     oneshot
++
++# horizon changes:
++on property:sys.boot_completed=1
++    stop bugreportd
++    stop bugreportm
++    stop dumpstate
++    stop dumpstatez
++
