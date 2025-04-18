@@ -87,20 +87,18 @@ jobs:
           done
           touch ./local_build/logs/hux_build.log
   
-      - name: Clone LonelyFool's lpunpack_and_lpmake Repository to fetch Android Development Tools
+      - name: Clone Android Super Partition Tinkerer Binaries Repository to fetch Android Development Tools
         run: |
-          git clone --branch android11 --single-branch https://github.com/LonelyFool/lpunpack_and_lpmake/
+          git clone https://github.com/forsaken-heart24/Android-Super-Partition-Tinkerer-Binaries.git
           
-      - name: Setup LonelyFool's Android Development Tools.
+      - name: Setup Luna's Android Development Tools.
         run: |
-          cd lpunpack_and_lpmake
+          cd Android-Super-Partition-Tinkerer-Binaries
           chmod +x ./make.sh
           echo -e "\n\nexit 0" >> ./make.sh
           ./make.sh &>../local_build/logs/hux_build.log || true
-          cd ..
           for precompiledBinaries in bin/*; do
-              echo "$precompiledBinaries"    
-              mv $precompiledBinaries ./src/dependencies/bin/
+              mv $precompiledBinaries ./src/dependencies/bin/ 
           done
           
       - name: Download And Configure Firmware 
