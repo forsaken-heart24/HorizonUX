@@ -97,7 +97,9 @@ jobs:
           chmod +x ./make.sh
           echo -e "\n\nexit 0" >> ./make.sh
           ./make.sh &>../local_build/logs/hux_build.log || true
-          for precompiledBinaries in bin/*; do
+          cd ..
+          for precompiledBinaries in lpunpack_and_lpmake/bin/* bin/*; do
+              echo "$precompiledBinaries"    
               mv $precompiledBinaries ./src/dependencies/bin/
           done
           
