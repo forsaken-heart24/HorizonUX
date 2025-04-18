@@ -90,12 +90,10 @@ jobs:
       - name: Clone LonelyFool's lpunpack_and_lpmake Repository to fetch Android Development Tools
         run: |
           git clone --branch android11 --single-branch https://github.com/LonelyFool/lpunpack_and_lpmake/
-          echo
           
       - name: Setup LonelyFool's Android Development Tools.
         run: |
           cd lpunpack_and_lpmake
-          mkdir -p ./bin
           chmod +x ./make.sh
           echo -e "\n\nexit 0" >> ./make.sh
           ./make.sh &>../local_build/logs/hux_build.log || true
