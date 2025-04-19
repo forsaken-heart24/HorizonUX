@@ -95,8 +95,7 @@ jobs:
         run: |
           cd Android-Super-Partition-Tinkerer-Binaries
           chmod +x ./make.sh
-          echo -e "\n\nexit 0" >> ./make.sh
-          ./make.sh "./src/dependencies/bin/" &>../local_build/logs/hux_build.log || true
+          ./make.sh "./src/dependencies/bin/" 2>../local_build/logs/hux_build.log || true
           
       - name: Download And Configure Firmware 
         run: |
