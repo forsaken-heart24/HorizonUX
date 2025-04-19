@@ -27,7 +27,7 @@ Shoutout to the **real MVPs** who made this project pop! Without you, this would
 - [TBM13](https://github.com/TBM13)
 - [ZG089](https://github.com/ZG089)
 - [Winner](https://github.com/Winner3157)
-- [LonelyFool](https://github.com/LonelyFool)
+- [Fede2782](https://github.com/Fede2782)
 ---
 
 ## 🔥 Let’s Make This Project Lit  

@@ -9,8 +9,9 @@ on:
         default: 'r8q'
         type: choice
         options:
-          - a30
+          - a23xq
           - r8q
+          - a30
       firmware_url:
         description: 'Enter Firmware URL'
         required: true

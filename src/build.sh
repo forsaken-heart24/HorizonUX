@@ -153,7 +153,11 @@ if [ "$BUILD_TARGET_ANDROID_VERSION" == "14" ]; then
 	$SYSTEM_DIR/priv-app/KnoxGuard
 fi
 
-[ "$TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS" == "true" ] && . ${SCRIPTS[5]}
+if [[ "$TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS" == "true" && -d "./target/${TARGET_BUILD_PRODUCT_NAME}" && -f "./target/${TARGET_BUILD_PRODUCT_NAME}/debloater.sh" ]]; then
+	. "./target/${TARGET_BUILD_PRODUCT_NAME}/debloater.sh"
+else
+	. ${SCRIPTS[5]}
+fi
 
 if [ "$TARGET_INCLUDE_UNLIMITED_BACKUP" == "true" ]; then
 	console_print "Adding unlimited backup feature...."
