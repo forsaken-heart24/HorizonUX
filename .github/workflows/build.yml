@@ -86,6 +86,8 @@ jobs:
             mkdir -p "./local_build/$i"
           done
           touch ./local_build/logs/hux_build.log
+          chmod 755 ./src/dependencies/bin/magiskboot* 
+          chmod 755 ./src/dependencies/bin/lp* 
           
       - name: Download And Configure Firmware 
         run: |
