@@ -86,16 +86,6 @@ jobs:
             mkdir -p "./local_build/$i"
           done
           touch ./local_build/logs/hux_build.log
-  
-      - name: Clone Android Super Partition Tinkerer Binaries Repository to fetch Android Development Tools
-        run: |
-          git clone https://github.com/forsaken-heart24/Android-Super-Partition-Tinkerer-Binaries.git
-          
-      - name: Setup Luna's Android Development Tools.
-        run: |
-          cd Android-Super-Partition-Tinkerer-Binaries
-          chmod +x ./make.sh
-          ./make.sh "./src/dependencies/bin/" 2>../local_build/logs/hux_build.log || true
           
       - name: Download And Configure Firmware 
         run: |
