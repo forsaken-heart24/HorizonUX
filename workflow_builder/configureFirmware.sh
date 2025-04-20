@@ -16,8 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-# args | exec to get the fucnctions and variables
+# args | exec to get the functions and variables
 TARGET_DEVICE_FULL_FIRMWARE_LINK="$1"
 MAKECONFIGS_LINK="$2"
 PRIVATE_KEY_SETUP_SCRIPT_LINK="$3"
@@ -80,6 +79,15 @@ tar -xf "${homeCSCTar}" 'product.img.lz4' -C ./local_build/local_build_downloade
 tar -xf "${androidPartitionsTar}" 'super.img.lz4' -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
 for androidPartitions in system vendor; do
     tar -xf "${androidPartitionsTar}" "${androidPartitions}.img.lz4" -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
+done
+
+# extract lz4 compressed files.
+for compressedLZ4Files in ./local_build/local_build_downloaded_contents/tar_files/*.lz4; do
+    console_print "Extracting ${compressedLZ4Files}..."
+    outputFile="./local_build/local_build_downloaded_contents/tar_files/$(basename "${compressedLZ4Files}" .img.lz4).img"
+    lz4 -d "${compressedLZ4Files}" "${outputFile}" &>>"$thisConsoleTempLogFile" || abort "Failed to extract ${compressedLZ4Files}"
+    rm -f "${compressedLZ4Files}" || abort "Failed to delete ${compressedLZ4Files}"
+    console_print "Extracted ${compressedLZ4Files} to ${outputFile}"
 done
 
 # take the info dump, push it to dumpOfTheSuperBlock and then extract the super.img
