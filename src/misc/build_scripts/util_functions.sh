@@ -29,7 +29,7 @@ function grep_prop() {
     local variable_name="$1"
     local prop_file="$2"
     [[ -z "$variable_name" || -z "$prop_file" || ! -f "$prop_file" ]] && return 1
-    grep -E "^${variable_name}=" "$prop_file" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"' || return 1
+    grep -E "^${variable_name}=" "$prop_file" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"' || echo ""
 }
 
 function download_stuffs() {
@@ -203,6 +203,10 @@ function build_and_sign() {
 function catch_duplicates_in_xml() {
     local feature_code="$1"
     local file="$2"
+    if [ ! -f "$file" ] || [ ! -s "$file" ]; then
+        echo "0"
+        return 0
+    fi
     grep -c "${feature_code}" "$file"
 }
 
@@ -436,13 +440,6 @@ EOF
     clear
 }
 
-function existance() {
-    local file="$1"
-    # grrrrrrrrrrrrrr
-    [ -f "$file" ] && return 0
-    return 1
-}
-
 function string_format() {
     local string="$2"
     case "$1" in
@@ -663,36 +660,10 @@ function check_internet_connection() {
     return 0
 }
 
-function fetch_file_arch() {
-    local file="$2"
-    local argument="$1"
-    local fileArch=$(file "${file}" | awk '{print $3}' | cut -c 1-2)
-    if [[ "${fileArch}" == "64" || "${fileArch}" == "32" ]]; then
-        case "$argument" in
-            --binary-path)
-                [ "${fileArch}" == "64" ] && echo "64"
-            ;;
-            --yap-whos-that-pokemon)
-                echo "$fileArch"
-            ;;
-        esac
-    else
-        warns "This binary file is not supported because it's not either 32 or 64 bits, please contact the developer for assistance." "UNDEFINED_BINARY_ARCHITECTURE"
-        return 1
-    fi
-}
-
 function verify() {
     local file="$1"
     local fileHash="$2"
     [ "$(sha512sum $file | awk '{print $1}')" = "$fileHash" ] && return 0
-    return 1
-}
-
-# stupid FUCKING function that i have to FUCKING make it to FUCKING fix my FUCKING code.
-function boolReturn() {
-    local value="$(string_format -l "$@")"
-    [[ "$value" == "true" || "$value" == "0" ]] && return 0
     return 1
 }
 
@@ -872,6 +843,9 @@ function deviceCodenameToModel() {
         ;;
         "a30")
             echo "A30"
+        ;;
+        "a23xq")
+            echo "A23"
         ;;
     esac
 }
@@ -1065,26 +1039,66 @@ function uploadToGoFile() {
 }
 
 function lpdump() {
-    ./src/dependencies/bin/lpdump "$@"
+    if [ ${HOSTTYPE} == "x86_64" ]; then
+        ./src/dependencies/bin/lpdumpX64 "$@"
+    elif [ ${HOSTTYPE} == "i686" ]; then
+        ./src/dependencies/bin/lpdumpX32 "$@"
+    elif [ ${HOSTTYPE} == "arm" ]; then
+        ./src/dependencies/bin/lpdumpA32 "$@"
+    elif [ ${HOSTTYPE} == "aarch64" ]; then
+        ./src/dependencies/bin/lpdumpA64 "$@"
+    else
+        abort "Unsupported architecture: ${HOSTTYPE}"
+    fi
 }
 
 function lpunpack() {
-    ./src/dependencies/bin/lpunpack "$@"
+    if [ ${HOSTTYPE} == "x86_64" ]; then
+        ./src/dependencies/bin/lpdumpX64 "$@"
+    elif [ ${HOSTTYPE} == "i686" ]; then
+        ./src/dependencies/bin/lpdumpX32 "$@"
+    elif [ ${HOSTTYPE} == "arm" ]; then
+        ./src/dependencies/bin/lpdumpA32 "$@"
+    elif [ ${HOSTTYPE} == "aarch64" ]; then
+        ./src/dependencies/bin/lpdumpA64 "$@"
+    else
+        abort "Unsupported architecture: ${HOSTTYPE}"
+    fi
 }
 
 function lpmake() {
-    ./src/dependencies/bin/lpmake "$@"
+    if [ ${HOSTTYPE} == "x86_64" ]; then
+        ./src/dependencies/bin/lpmakeX64 "$@"
+    elif [ ${HOSTTYPE} == "i686" ]; then
+        ./src/dependencies/bin/lpmakeX64 "$@"
+    elif [ ${HOSTTYPE} == "arm" ]; then
+        ./src/dependencies/bin/lpmakeX64 "$@"
+    elif [ ${HOSTTYPE} == "aarch64" ]; then
+        ./src/dependencies/bin/lpmakeX64 "$@"
+    else
+        abort "Unsupported architecture: ${HOSTTYPE}"
+    fi
 }
 
 function lpadd() {
-    ./src/dependencies/bin/lpadd "$@"
+    if [ ${HOSTTYPE} == "x86_64" ]; then
+        ./src/dependencies/bin/lpaddX64 "$@"
+    elif [ ${HOSTTYPE} == "i686" ]; then
+        ./src/dependencies/bin/lpaddX64 "$@"
+    elif [ ${HOSTTYPE} == "arm" ]; then
+        ./src/dependencies/bin/lpaddX64 "$@"
+    elif [ ${HOSTTYPE} == "aarch64" ]; then
+        ./src/dependencies/bin/lpaddX64 "$@"
+    else
+        abort "Unsupported architecture: ${HOSTTYPE}"
+    fi
 }
 
 # Thanks to salvo for their amazing work!
 function javaKeyStoreToHex() {
     # check if we are using our own test key or not:
     if [[ "${MY_KEYSTORE_ALIAS}" == "Horizon_test" && "${MY_KEYSTORE_PASSWORD}" == "ayyochill24" && "${MY_KEYSTORE_PATH}" == "../test-keys/HorizonUX-testkey.jks" ]]; then
-        warns "Sorry but, you are using a test key that is available publically on this repo, using this on a ROM that is released may lead to potencial data theft and etc" "TESTKEY_WARN"
+        warns "Sorry but, you are using a test key that is available publically on this repo, using this on a ROM that may lead to potencial data theft and etc" "TESTKEY_WARN"
         if ! ask "Do you understand the risks and do you still want to proceed?"; then
             console_print "Thanks, don't use this on release builds, better use it for private test builds!"
             return 1

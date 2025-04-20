@@ -26,7 +26,6 @@ on:
         options:
           - tar
           - zstd
-          - zip
       private_key_setup_link:
         description: 'Enter the link to the private key setup script'
         required: false

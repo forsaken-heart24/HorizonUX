@@ -23,6 +23,6 @@ if [[ "$(grep_prop "ro.product.vendor.device" "$HORIZON_VENDOR_PROPERTY_FILE")" 
     console_print "Customizing experience for Galaxy A23..."
     setprop --custom "${VENDOR_DIR}/default.prop" "log.tag.stats_log" "D"
     setprop --custom "${VENDOR_DIR}/default.prop" "persist.sys.usb.config" "mtp,adb"
-    boolReturn "${BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT}" && build_and_sign "./target/a23/overlay/framework-res/" "${VENDOR_DIR}"
+    [ "${BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT}" == "true" ] && build_and_sign "./target/a23/overlay/framework-res/" "${VENDOR_DIR}"
     replaceTargetBuildProperties "a23"
 fi

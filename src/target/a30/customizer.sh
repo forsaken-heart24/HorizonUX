@@ -44,7 +44,7 @@ if [[ "$(grep_prop "ro.product.vendor.device" "$HORIZON_VENDOR_PROPERTY_FILE")" 
     setprop --custom "${VENDOR_DIR}/default.prop" "log.tag.stats_log" "D"
     setprop --custom "${VENDOR_DIR}/default.prop" "persist.sys.usb.config" "mtp,adb"
     replaceTargetBuildProperties "a30"
-    if boolReturn "${BUILD_TARGET_ADD_PATCHED_C2API_LIBRARY_FILE}"; then
+    if [ "${BUILD_TARGET_ADD_PATCHED_C2API_LIBRARY_FILE}" == "true" ]; then
         console_print "Copying patched camera2api library file..."
         if [ -z "$(grep_prop "ro.vendor.build.date.utc" "$HORIZON_VENDOR_PROPERTY_FILE")" ]; then
             lib_date=$(strings $stockCameraLibPath | grep -o -E "$REGEX")
@@ -62,8 +62,8 @@ if [[ "$(grep_prop "ro.product.vendor.device" "$HORIZON_VENDOR_PROPERTY_FILE")" 
             copyDeviceBlobsSafely "$selected_lib" "$VENDOR_DIR/lib64/libexynoscamera3.so" && debugPrint "Brought camera2api!!!"
         fi
     fi
-    boolReturn "${BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT}" && build_and_sign "./target/a30/overlay/framework-res/" "${VENDOR_DIR}"
-    if boolReturn "${BUILD_TARGET_ADD_EXTRA_CAMERA_MODE}"; then
+    [ "${BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT}" == "true" ] && build_and_sign "./target/a30/overlay/framework-res/" "${VENDOR_DIR}"
+    if [ "${BUILD_TARGET_ADD_EXTRA_CAMERA_MODE}" == "true" ]; then
         console_print "Removing Pro Lite Mode and replacing with Pro mode.."
         manageCameraFeatures --remove "SHOOTING_MODE_PRO_LITE" "${SYSTEM_DIR}/cameradata/camera-feature.xml"
         manageCameraFeatures --add "SHOOTING_MODE_PRO" "value=\"true\"" "SHOOTING_MODE_" "${SYSTEM_DIR}/cameradata/camera-feature.xml"
