@@ -82,6 +82,7 @@ for androidPartitions in system vendor; do
 done
 
 # extract lz4 compressed files.
+shopt -s nullglob
 lz4Files=(./local_build/local_build_downloaded_contents/tar_files/*.lz4)
 if [ ${#lz4Files[@]} -eq 0 ]; then
     console_print "No .lz4 files found to extract."
