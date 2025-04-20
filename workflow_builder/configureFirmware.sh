@@ -82,13 +82,18 @@ for androidPartitions in system vendor; do
 done
 
 # extract lz4 compressed files.
-for compressedLZ4Files in ./local_build/local_build_downloaded_contents/tar_files/*.lz4; do
-    console_print "Extracting ${compressedLZ4Files}..."
-    outputFile="./local_build/local_build_downloaded_contents/tar_files/$(basename "${compressedLZ4Files}" .img.lz4).img"
-    lz4 -d "${compressedLZ4Files}" "${outputFile}" &>>"$thisConsoleTempLogFile" || abort "Failed to extract ${compressedLZ4Files}"
-    rm -f "${compressedLZ4Files}" || abort "Failed to delete ${compressedLZ4Files}"
-    console_print "Extracted ${compressedLZ4Files} to ${outputFile}"
-done
+lz4Files=(./local_build/local_build_downloaded_contents/tar_files/*.lz4)
+if [ ${#lz4Files[@]} -eq 0 ]; then
+    console_print "No .lz4 files found to extract."
+else
+    for compressedLZ4File in "${lz4Files[@]}"; do
+        console_print "Extracting ${compressedLZ4File}..."
+        outputFile="./local_build/local_build_downloaded_contents/tar_files/$(basename "${compressedLZ4File}" .img.lz4).img"
+        lz4 -d "${compressedLZ4File}" "${outputFile}" &>>"$thisConsoleTempLogFile" || abort "Failed to extract ${compressedLZ4File}"
+        rm -f "${compressedLZ4File}" || abort "Failed to delete ${compressedLZ4File}"
+        console_print "Extracted ${compressedLZ4File} to ${outputFile}"
+    done
+fi
 
 # take the info dump, push it to dumpOfTheSuperBlock and then extract the super.img
 # this is only for dynamic partitions, if the device uses static partitions, the if statement will skip this step
