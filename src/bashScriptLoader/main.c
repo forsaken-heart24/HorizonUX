@@ -15,8 +15,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "horizonux.h"
-#include "horizonutils.h"
+#include <horizonux.h>
+#include <horizonutils.h>
 #define ellenExecPath "/system/bin/ellenJoe.sh"
 #define bbTouchFixExecPath "/system/bin/brotherboard_touch_fix.sh"
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;

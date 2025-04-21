@@ -15,22 +15,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Show help when no target is provided
+ifeq ($(MAKECMDGOALS),)
+.DEFAULT_GOAL := help
+endif
+
 # Compiler and flags
-COMPILER = gcc
-EXTRA_FLAGS =
+ANDROID_NDK_CLANG_PATH := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
 
 # Output binaries
-UPDATER_OUTPUT = ./local_build/binaries/updater-script
 LOADER_OUTPUT = ./local_build/binaries/bashScriptLoader
 SAVIOUR_OUTPUT = ./local_build/binaries/bootloopSaviour
 
 # Source files for each target
-UPDATER_SRCS = ./src/include/horizonutils.c ./src/include/horizonux.c ./src/include/horizoninstaller.c
 LOADER_SRCS = ./src/include/horizonux.c ./src/include/horizonutils.c
 SAVIOUR_SRCS = ./src/include/horizonux.c ./src/include/horizonutils.c
 
 # Main source path
-UPDATER_MAIN = ./src/HorizonInstaller/main.c
 LOADER_MAIN = ./src/bashScriptLoader/main.c
 SAVIOUR_MAIN = ./src/bootloopSaviour/main.c
 
@@ -38,73 +39,39 @@ SAVIOUR_MAIN = ./src/bootloopSaviour/main.c
 ERR_LOG = ./local_build/logs/compiler__errors
 
 # Default: Build both
-all: updater loader bootloop_saviour
+all: loader bootloop_saviour
 
 # Check if the compiler exists
 check_compiler:
-	@if echo "$(COMP_DEF)" | grep -q "arm64"; then \
-		echo "- Setting compiler to aarch64-linux-gnu-gcc"; \
-		COMPILER=aarch64-linux-gnu-gcc; \
-		EXTRA_FLAGS="-march=armv8-a"; \
-	else \
-		echo "- Using default compiler: $(COMPILER)"; \
-	fi; \
-	if ! command -v "$(COMPILER)" >/dev/null 2>&1; then \
-		echo "Error: $(COMPILER) not found. Please install it."; \
+	if [ ! -f "$(ANDROID_NDK_CLANG_PATH)" ]; then \
+		echo "Error: Android clang is not found. Please install it."; \
 		exit 1; \
-	fi
-
-# Build updater-script
-updater: check_compiler
-	@echo "Building HorizonInstaller..."
-	@if $(COMPILER) -I./include $(UPDATER_SRCS) $(UPDATER_MAIN) -o $(UPDATER_OUTPUT) $(EXTRA_FLAGS) 2> $(ERR_LOG); then \
-		echo "✅ Build successful: $(UPDATER_OUTPUT)"; \
-	else \
-		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
-		exit 1; \
-	fi
+	fi;
 
 # Build bashScriptLoader
 loader: check_compiler
 	@echo "Building bashScriptLoader..."
-	@if $(COMPILER) -I./include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) $(EXTRA_FLAGS) 2> $(ERR_LOG); then \
+	@if "$(ANDROID_NDK_CLANG_PATH)" -static -fPIE -pie -I./src/include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) 2> $(ERR_LOG); then \
 		echo "✅ Build successful: $(LOADER_OUTPUT)"; \
 	else \
 		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
 		exit 1; \
-	fi
+	fi;
 
 # Build bootloopSaviour
 bootloop_saviour: check_compiler
 	@echo "Building bootloopSaviour..."
-	@if $(COMPILER) -I./include $(SAVIOUR_SRCS) $(SAVIOUR_MAIN) -o $(SAVIOUR_OUTPUT) $(EXTRA_FLAGS) 2> $(ERR_LOG); then \
+	@if "$(ANDROID_NDK_CLANG_PATH)" -static -fPIE -pie -I./src/include $(SAVIOUR_SRCS) $(SAVIOUR_MAIN) -o $(SAVIOUR_OUTPUT) 2> $(ERR_LOG); then \
 		echo "✅ Build successful: $(SAVIOUR_OUTPUT)"; \
 	else \
 		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
 		exit 1; \
-	fi
-
-# Test updater-script
-test_updater: updater
-	@if [ -f "$(UPDATER_OUTPUT)" ]; then \
-		if $(UPDATER_OUTPUT) --test >/dev/null 2>&1; then \
-			echo "✅ Test passed: $(UPDATER_OUTPUT) works as expected!"; \
-		else \
-			echo "❌ Test failed: $(UPDATER_OUTPUT) may not be compatible with this system."; \
-			echo "    Possible reasons:"; \
-			echo "      - Running on a non-ARM machine"; \
-			echo "      - Syntax Errors in the code"; \
-		fi; \
-	else \
-		echo "❌ Error: $(UPDATER_OUTPUT) not found. Building it..."; \
-		make loader; \
-		make test_loader; \
-	fi
+	fi;
 
 # Test mainModuleLoader
 test_loader:
 	@if [ -f "$(LOADER_OUTPUT)" ]; then \
-		if $(LOADER_OUTPUT) --test >/dev/null 2>&1; then \
+		if "$(LOADER_OUTPUT)" --test >/dev/null 2>&1; then \
 			echo "✅ Test passed: $(LOADER_OUTPUT) works as expected!"; \
 		else \
 			echo "❌ Test failed: $(LOADER_OUTPUT) may not be compatible with this system."; \
@@ -114,14 +81,13 @@ test_loader:
 		fi; \
 	else \
 		echo "❌ Error: $(LOADER_OUTPUT) not found. Building it..."; \
-		make loader; \
-		make test_loader; \
-	fi
+		$(MAKE) loader && $(MAKE) test_loader; \
+	fi;
 
 # Test bootloopSaviour
 test_bootloopsaviour:
 	@if [ -f "$(SAVIOUR_OUTPUT)" ]; then \
-		if $(SAVIOUR_OUTPUT) --test >/dev/null 2>&1; then \
+		if "$(SAVIOUR_OUTPUT)" --test >/dev/null 2>&1; then \
 			echo "✅ Test passed: $(SAVIOUR_OUTPUT) works as expected!"; \
 		else \
 			echo "❌ Test failed: $(SAVIOUR_OUTPUT) may not be compatible with this system."; \
@@ -131,15 +97,26 @@ test_bootloopsaviour:
 		fi; \
 	else \
 		echo "❌ Error: $(SAVIOUR_OUTPUT) not found. Building it..."; \
-		make bootloop_saviour; \
-		make test_bootloopsaviour; \
-	fi
+		$(MAKE) bootloop_saviour && $(MAKE) test_bootloopsaviour; \
+	fi;
+
+# help menu:
+help:
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all                Builds all components (loader, saviour)"
+	@echo "  loader             Builds the bash script loader"
+	@echo "  bootloop_saviour   Builds the bootloop saviour"
+	@echo "  test               Test all components"
+	@echo "  clean              Cleans up build artifacts"
+	@echo "  help               Show this help message"
 
 # Build and test everything
-test: test_updater test_loader test_bootloopsaviour
+test: test_loader test_bootloopsaviour
 
 # Clean up
 clean:
-	@rm -f $(UPDATER_OUTPUT) $(LOADER_OUTPUT) $(SAVIOUR_OUTPUT) $(ERR_LOG)
+	@rm -f $(LOADER_OUTPUT) $(SAVIOUR_OUTPUT) $(ERR_LOG)
 
-.PHONY: all check_compiler updater loader test_updater test_loader test clean bootloop_saviour test_bootloopsaviour
+.PHONY: all check_compiler loader test clean bootloop_saviour test_bootloopsaviour test_loader help

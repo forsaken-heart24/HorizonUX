@@ -24,7 +24,7 @@ TARGET_BUILD_PRODUCT_NAME=
 # don't upload your rom if you have used the testkey to sign packages.
 MY_KEYSTORE_ALIAS=Horizon_test
 MY_KEYSTORE_PASSWORD=ayyochill24
-MY_KEYSTORE_PATH=../test-keys/HorizonUX-testkey.jks
+MY_KEYSTORE_PATH=./test-keys/HorizonUX-testkey.jks
 MY_KEYSTORE_ALIAS_KEY_PASSWORD="${MY_KEYSTORE_ALIAS}"
 
 # replace these with your dir

@@ -239,10 +239,15 @@ char *combineShyt(const char *command, const char *value) {
 }
 
 // logs to console
-int consoleLog(char *text, char *extr_factor) {
+void consoleLog(char *text, char *extr_factor) {
     FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
-    if(!log4horizon) return 1;
+    if(!log4horizon) return;
     fprintf(log4horizon, "%s %s\n", text, extr_factor);
     fclose(log4horizon);
-    return 0;
+}
+
+// throws messages and stops the instance.
+void abort_instance(const char *text, const char *extr_factor) {
+    error_print_extended(text, extr_factor);
+    exit(1);
 }

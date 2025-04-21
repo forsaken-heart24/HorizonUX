@@ -15,8 +15,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "horizonux.h"
-#include "horizonutils.h"
+#include <horizonux.h>
+#include <horizonutils.h>
 
 bool isTheDeviceBootCompleted() {
     FILE *getprop = popen("getprop sys.boot_completed", "r");
@@ -142,7 +142,7 @@ void sendNotification(const char *message) {
     size_t commandLength = snprintf(NULL, 0, template, message) + 1;
     char *command = malloc(commandLength);
     if(!command) {
-        abort__("sendNotification(): Failed to allocate memory for notification command", "");
+        abort_instance("sendNotification(): Failed to allocate memory for notification command", "");
     }
     snprintf(command, commandLength, template, message);
     executeCommands(command, "");
