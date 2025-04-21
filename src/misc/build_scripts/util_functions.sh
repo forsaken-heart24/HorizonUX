@@ -187,7 +187,6 @@ function build_and_sign() {
     if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
         java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" &>>"$thisConsoleTempLogFile"
     else
-        warns "NOTE: You are using Uber test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
         java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" &>>"$thisConsoleTempLogFile"
     fi
 
@@ -203,7 +202,7 @@ function build_and_sign() {
 function catch_duplicates_in_xml() {
     local feature_code="$1"
     local file="$2"
-    if [ ! -f "$file" ] || [ ! -s "$file" ]; then
+    if [[ ! -f "$file" || ! -s "$file" ]]; then
         echo "0"
         return 0
     fi

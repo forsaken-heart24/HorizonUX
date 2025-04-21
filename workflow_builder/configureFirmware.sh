@@ -76,7 +76,7 @@ androidPartitionsTar=$(find "./local_build/local_build_downloaded_contents/extra
 console_print "Extracting images from the firmware archive..."
 tar -xf "${homeCSCTar}" 'optics.img.lz4' -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
 tar -xf "${homeCSCTar}" 'product.img.lz4' -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
-tar -xf "${androidPartitionsTar}" 'super.img.lz4' -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
+tar -xf "${androidPartitionsTar}" 'super.img.lz4' -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null || console_print "Warning: super.img.lz4 not found. Skipping super.img extraction."
 for androidPartitions in system vendor; do
     tar -xf "${androidPartitionsTar}" "${androidPartitions}.img.lz4" -C ./local_build/local_build_downloaded_contents/tar_files/ &>/dev/null
 done
@@ -101,27 +101,40 @@ fi
 if [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "true" ]; then
     console_print "Treble Device w/ Dynamic Partitions detected!"
     console_print "Extracting super.img and other images from the firmware archive..."
-    mkdir -p ./local_build/super_extract
-    lpdump "./local_build/local_build_downloaded_contents/tar_files/super.img" > ./dumpOfTheSuperBlock
-    lpunpack "./local_build/local_build_downloaded_contents/tar_files/super.img" "./local_build/super_extract/" &>>$thisConsoleTempLogFile
-    for COMMON_FIRMWARE_BLOCKS in ./local_build/super_extract/*.img; do 
-        echo "$(basename "${COMMON_FIRMWARE_BLOCKS}")" | grep -qE "system.img|vendor.img|product.img" || continue
-        mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__$(basename "${COMMON_FIRMWARE_BLOCKS}" .img)"
-        mkdir -p "$mountPath"
-        setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
-    done
+    if [ -f "./local_build/local_build_downloaded_contents/tar_files/super.img" ]; then
+        mkdir -p ./local_build/super_extract
+        lpdump "./local_build/local_build_downloaded_contents/tar_files/super.img" > ./dumpOfTheSuperBlock || abort "Failed to dump metadata from super.img"
+        lpunpack "./local_build/local_build_downloaded_contents/tar_files/super.img" "./local_build/super_extract/" &>>$thisConsoleTempLogFile || abort "Failed to unpack super.img"
+        for COMMON_FIRMWARE_BLOCKS in ./local_build/super_extract/*.img; do 
+            echo "$(basename "${COMMON_FIRMWARE_BLOCKS}")" | grep -qE "system.img|vendor.img|product.img" || continue
+            mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__$(basename "${COMMON_FIRMWARE_BLOCKS}" .img)"
+            mkdir -p "$mountPath"
+            setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
+        done
+    else
+        abort "Warning: super.img not found. Aborting this session."
+    fi
 # if the device uses static partitions, we will mount the extracted optics.img and product.img
 # and then extract the rest of the images from the AP tar file
 elif [ "${BUILD_TARGET_USES_DYNAMIC_PARTITIONS}" == "false" ]; then
-    for staticPartitions in system vendor; do
+    for staticPartitions in system vendor optics product; do
         console_print "Extracting ${staticPartitions}, from this legacy firmware archive..."
         mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__${staticPartitions}"
         mkdir -p "$mountPath"
-        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/${staticPartitions}.img.lz4" "${mountPath}"
+        setupLocalImage "./local_build/local_build_downloaded_contents/tar_files/${staticPartitions}.img" "${mountPath}"
     done
 else
     abort "Unable to determine if the device uses dynamic partitions or not!"
 fi
+
+# TODO: Setup product or optics.img:
+for images in ./local_build/local_build_downloaded_contents/tar_files/product.img ./local_build/local_build_downloaded_contents/tar_files/optics.img; do
+    [ -f "${images}" ] || continue
+    console_print "Extracting ${images}..."
+    mountPath="./local_build/workflow_partitions/$(generate_random_hash 10)__$(basename "${images}" .img)"
+    mkdir -p "$mountPath"
+    setupLocalImage "${images}" "${mountPath}"
+done
 
 # TODO: Cleanup:
 rm -f "${homeCSCTar}" || abort "Failed to delete the HOME_CSC tar file, please try again!"

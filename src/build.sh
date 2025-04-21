@@ -31,16 +31,14 @@ for i in ./src/makeconfigs.prop ./src/misc/build_scripts/util_functions.sh ./src
 		sleep 0.5
 		exit 1
 	else
-		debugPrint "Executing ${i}.."
+		debugPrint "Executing ${i}.." 2>/dev/null
 		source "$i"
 	fi
 done
 
 # ok, fbans dropped!
 for dependenciesRequiredForTheBuild in java python3 zip lz4; do
-	if [ -z "$(command -v ${dependenciesRequiredForTheBuild})" ]; then
-		abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
-	fi
+	command -v ${dependenciesRequiredForTheBuild} || abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
 done
 
 # mako mako mako mako those who know💀
@@ -153,7 +151,7 @@ if [ "$BUILD_TARGET_ANDROID_VERSION" == "14" ]; then
 	$SYSTEM_DIR/priv-app/KnoxGuard
 fi
 
-if [[ "$TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS" == "true" && -d "./target/${TARGET_BUILD_PRODUCT_NAME}" && -f "./target/${TARGET_BUILD_PRODUCT_NAME}/debloater.sh" ]]; then
+if [[ "$TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS" == "true" && -f "./target/${TARGET_BUILD_PRODUCT_NAME}/debloater.sh" ]]; then
 	. "./target/${TARGET_BUILD_PRODUCT_NAME}/debloater.sh"
 else
 	. ${SCRIPTS[5]}
@@ -167,7 +165,7 @@ fi
 if [ "$BUILD_TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES" == "true" ]; then
 	console_print "Patching bluetooth...."
 	[ -f "$SYSTEM_DIR/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found"
-	magiskboot hexpatch "$SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052"
+	magiskboot hexpatch "$SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052" || warns "Failed to patch the bluetooth library, please try again!" "BLUETOOTH_PATCH_FAIL"
 fi
 
 [ "$BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH" == "true" ] && . ${SCRIPTS[2]}
@@ -352,18 +350,20 @@ if [ "$CUSTOM_WALLPAPER_RES_JSON_GENERATOR" == "true" ]; then
 	printf "\e[1;36m - How many wallpapers do you need to add to the Wallpaper App?\e[0;37m "
 	read wallpaper_count
 	debugPrint "User requested ${wallpaper_count} metadata to generate for wallpaper-res"
-	if ! [[ "$wallpaper_count" =~ ^[0-9]+$ ]]; then
-		abort "\e[0;31m - Invalid input. Please enter a valid number. Exiting...\e[0;37m"
-	fi
+	[[ "$wallpaper_count" =~ ^[0-9]+$ ]] && abort "\e[0;31m - Invalid input. Please enter a valid number. Exiting...\e[0;37m"
 	clear
 	rm -rf resources_info.json
 	echo -e "{\n\t\"version\": \"0.0.1\",\n\t\"phone\": [" > resources_info.json
 	for ((i = 1; i <= wallpaper_count; i++)); do
-		if [ "${i}" -ge "10" ]; then
-			special_index=0
-		fi
+		[ "${i}" -ge "10" ] && special_index=0
 		printf "\e[0;36m - Adding configurations for wallpaper_${special_index}${i}.png.\e[0;37m\n"
-		special_symbol=$([[ $i -eq $wallpaper_count ]] && echo "" || echo ",")
+		special_symbol=$(
+			if [[ $i -eq $wallpaper_count ]]; then
+				echo ","
+			else
+				echo ""
+			fi
+		)
 		if [[ "$the_lockscreen_wallpaper_has_been_set" == true && "$the_homescreen_wallpaper_has_been_set" == true ]]; then
 			ADD_THE_WALLPAPER_METADATA "${special_index}${i}" "additional" "$i"
 		else
@@ -397,7 +397,7 @@ if [ "$CUSTOM_WALLPAPER_RES_JSON_GENERATOR" == "true" ]; then
 		fi
 	done
 	echo -e "  ]\n}" >> resources_info.json
-	build_and_sign "." "."
+	build_and_sign "./src/horizon/packages/flosspaper_purezza" "."
 	echo -e "\e[0;31m######################################################################"
 	echo "#       __        ___    ____  _   _ ___ _   _  ____ _               #"
 	echo "#       \ \      / / \  |  _ \| \ | |_ _| \ | |/ ___| |              #"
