@@ -1,9 +1,17 @@
-![emergency_food_again](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/emergency_food_again.png?raw=true)
+![Emergency Food Again](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/emergency_food_again.png?raw=true)
 
-# The files in `scripts/`, `META-INF/com/google/android/aroma/a1.png`, `META-INF/com/google/android/aroma/themes/horizon`, and `META-INF/com/google/android/aroma/ttf/GoogleSansRegular.ttf` were created by me and should not be used without my permission.
+# AROMA Installer for Horizon
 
-# Thanks to <a href="https://github.com/amarullz/">Amarullz</a> for their <a href="https://github.com/amarullz/AROMA-Installer/">AROMA Installer Project</a>.
+The following files and directories were created by me and should not be used without my permission:
 
+- `scripts/`
+- `META-INF/com/google/android/aroma/a1.png`
+- `META-INF/com/google/android/aroma/themes/horizon/`
+- `META-INF/com/google/android/aroma/ttf/GoogleSansRegular.ttf`
+
+Special thanks to [Amarullz](https://github.com/amarullz/) for their [AROMA Installer Project](https://github.com/amarullz/AROMA-Installer/).
+
+## Directory Structure
 ```
 src/
 └── aroma_installer/
