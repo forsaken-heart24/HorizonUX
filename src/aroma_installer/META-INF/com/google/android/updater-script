@@ -1,3 +1,6 @@
+#MAGISK
+# to be handled by a bash script!
+
 # Oh, she's sweet but a psycho
 # A little bit psycho
 # At night, she's screamin'
@@ -84,3 +87,12 @@
 # A little bit psycho
 # At night, she's screamin'
 # "I'm-ma-ma-ma out my mind"
+
+# setup the script environment and execute it
+export INSTALLER="$TMPDIR/install"
+mkdir -p "$INSTALLER" || exit 1
+for file in "scripts/installer.sh" scripts/util_functions.sh; do
+    unzip -o "$3" "$file" -d "${INSTALLER}/"; || exit 1
+done
+
+exec sh "$INSTALLER/scripts/installer.sh" "/dev/null" "$2" "$3"

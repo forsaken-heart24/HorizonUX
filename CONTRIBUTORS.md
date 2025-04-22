@@ -28,6 +28,7 @@ Shoutout to the **real MVPs** who made this project pop! Without you, this would
 - [ZG089](https://github.com/ZG089)
 - [Winner](https://github.com/Winner3157)
 - [Fede2782](https://github.com/Fede2782)
+- [Amarullz](https://github.com/amarullz)
 ---
 
 ## 🔥 Let’s Make This Project Lit  
