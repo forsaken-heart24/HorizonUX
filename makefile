@@ -17,11 +17,12 @@
 
 # Show help when no target is provided
 ifeq ($(MAKECMDGOALS),)
-.DEFAULT_GOAL := help
+	.DEFAULT_GOAL := help
 endif
 
 # Compiler and flags
 ANDROID_NDK_CLANG_PATH := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
+STRIP_PATH := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin/strip
 
 # Output binaries
 LOADER_OUTPUT = ./local_build/binaries/bashScriptLoader
@@ -43,30 +44,30 @@ all: loader bootloop_saviour
 
 # Check if the compiler exists
 check_compiler:
-	if [ ! -f "$(ANDROID_NDK_CLANG_PATH)" ]; then \
+	@if [ ! -f "$(ANDROID_NDK_CLANG_PATH)" ]; then \
 		echo "Error: Android clang is not found. Please install it."; \
 		exit 1; \
-	fi;
+	fi
 
 # Build bashScriptLoader
 loader: check_compiler
 	@echo "Building bashScriptLoader..."
-	@if "$(ANDROID_NDK_CLANG_PATH)" -static -fPIE -pie -I./src/include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) 2> $(ERR_LOG); then \
-		echo "✅ Build successful: $(LOADER_OUTPUT)"; \
-	else \
+	@$(ANDROID_NDK_CLANG_PATH) -static -fPIE -pie -I./src/include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) 2> $(ERR_LOG) && \
+	echo "✅ Build successful: $(LOADER_OUTPUT)" && \
+	$(STRIP_PATH) $(LOADER_OUTPUT) || { \
 		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
 		exit 1; \
-	fi;
+	}
 
 # Build bootloopSaviour
 bootloop_saviour: check_compiler
 	@echo "Building bootloopSaviour..."
-	@if "$(ANDROID_NDK_CLANG_PATH)" -static -fPIE -pie -I./src/include $(SAVIOUR_SRCS) $(SAVIOUR_MAIN) -o $(SAVIOUR_OUTPUT) 2> $(ERR_LOG); then \
-		echo "✅ Build successful: $(SAVIOUR_OUTPUT)"; \
-	else \
+	@$(ANDROID_NDK_CLANG_PATH) -static -fPIE -pie -I./src/include $(SAVIOUR_SRCS) $(SAVIOUR_MAIN) -o $(SAVIOUR_OUTPUT) 2> $(ERR_LOG) && \
+	echo "✅ Build successful: $(SAVIOUR_OUTPUT)" && \
+	$(STRIP_PATH) $(SAVIOUR_OUTPUT) || { \
 		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
 		exit 1; \
-	fi;
+	}
 
 # Test mainModuleLoader
 test_loader:
@@ -82,7 +83,7 @@ test_loader:
 	else \
 		echo "❌ Error: $(LOADER_OUTPUT) not found. Building it..."; \
 		$(MAKE) loader && $(MAKE) test_loader; \
-	fi;
+	fi
 
 # Test bootloopSaviour
 test_bootloopsaviour:
@@ -98,7 +99,7 @@ test_bootloopsaviour:
 	else \
 		echo "❌ Error: $(SAVIOUR_OUTPUT) not found. Building it..."; \
 		$(MAKE) bootloop_saviour && $(MAKE) test_bootloopsaviour; \
-	fi;
+	fi
 
 # help menu:
 help:

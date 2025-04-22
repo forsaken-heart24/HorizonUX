@@ -155,7 +155,7 @@ char *getSystemProperty(const char *filepath, const char *propertyVariableName) 
     char *buildProperty = malloc(propertyLen);
     if(buildProperty == NULL) {
         error_print("getSystemProperty(): Failed to allocate memory for the requested operation.");
-        return "KILL.796f7572.73656c660a";
+        exit(1);
     }
     if(!file) {
         snprintf(buildProperty, propertyLen, "getprop %s", propertyVariableName);
@@ -191,7 +191,7 @@ int getSystemProperty__(const char *filepath, const char *propertyVariableName) 
     if(!file) {
         if(buildProperty == NULL) {
             error_print("getSystemProperty__(): Failed to allocate memory for the requested operation.");
-            return 1;
+            exit(1);
         }
         snprintf(buildProperty, propertyLen, "getprop %s", propertyVariableName);
         FILE *cmd = popen(buildProperty, "r");

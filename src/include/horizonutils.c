@@ -18,18 +18,14 @@
 #include <horizonutils.h>
 
 void error_print(const char *Message) {
-    if(WRITE_DEBUG_MESSAGES_TO_CONSOLE == true) {
-        printf("\e[0;31m%s\e[0;37m\n", Message);
+    FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
+    if(!log4horizon) {
+        printf("\e[0;31merror_print(): Failed to open log file: %s\e[0;37m\n", LOG4HORIZONFILE);
+        return;
     }
-    else {
-        FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
-        if(!log4horizon) {
-            printf("\e[0;31merror_print(): Failed to open log file: %s\e[0;37m\n", LOG4HORIZONFILE);
-            return;
-        }
-        fprintf(log4horizon, "%s\n", Message);
-        fclose(log4horizon);
-    }
+    fprintf(log4horizon, "%s\n", Message);
+    fclose(log4horizon);
+    fprintf(stderr, "\e[0;31m%s\e[0;37m\n", Message);
 }
 
 void error_print_extended(const char *message, const char *additional_args) {
@@ -42,11 +38,11 @@ void error_print_extended(const char *message, const char *additional_args) {
     char *kimikimi = malloc(kimikimi_);
     if(!kimikimi) {
         error_print("error_print_extended(): Failed to allocate memory.");
-        return;
+        exit(1);
     }
     snprintf(kimikimi, kimikimi_, "%s %s", message, safe_args);
-    free(kimikimi);
     error_print(kimikimi);
+    free(kimikimi);
 }
 
 bool erase_file_content(const char *__file) {
@@ -66,7 +62,7 @@ int executeCommands(const char *command, bool requiresOutput) {
     char *command__ = malloc(strlen(command) + 1);
     if(!command__) {
         error_print("executeCommands(): Failed to allocate memory.");
-        return 1;
+        exit(1);
     }
     strcpy(command__, command);
     FILE *fp = popen(command__, "r");
@@ -99,7 +95,7 @@ int executeScripts(const char *__script__file, const char *__args, bool requires
     char *commandAlloc = malloc(sizeOfTheDawn);
     if(!commandAlloc) {
         error_print("executeScripts(): Failed to allocate memory.");
-        return 1;
+        exit(1);
     }
     snprintf(commandAlloc, sizeOfTheDawn, "'%s' %s", __script__file, __args ? __args : "");
     FILE *scriptWithArguments  = popen(commandAlloc, "r");
@@ -131,7 +127,7 @@ int searchBlockListedStrings(const char *__filename, const char *__search_str) {
     char *command = malloc(sizeOfTheseCraps);
     if(!command) {
         error_print("searchBlockListedStrings(): Failed to allocate memory.");
-        return 1;
+        exit(1);
     }
     snprintf(command, sizeOfTheseCraps, "grep -q '%s' '%s'", __search_str, __filename);
     FILE *file = popen(command, "r");
@@ -232,7 +228,7 @@ char *combineShyt(const char *command, const char *value) {
     char *buffer = (char *)malloc(nom_nom);
     if (!buffer) {
         error_print("combineShyt(): Failed to allocate memory.");
-        return NULL;
+        exit(1);
     }
     snprintf(buffer, nom_nom, "%s %s", command, value);
     return buffer;

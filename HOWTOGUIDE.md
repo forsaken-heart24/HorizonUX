@@ -5,10 +5,10 @@
 
 ## Dependencies:
 - Java
-- Python (only used in patching recovery)
+- Python (only used for patching recovery)
 - wget
 - curl
-- gcc
+- Android NDK
 **Attention:** You shall not proceed without these dependencies, if you do so. You might end up with a unbootable rom.
 
 ## 1️⃣ Configure `src/makeconfigs.prop`

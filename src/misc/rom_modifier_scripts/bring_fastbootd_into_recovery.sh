@@ -54,18 +54,19 @@ done
 
 # repack the blobs and sign them using avbtool:
 magiskboot cpio ramdisk.cpio "add 0755 system/bin/recovery recovery_patch" && rm -rf recovery_patch
-magiskboot repack . ../recovery_patched.img
+magiskboot repack . ./recovery_patched.img
 avbtool \
     add_hash_footer \
     --partition_name recovery \
     --partition_size ${recoveryFileSize}
-    --image ../recovery_patched.img \
-    --key ../../test-keys/testkey_rsa2048.pem
+    --image ./recovery_patched.img \
+    --key ./test-keys/testkey_rsa2048.pem
     --algorithm SHA256_RSA2048
 
 if ask "Do you want a tar to get this flashed via odin?"; then
-    lz4 -B6 --content-size ../recovery_patched.img ./recovery_patched.img.lz4
+    lz4 -B6 --content-size ./recovery_patched.img ./recovery_patched.img.lz4
     tar -cvf "fastbootd-patched-recovery.tar" ./recovery_patched.img.lz4
     console_print "Odin tar file is located at ./recovery_patched.img.lz4"
+    rm -rf ./recovery_patched.img ./recovery_patched.img.lz4
 fi
-cd ../../
+rm -rf boot ramdisk.cpio recovery_patch
