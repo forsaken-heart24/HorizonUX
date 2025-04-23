@@ -244,37 +244,27 @@ else
 	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
-if [ "$TARGET_FLOATING_FEATURE_DISABLE_BLUR_EFFECTS" == "true" ]; then
-    console_print "Disabling blur effects..."
-    for blur_effects in SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_PARTIAL_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_CAPTURED_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG; do
-        change_xml_values "$blur_effects" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
-    done
-else
-	if [ "$BUILD_TARGET_SDK_VERSION" == "32|33|34|35" ]; then
-		warns "Actual blur from flagship device is not available for now, so stay tuned!" "CRYABOUTTHISPLEASE"
-	elif [ "$BUILD_TARGET_SDK_VERSION" == "28|28|30|31|32|33|34|35" ]; then
-		console_print "Enabling blur effects..."
-		for blur_effects in SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_PARTIAL_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_CAPTURED_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG; do
-			change_xml_values "$blur_effects" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
-		done
-		for props in "ro.surface_flinger.supports_background_blur 1" "persist.sys.sf.disable_blurs 0" "ro.sf.blurs_are_expensive 1"; do
-			setprop --system "$(echo "$props" | awk '{print $1}')" "$(echo "$props" | awk '{print $2}')"
-		done
-		for files in ./src/device_dumps/beyond0ltexx/${BUILD_TARGET_SDK_VERSION}/system/{bin/*,lib/*,lib64/*}; do
-			if [ -f "$files" ]; then
-				case "$files" in
-					*lib64/*)
-						cp -af "$files" "$SYSTEM_DIR/lib64/" || abort "Failed to copy $files to $SYSTEM_DIR/lib64"
-					;;
-					*lib/*)
-						cp -af "$files" "$SYSTEM_DIR/lib/" || abort "Failed to copy $files to $SYSTEM_DIR/lib"
-					;;
-					*bin/*)
-						cp -af "$files" "$SYSTEM_DIR/bin/" || abort "Failed to copy $files to $SYSTEM_DIR/bin"
-					;;
-				esac
-			fi
-		done
+if [ "$TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS" == "true" ]; then
+	console_print "Enabling live blur effects..."
+	for blur_effects in SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_PARTIAL_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_CAPTURED_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG; do
+		change_xml_values "$blur_effects" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	done
+	if [ -f "${VENDOR_DIR}/etc/fstab.qcom" ]; then
+		if echo "${BUILD_TARGET_SDK_VERSION}" | grep -qE "33|34"
+			cp ./src/target/soc/snapdragon/${BUILD_TARGET_SDK_VERSION}/system/bin/surfaceflinger ${SYSTEM_DIR}/bin/surfaceflinger
+			cp ./src/target/soc/snapdragon/${BUILD_TARGET_SDK_VERSION}/system/lib/libgui.so ${SYSTEM_DIR}/lib/libgui.so
+			cp ./src/target/soc/snapdragon/${BUILD_TARGET_SDK_VERSION}/system/lib64/libgui.so ${SYSTEM_DIR}/lib64/libgui.so
+		else
+			console_print "SDK ${BUILD_TARGET_SDK_VERSION} is not supported."
+		fi
+	elif [[ -f ${VENDOR_DIR}/etc/fstab.exynos* || -f "${VENDOR_DIR}/bin/vaultkeeperd" ]]; then
+		if echo "${BUILD_TARGET_SDK_VERSION}" | grep -qE "28|29|30|31|33|34"; then
+			cp ./src/target/soc/exynos/${BUILD_TARGET_SDK_VERSION}/system/bin/surfaceflinger ${SYSTEM_DIR}/bin/surfaceflinger
+			cp ./src/target/soc/exynos/${BUILD_TARGET_SDK_VERSION}/system/lib/libgui.so ${SYSTEM_DIR}/lib/libgui.so
+			cp ./src/target/soc/exynos/${BUILD_TARGET_SDK_VERSION}/system/lib64/libgui.so ${SYSTEM_DIR}/lib64/libgui.so
+		else
+			console_print "SDK ${BUILD_TARGET_SDK_VERSION} is not supported."
+		fi
 	fi
 fi
 

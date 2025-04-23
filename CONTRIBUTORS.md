@@ -29,6 +29,7 @@ Shoutout to the **real MVPs** who made this project pop! Without you, this would
 - [Winner](https://github.com/Winner3157)
 - [Fede2782](https://github.com/Fede2782)
 - [Amarullz](https://github.com/amarullz)
+- [Ley](https://t.me/leynox64)
 ---
 
 ## 🔥 Let’s Make This Project Lit  

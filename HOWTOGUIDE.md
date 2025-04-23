@@ -1,7 +1,7 @@
 ![emergency_food](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/emergency_food.png?raw=true)
 
 # Building / Modifying Your Own Stock-Based MOD
-**Attention:** This project is solely made for Exynos devices and is not meant for others. Some might work because nothing gets changed much, but still, proceed at your own risk.
+**Attention:** This project is solely made for Exynos and Snapdragon devices and is not meant for others. Some might work because nothing gets changed much, but still, proceed at your own risk.
 
 ## Dependencies:
 - Java

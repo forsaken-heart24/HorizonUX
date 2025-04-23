@@ -136,7 +136,7 @@ TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS=false
 TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING=false
 
 # please disable the window blurs for battery life and ux performance.
-TARGET_FLOATING_FEATURE_DISABLE_BLUR_EFFECTS=false
+TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS=false
 
 # - This feature requires proper or bare minimum mdNIE support on the ROM and maybe the device to get it workin' properly
 # - if your device have any of those screen modes mentioned below, it means that it might have a proper or bare minimum support of the mdNIE feature.

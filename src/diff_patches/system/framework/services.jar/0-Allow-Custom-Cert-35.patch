@@ -1,4 +1,4 @@
-From 603b5a1d5e41795c493a3e45f05a85fd1e893b2e Mon Sep 17 00:00:00 2001
+From 3c4eadb0c00d61c1d778df25a289f010e2ab781b Mon Sep 17 00:00:00 2001
 From: Salvo Giangreco <giangrecosalvo9@gmail.com>
 Date: Mon, 26 Aug 2024 03:16:23 +0200
 Subject: [PATCH] Allow custom platform signature
@@ -10,7 +10,7 @@ Based off: https://github.com/TheParasiteProject/frameworks_base/commit/dcedc5be
  2 files changed, 230 insertions(+), 100 deletions(-)
 
 diff --git a/smali_classes3/com/android/server/pm/InstallPackageHelper.smali b/smali_classes3/com/android/server/pm/InstallPackageHelper.smali
-index 95b0d88d..d08397d0 100644
+index 95b0d88d..f1723392 100644
 --- a/smali_classes3/com/android/server/pm/InstallPackageHelper.smali
 +++ b/smali_classes3/com/android/server/pm/InstallPackageHelper.smali
 @@ -22,6 +22,8 @@

@@ -27,7 +27,7 @@
 - **TARGET_REMOVE_USELESS_VENDOR_STUFFS**: Removes bloat from the vendor partition.
 - **TARGET_REMOVE_SAMSUNG_APPLICATIONS_STUFFS**: Removes unnecessary Samsung apps (note: Android 9 is not fully supported).
 - **TARGET_ADD_EXTRA_ANIMATION_SCALES**: Adds extra animation scales for customization.
-- **TARGET_FLOATING_FEATURE_DISABLE_BLUR_EFFECTS**: Disables blur effects for better performance and battery life.
+- **TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS**: Enables live blur effects for aesthetic, please note that it impacts battery life and performance.
 - **TARGET_FLOATING_FEATURE_ENABLE_ULTRA_POWER_SAVING**: Ultra power saving, this thing is useless but yeah if you want it then take it.
 - **TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH**: Disables Smart Switch on setup.
 

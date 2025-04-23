@@ -807,34 +807,26 @@ function avbtool() {
     python3 ./src/dependencies/bin/avbtool "$@"
 }
 
-# Thanks to salvo for their amazing work!
+# Thanks to salvo and ravindu for their amazing work!
 function javaKeyStoreToHex() {
-    # check if we are using our own test key or not:
-    if [[ "${MY_KEYSTORE_ALIAS}" == "Horizon_test" && "${MY_KEYSTORE_PASSWORD}" == "ayyochill24" && "${MY_KEYSTORE_PATH}" == "../test-keys/HorizonUX-testkey.jks" ]]; then
-        warns "Sorry but, you are using a test key that is available publically on this repo, using this on a ROM that may lead to potencial data theft and etc" "TESTKEY_WARN"
-        if ! ask "Do you understand the risks and do you still want to proceed?"; then
-            console_print "Thanks, don't use this on release builds, better use it for private test builds!"
-            return 1
-        fi
-    fi
-
-    # check dependencies:
-    command -v keytool >/dev/null 2>&1 || abort "keytool not found. Is Java installed?"
+    # lky variables
+    local keystoreFileNameString="$(generate_random_hash 30)"
+    local keystorePemFileNameString="$(generate_random_hash 30)"
+    local keystoreKeyFileNameString="$(generate_random_hash 30)"
+    local hexKey
+    
+    # check up:
     command -v openssl >/dev/null 2>&1 || abort "openssl not found. Please install it."
-    
-    # export java key:
-    console_print "Exporting certificate..."
-    keytool -exportcert -keystore "$MY_KEYSTORE_PATH" -alias "$MY_KEYSTORE_ALIAS" -storepass "$MY_KEYSTORE_PASSWORD" -rfc -file cert.pem || abort "Export failed"
-    
-    # convert it to hex using xxd
-    console_print "Converting to hex..."
-    openssl x509 -in cert.pem -outform DER | xxd -p > "cert.hex" || abort "Conversion failed"
-    rm -f cert.pem
 
-    # add it to the patch!
-    console_print "Adding key to the patch file..."
-    local hexKey=$(cat cert.hex)
-    rm -f cert.hex
+    # main():
+    openssl genrsa -out ${keystorePemFileNameString}.pem 2048
+    openssl pkcs8 -in ${keystorePemFileNameString}.pem -topk8 -outform DER -out ${keystoreKeyFileNameString}.pk8 -nocrypt
+    openssl req -new -x509 -key ${keystorePemFileNameString}.pem -out ${keystoreKeyFileNameString}.x509.pem -days 82435 -subj "/C=US/ST=Arizona/L=Scottsdale/O=Horizon/OU=HorizonUX_public/CN=Horizon/emailAddress=luna.realm.io.bennett24@outlook.com"
+    ( openssl x509 -inform PEM -in ${keystoreKeyFileNameString}.x509.pem -outform DER | xxd -p | tr -d '\n' ) > hex.key
+    hexKey=$(cat hex.key)
+    rm ${keystorePemFileNameString}.pem hex.key ${keystoreKeyFileNameString}.pk8
+
+    # changes the hex in the patch file:
     if [ "${BUILD_TARGET_SDK_VERSION}" == "34" ]; then
         sed -i 's|\(const-string v1, "\)[^"]*|\1${hexKey}|' ${DIFF_UNIFIED_PATCHES[36]}
     elif [ "${BUILD_TARGET_SDK_VERSION}" == "35" ]; then
@@ -843,6 +835,8 @@ function javaKeyStoreToHex() {
         console_print "Signature patch is not available for this SDK version."
         return 1
     fi
+
+    # error checks:
     if [ "$?" == "0" ]; then
         console_print "Successfully added your key into the patch file!!"
         return 0
