@@ -106,12 +106,14 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all                Builds all components (loader, saviour)"
-	@echo "  loader             Builds the bash script loader"
-	@echo "  bootloop_saviour   Builds the bootloop saviour"
-	@echo "  test               Test all components"
-	@echo "  clean              Cleans up build artifacts"
-	@echo "  help               Show this help message"
+	@echo "  all                     Builds all components (loader, saviour)"
+	@echo "  loader                  Builds the bash script loader"
+	@echo "  bootloop_saviour        Builds the bashScriptLoader"
+	@echo "  test                    Test all buildable components"
+	@echo "  test_loader             Tests bashScriptLoader"
+	@echo "  test_bootloopsaviour    Tests test_bootloopsaviour"
+	@echo "  clean                   Cleans up build artifacts"
+	@echo "  help                    Show this help message"
 
 # Build and test everything
 test: test_loader test_bootloopsaviour
