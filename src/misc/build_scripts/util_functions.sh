@@ -82,7 +82,7 @@ function setprop() {
 }
 
 function abort() {
-    echo -e "\e[0;31m$1\e[0;37m"
+    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
     debugPrint "[:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
@@ -93,17 +93,12 @@ function abort() {
 }
 
 function warns() {
-    echo -e "[$2]: $1"
+    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] / [:\e[0;36mWARN\e[0;37m:] / [:\e[0;32m$2\e[0;37m:] -\e[0;33m $1\e[0;37m"
     debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1"
 }
 
 function console_print() {
-    if [ "$1" == "tg" ]; then
-        echo -e "$2"
-        sendMessageToTelegramChat "$2"
-        return 0
-    fi
-    echo -e "$1"
+    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m $1\e[0;37m"
 }
 
 function default_language_configuration() {
@@ -116,9 +111,11 @@ function default_language_configuration() {
     # Default values
     [ -z "$language" ] && language="en"
     [ -z "$country" ] && country="US"
+
     # Convert to proper case
     language=$(echo "$1" | tr '[:upper:]' '[:lower:]')
     country=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+    
     # Validate length (ISO 639-1 for language, ISO 3166-1 alpha-2 for country)
     if [[ ! "$language" =~ ^[a-z]{2,3}$ ]]; then
         abort "Invalid language code: $language"
@@ -126,6 +123,7 @@ function default_language_configuration() {
     if [[ ! "$country" =~ ^[A-Z]{2,3}$ ]]; then
         abort "Invalid country code: $country"
     fi
+    
     for EXPECTED_CUSTOMER_XML_PATH in $PRODUCT_DIR/omc/*/conf/customer.xml $OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
         [ -f "$EXPECTED_CUSTOMER_XML_PATH" ] || continue
         # Skip modification if the values are already correct
@@ -142,7 +140,7 @@ function default_language_configuration() {
 function custom_setup_finished_messsage() {
     [ -z "${CUSTOM_SETUP_WELCOME_MESSAGE}" ] && CUSTOM_SETUP_WELCOME_MESSAGE="Welcome to HorizonUX"
     [ "${CUSTOM_SETUP_WELCOME_MESSAGE}" == "xxx" ] && CUSTOM_SETUP_WELCOME_MESSAGE="Welcome to HorizonUX"
-    sed -i 's|<string name="outro_title">.*</string>|<string name="outro_title">&quot;${CUSTOM_SETUP_WELCOME_MESSAGE}&quot;</string>|' ./src/horizon/overlay_packages/sec_setup_wizard_horizonux_overlay/res/values/strings.xml
+    sed -i "s|<string name=\"outro_title\">.*</string>|<string name=\"outro_title\">&quot;${CUSTOM_SETUP_WELCOME_MESSAGE}&quot;</string>|" ./src/horizon/overlay_packages/sec_setup_wizard_horizonux_overlay/res/values/strings.xml
 }
 
 function build_and_sign() {
@@ -342,55 +340,30 @@ function ask() {
 
 function remove_attributes() {
     local INPUT_FILE="$1"
-    local OUTPUT_FILE="$2"
-    local NAME_TO_SKIP="$3"
-    local MODIFIED=false
-    # capture ts input action:
-    debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Output File: ${OUTPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
+    local NAME_TO_SKIP="$2"
+
+    debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
+
     # Validate input
-    [ ! -f "$INPUT_FILE" ] && { debugPrint "Error: Input file not found!"; return 1; }
-    [ -z "$NAME_TO_SKIP" ] && { debugPrint "Error: Attribute to skip was not provided"; return 1; }
-    # Create output file
-    touch "$OUTPUT_FILE"
-    # Start writing new XML
-    {
-        # Read the input XML file line by line
-        while IFS='' read -r line; do
-            # Check if this line starts a <hal> block
-            if [[ "$line" =~ ^[[:space:]]*"<hal" ]]; then
-                block="$line"
-                skip_block=false
-                # Read the rest of the <hal> block
-                while IFS='' read -r inner_line; do
-                    block+=$'\n'"$inner_line"
-                    # If we find a <name> tag with the specified value, mark this block for skipping
-                    [[ "$inner_line" =~ ^[[:space:]]*"<name>"$NAME_TO_SKIP"</name>"[[:space:]]* ]] && skip_block=true
-                    # Stop reading if we reach the closing </hal>
-                    [[ "$inner_line" =~ ^[[:space:]]*"</hal>" ]] && break
-                done
-                # If block was marked for skipping, do not write it to the output file
-                if $skip_block; then
-                    MODIFIED=true
-                    continue
-                fi
-                # Otherwise, write the block to the output
-                echo "$block"
-            else
-                # Write all other lines that are not part of a <hal> block
-                echo "$line"
-            fi
-        done < "$INPUT_FILE"
-        echo "</manifest>"
-    } > "$OUTPUT_FILE"
-    # Only replace the input file if changes were made
-    if $MODIFIED; then
-        mv "$OUTPUT_FILE" "$INPUT_FILE"
-        console_print "Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
-        debugPrint "remove_attributes(): Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
-    else
+    [ ! -f "$INPUT_FILE" ] && { console_print "Error: Input file not found!"; return 1; }
+    [ -z "$NAME_TO_SKIP" ] && { console_print "Error: Attribute to skip was not provided"; return 1; }
+
+    # Backup original
+    cp "$INPUT_FILE" "${INPUT_FILE}.bak"
+
+    # Use xmlstarlet to remove <hal> blocks with <name> equal to NAME_TO_SKIP
+    xmlstarlet ed -P -L \
+        -d "/manifest/hal[name='$NAME_TO_SKIP']" \
+        "$INPUT_FILE"
+
+    if cmp -s "$INPUT_FILE" "${INPUT_FILE}.bak"; then
         console_print "No changes made. <hal> with name=$NAME_TO_SKIP was not found."
         debugPrint "remove_attributes(): No changes made. <hal> with name=$NAME_TO_SKIP was not found."
-        rm "$OUTPUT_FILE"
+        rm "${INPUT_FILE}.bak"
+    else
+        console_print "Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
+        debugPrint "remove_attributes(): Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
+        rm "${INPUT_FILE}.bak"
     fi
 }
 
@@ -540,17 +513,17 @@ function stack_build_properties() {
 function kang_dir() {
     local dir
     local WhySoSerious=$(string_format --lower "$1")
-    if [ "$WhySoSerious1" == "prism" ]; then
+    if [ "$WhySoSerious" == "prism" ]; then
         dir="$PRISM_DIR"
-    elif [ "$WhySoSerious1" == "product" ]; then
+    elif [ "$WhySoSerious" == "product" ]; then
         dir="$PRODUCT_DIR"
-    elif [ "$WhySoSerious1" == "system" ]; then
+    elif [ "$WhySoSerious" == "system" ]; then
         dir="$SYSTEM_DIR"
     elif [ "$WhySoSerious" == "system_ext" ]; then
         dir="$SYSTEM_EXT_DIR"
-    elif [ "$WhySoSerious1" == "vendor" ]; then
+    elif [ "$WhySoSerious" == "vendor" ]; then
         dir="$VENDOR_DIR"
-    elif [ "$WhySoSerious1" == "optics" ]; then
+    elif [ "$WhySoSerious" == "optics" ]; then
         dir="$OPTICS_DIR"
     fi
     [ -d "$dir/etc" ] && echo "$dir"

@@ -25,8 +25,6 @@ if [ -z "$(command -v dos2unix)" ]; then
 fi
 
 # let's convert these script files.
-for i in *; do 
-    for j in "$(find ${i})"; do
-        echo "$j" | grep -q .git || dos2unix "${j}"
-    done
+for j in "$(find src/)"; do
+    echo "$j" | grep -q .git || dos2unix "${j}"
 done
