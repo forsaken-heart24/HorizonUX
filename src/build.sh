@@ -134,10 +134,6 @@ if [ "$TARGET_BUILD_IS_FOR_DEBUGGING" == "true" ]; then
 	setprop --product "persist.sys.usb.config" "mtp,adb"
 fi
 
-# Stack build properties into a temporary directory
-console_print "Storing the ROM's build properties into a temporary directory..."
-stack_build_properties
-
 # warn users about test key
 [ "$MY_KEYSTORE_PATH" == "./test-keys/HorizonUX-testkey.jks" ] && warns "NOTE: You are using HorizonUX test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
 

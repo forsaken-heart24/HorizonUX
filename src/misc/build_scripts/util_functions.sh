@@ -20,9 +20,6 @@
 thisConsoleTempLogFile="./local_build/logs/hux_build.log"
 # fix: touch: cannot touch './local_build/logs/hux_build.log': No such file or directory
 mkdir -p ./local_build/logs/
-theBotToken="$1"
-chatID="$2"
-topicID="$3"
 touch ./local_build/logs/hux_build.log
 
 function grep_prop() {
@@ -86,9 +83,7 @@ function abort() {
     debugPrint "[:ABORT:] - $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    sendMessageToTelegramChat "$1 | Workflow failed at $(TZ=America/Phoenix date +%I:%M%p) "
     rm -rf $TMPDIR ./local_build/* output
-    uploadGivenFileToTelegram "./local_build/logs/hux_build.log"
     exit 1
 }
 
@@ -200,10 +195,7 @@ function build_and_sign() {
 function catch_duplicates_in_xml() {
     local feature_code="$1"
     local file="$2"
-    if [[ ! -f "$file" || ! -s "$file" ]]; then
-        echo "0"
-        return 0
-    fi
+    [ ! -f "$file" ] && return 0
     grep -c "${feature_code}" "$file"
 }
 
@@ -499,17 +491,6 @@ function apply_diff_patches() {
     patch "$TheFileToPatch" < "$DiffPatchFile" &>>$thisConsoleTempLogFile || console_print "Patch failed! Check logs for details."
 }
 
-function stack_build_properties() {
-    local unforgettable
-    local i
-    local stacked_temp_properties="${TMPDIR}/$(generate_random_hash 20)___stacked__properties"
-    for i in $HORIZON_PRODUCT_PROPERTY_FILE $HORIZON_SYSTEM_PROPERTY_FILE $HORIZON_SYSTEM_EXT_PROPERTY_FILE $HORIZON_VENDOR_PROPERTY_FILE; do
-        for unforgettable in "$(cat "${i}")"; do
-            echo "${unforgettable}" >> ${stacked_temp_properties}
-        done
-    done
-}
-
 function kang_dir() {
     local dir
     local WhySoSerious=$(string_format --lower "$1")
@@ -688,9 +669,7 @@ function copyDeviceBlobsSafely() {
     local blobInROM="$2"
     local backupBlob="./local_build/tmp/hux/${blobInROM}.bak"
     console_print "Trying to copy ${blobFromSource} to ${blobInROM}"
-    if [ -f "$blobInROM" ]; then
-        cp -af "$blobInROM" "$backupBlob"
-    fi
+    [ -f "$blobInROM" ] && cp -af "$blobInROM" "$backupBlob"; 
     if [ ! -f "$blobInROM" ] && ask "${blobFromSource} is not found on the ROM, do you wanna copy this blob to the device?"; then
         if ! cp -af "${blobFromSource}" "${blobInROM}" 2>${thisConsoleTempLogFile}; then
             warns "Failed to copy ${blobFromSource}, this might cause a bootloop, attempting to restore original blob." "copyDeviceBlobsSafely()"
@@ -703,56 +682,8 @@ function copyDeviceBlobsSafely() {
         fi
     fi
     console_print "Finished copying given blobs!"
+    rm -f "$backupBlob"
     return 0
-}
-
-function deviceCodenameToModel() {
-    case $(string_format -l $1) in
-        "r8q")
-            echo "S20 FE"
-        ;;
-        "a30")
-            echo "A30"
-        ;;
-        "a23xq")
-            echo "A23"
-        ;;
-    esac
-}
-
-function compressInZStandard() {
-    local fileToCompress="$1"
-    local outputPath="$2"
-    local levelArg="$3"
-    local splitThreshold=1887436800
-    local compressionLevel
-    local fileSize
-    local baseOutput
-    [[ -z "$fileToCompress" || -z "$outputPath" || -z "$levelArg" ]] && abort "Usage: compressInZStandard <file> <output path> <--low|--mid|--ultra>"
-    [[ ! -f "$fileToCompress" ]] && abort "Error: '$fileToCompress' does not exist or is not a file."
-    case "$levelArg" in
-        --low)
-            compressionLevel="-3"
-        ;;
-        --mid)
-            compressionLevel="-10"
-        ;;
-        --ultra)
-            compressionLevel="--ultra -22"
-        ;;
-        *)
-            console_print "Unknown compression level: $levelArg. Using --low (-3) by default."
-            compressionLevel="-3"
-        ;;
-    esac
-    console_print "Compressing $fileToCompress to $outputPath with level $levelArg..."
-    zstd -T0 $compressionLevel "$fileToCompress" -o "$outputPath" || abort "Failed to compress $fileToCompress as a zstd archive!"
-    fileSize=$(stat -c%s "$outputPath")
-    if (( fileSize > splitThreshold )); then
-        console_print "Compressed file exceeds 1.8 GiB, splitting for Telegram compatibility..."
-        split -b $splitThreshold "$outputPath" "${outputPath}" || abort "Failed to split oversized compressed file!"
-        rm -f "$outputPath"
-    fi
 }
 
 function magiskboot() {
@@ -810,7 +741,7 @@ function javaKeyStoreToHex() {
     fi
 
     # error checks:
-    if [ "$?" == "0" ]; then
+    if [ "$?" == 0 ]; then
         console_print "Successfully added your key into the patch file!!"
         return 0
     else

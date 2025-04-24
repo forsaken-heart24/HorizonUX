@@ -18,8 +18,6 @@
 
 # device blob path and etc...
 BUILD_TARGET_BLOB_PATH="./target/a30/patches/stock_blobs"
-soundBoosterBlob=$(ls ${SYSTEM_DIR}/lib/ | grep lib_SoundBooster_ver)
-soundBooster64Blob=$(ls ${SYSTEM_DIR}/lib64/ | grep lib_SoundBooster_ver)
 stockCameraLibPath="${VENDOR_DIR}/lib/libexynoscamera3.so"
 selected_lib="$BUILD_TARGET_BLOB_PATH/vendor/lib/libexynoscamera3_apr17.so"
 REGEX="^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (([[:digit:]]| )[[:digit:]]) ([[:digit:]][[:digit:]][[:digit:]][[:digit:]])$"
@@ -31,11 +29,10 @@ declare -A months=(
 
 # adds fstab configs if the ROM fstab doesn't have f2fs configurations.
 function mkfstab() {
-    cat ${VENDOR_DIR}/etc/fstab.exynos7904 | grep -q f2fs || {
+    if ! cat ${VENDOR_DIR}/etc/fstab.exynos7904 | grep -q f2fs; then
         console_print "Vendor doesn't have f2fs mount configuaration, trying to add it..."
         echo -e "\n\n# ${BUILD_USERNAME} - ${BUILD_TARGET_CUSTOM_BRAND_NAME}\n/dev/block/platform/13500000.dwmmc0/by-name/cache /cache f2fs nosuid,nodev,noatime,inline_xattr wait,check,formattable\n/dev/block/platform/13500000.dwmmc0/by-name/userdata /data f2fs nosuid,nodev,noatime,inline_xattr,data_flush,fsync_mode=nobarrier latemount,wait,check,encryptable=footer,quota" >> ${VENDOR_DIR}/etc/fstab.exynos7904 && console_print "Added f2fs mount configs"
-    }
-    #abort "Failed to add mount configs, this may due to the vendor have came with mount configs"
+    fi
 }
 
 if [[ "$(grep_prop "ro.product.vendor.device" "$HORIZON_VENDOR_PROPERTY_FILE")" == *"a30"* && -f "${VENDOR_DIR}/etc/fstab.exynos7904" ]]; then
