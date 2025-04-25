@@ -91,9 +91,6 @@ BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_
 BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 
-# fix:
-[ ! -n "${TARGET_BUILD_PRODUCT_NAME}" ] && TARGET_BUILD_PRODUCT_NAME="$1"
-
 # floating feature conf depending on SDK version:
 case "${BUILD_TARGET_SDK_VERSION}" in
     28|29|30)
@@ -647,6 +644,11 @@ if [ "$TARGET_BUILD_MAKE_DEODEXED_ROM" == "true" ]; then
 		rm -rf ${deletableO_VDexFiles}
 	done
 	console_print "Deodexed the rom successfully!"
+fi
+
+if [[ "${TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES}" == "true" && "${BUILD_TARGET_SDK_VERSION}" == "35" ]]; then
+	console_print "Enabling Voice Memo on Samsung Notes..."
+	change_xml_values "SEC_FLOATING_FEATURE_VOICERECORDER_CONFIG_DEF_MODE" "normal,interview,voicememo"
 fi
 
 if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVICE" == "true" ]]; then

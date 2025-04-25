@@ -38,6 +38,7 @@
 - **TARGET_FLOATING_FEATURE_INCLUDE_EASY_MODE**: Easy mode, for huge icons and things, specifically made for people(s) who has difficulty in reading
 - **TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON**: Disable this, useless thing ever made.
 - **TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES**: This feature requires proper or bare minimum mdNIE support on the ROM and maybe the device to get it workin' properly
+- **TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES**: This features is supposed to enable voice memo feature on the Notes app. Only supports UI7
 
 ## Audio & Display
 - **TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER**: Fixes LDAC audio distortion for lower-end Bluetooth audio devices.

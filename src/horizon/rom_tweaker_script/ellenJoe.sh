@@ -62,16 +62,16 @@ function restart_audioserver() {
     return 1
 }
 
-function is_boot_completed() {
-    return $([ -z "$(getprop sys.boot_completed)" ] && echo 1; echo "$(getprop service.bootanim.progress)";)
+function is_boot_completed() { 
+    return $([ -z "$(getprop sys.boot_completed)" ] && echo 1 || echo 0);
 }
 
 function is_bootanimation_exited() {
-    return $([ -z "$(getprop service.bootanim.exit)" ] && echo 1; echo "$(getprop service.bootanim.progress)";)
+    return $([ -z "$(getprop service.bootanim.exit)" ] && echo 1 || echo 0);
 }
 
 function bootanimStillRunning() {
-    return $([ -z "$(getprop service.bootanim.progress)" ] && echo 1; echo "$(getprop service.bootanim.progress)";)
+    return $([ -z "$(getprop service.bootanim.progress)" ] && echo 1 || echo 0);
 }
 
 function string_case() {
@@ -115,7 +115,7 @@ function maybe_kill_daemons() {
 function dawn() {
     local dir=$1
     local the_fifty_jeez=$(string_case -l $(du -h $dir | head -n 1 | cut -c 4-4))
-    if echo $the_fifty_jeez | grep -q m ] || echo $the_fifty_jeez | grep -q g; then
+    if echo $the_fifty_jeez | grep -q m || echo $the_fifty_jeez | grep -q g; then
         return 0
     fi
     return 1
@@ -193,33 +193,33 @@ if [[ "$(getprop persist.horizonux.ellen)" == "available"  && is_boot_completed 
     horizon_log "GMSDoze" "Tweaking gms..."
     horizon_log "GMSDoze" "The logs of the tweaks can be seen below:"
     {
-            # Disable collective device administrators for all users
-            for U in $(ls /data/user); do
-                for C in "auth.managed.admin.DeviceAdminReceiver" "mdm.receivers.MdmDeviceAdminReceiver"; do
-                    pm disable --user $U com.google.android.gms/com.google.android.gms.$C
-                done
+        # Disable collective device administrators for all users
+        for U in $(ls /data/user); do
+            for C in "auth.managed.admin.DeviceAdminReceiver" "mdm.receivers.MdmDeviceAdminReceiver"; do
+                pm disable --user $U com.google.android.gms/com.google.android.gms.$C
             done
-            # The GMS0 variable holds the Google Mobile Services package name
-            GMS0="\"com.google.android.gms\""
-            STR1="allow-unthrottled-location package=$GMS0"
-            STR2="allow-ignore-location-settings package=$GMS0"
-            STR3="allow-in-power-save package=$GMS0"
-            STR4="allow-in-data-usage-save package=$GMS0"
-            # Find all XML files under /data/adb directory (case-insensitive search for .xml files)
-            find /data/adb/* -type f -iname "*.xml" -print |
-            while IFS= read -r XML; do
-                for X in $XML; do
-                    # If any of the defined strings (STR1, STR2, STR3, STR4) are found in the file,
-                    # execute the following block
-                    if grep -qE "$STR1|$STR2|$STR3|$STR4" $X 2>/dev/null; then
-                        # Use sed to remove the matched strings from the XML file
-                        # It deletes lines containing any of STR1, STR2, STR3, or STR4
-                        sed -i "/$STR1/d;/$STR2/d;/$STR3/d;/$STR4/d" $X
-                    fi
-                done
+        done
+        # The GMS0 variable holds the Google Mobile Services package name
+        GMS0="\"com.google.android.gms\""
+        STR1="allow-unthrottled-location package=$GMS0"
+        STR2="allow-ignore-location-settings package=$GMS0"
+        STR3="allow-in-power-save package=$GMS0"
+        STR4="allow-in-data-usage-save package=$GMS0"
+        # Find all XML files under /data/adb directory (case-insensitive search for .xml files)
+        find /data/adb/* -type f -iname "*.xml" -print |
+        while IFS= read -r XML; do
+            for X in $XML; do
+                # If any of the defined strings (STR1, STR2, STR3, STR4) are found in the file,
+                # execute the following block
+                if grep -qE "$STR1|$STR2|$STR3|$STR4" $X 2>/dev/null; then
+                    # Use sed to remove the matched strings from the XML file
+                    # It deletes lines containing any of STR1, STR2, STR3, or STR4
+                    sed -i "/$STR1/d;/$STR2/d;/$STR3/d;/$STR4/d" $X
+                fi
             done
-            # Add GMS to battery optimization
-            dumpsys deviceidle whitelist com.google.android.gms
+        done
+        # Add GMS to battery optimization
+        dumpsys deviceidle whitelist com.google.android.gms
     } >> ${the_logfile}
     if [ "$(grep_prop "persist.horizonux.audio.resampler")" == "available" ]; then
         horizon_log "horizonux_features_verifier" "The audio resampler is enabled in this build...."

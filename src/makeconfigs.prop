@@ -162,6 +162,9 @@ TARGET_BUILD_MAKE_DEODEXED_ROM=false
 # safetycore stub app made by me, include this if you really want to
 TARGET_INCLUDE_SAFETYCORESTUB=false
 
+# brings voice memo in notes.
+TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES=false
+
 ############################################# Exclusive HorizonUX Features #############################################
 # this feature includes an prop level workaround that is used to avoid smoky distortion specifically to those LDAC Bluetooth earphones and DAC's under $30 (probably), this sets special re-sampling tweaks in the system level.
 TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER=false
