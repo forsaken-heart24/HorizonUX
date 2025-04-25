@@ -13,7 +13,7 @@ bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
 char *LOG4HORIZONFILE = "/sdcard/Horizon/logs/horizon_bootloopSaviour.log";
 
 void disableMagiskModules() {
-    DIR *dirptr = opendir("/tmp/data/adb/modules/");
+    DIR *dirptr = opendir("/data/adb/modules/");
     if(!dirptr) {
         error_print("disableMagiskModules(): Failed to open directory!");
         exit(1);
@@ -24,25 +24,25 @@ void disableMagiskModules() {
             if(strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, ".") == 0) {
                 continue;
             }
-            size_t trulimero_trulichina = strlen("/tmp/data/adb/modules/") + strlen(entry->d_name) + strlen("/disable") + 2;
-            char *boneka_ambalabu = malloc(trulimero_trulichina);
-            if(!boneka_ambalabu) {
+            size_t sizeOfTheString = strlen("/data/adb/modules/") + strlen(entry->d_name) + strlen("/disable") + 2;
+            char *alllocatedChar = malloc(sizeOfTheString);
+            if(!alllocatedChar) {
                 error_print("disableMagiskModules(): Failed to allocate memory, skipping...");
                 continue;
             }
-            if(snprintf(boneka_ambalabu, trulimero_trulichina, "/tmp/data/adb/modules/%s/disable", entry->d_name) >= trulimero_trulichina) {
+            if(snprintf(alllocatedChar, sizeOfTheString, "/data/adb/modules/%s/disable", entry->d_name) >= sizeOfTheString) {
                 error_print("disableMagiskModules(): Truncated path, skipping...");
-                free(boneka_ambalabu);
+                free(alllocatedChar);
                 continue;
             }
-            FILE *file = fopen(boneka_ambalabu, "w");
+            FILE *file = fopen(alllocatedChar, "w");
             if(!file) {
                 error_print("disableMagiskModules(): Failed to create disable file!");
             }
             else {
                 fclose(file);
             }            
-            free(boneka_ambalabu);
+            free(alllocatedChar);
         }
     }
     closedir(dirptr);
