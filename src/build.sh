@@ -627,21 +627,13 @@ if [[ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" || "${TARGET_INCLUDE_HORIZON
 	cp -af ./src/horizon/rom_tweaker_script/init.ellen.rc $SYSTEM_DIR/etc/init/
 fi
 
-# include safetycore lore, refer ts: https://www.reddit.com/r/technology/comments/1iy19yt/a_new_android_feature_is_scanning_your_photos_for/
-if [ "$TARGET_INCLUDE_SAFETYCORESTUB" == "true" ]; then
-	console_print "Adding safetycore stub..."
-	mkdir -p $SYSTEM_DIR/app/SafetyCoreStub/
-	build_and_sign ./src/horizon/packages/SafetyCoreStub $SYSTEM_DIR/app/SafetyCoreStub/
-	console_print "Successfully added safetycore stub into your device!"
-fi
-
 if [ "$TARGET_BUILD_MAKE_DEODEXED_ROM" == "true" ]; then
 	console_print "Deodexing the rom.."
-	for deletableO_VDexFiles in $SYSTEM_DIR/app/*/*.odex $SYSTEM_DIR/app/*/*.vdex $SYSTEM_DIR/priv-app/*/*.odex $SYSTEM_DIR/priv-app/*/*.vdex \
-		$PRODUCT_DIR/app/*/*.odex $PRODUCT_DIR/priv-app/*/*.vdex
-		$VENDOR_DIR/app/*/*.odex $VENDOR_DIR/priv-app/*/*.vdex \
-		$SYSTEM_EXT_DIR/app/*/*.odex $SYSTEM_EXT_DIR/app/*/*.vdex $SYSTEM_EXT_DIR/priv-app/*/*.odex $SYSTEM_EXT_DIR/priv-app/*/*.vdex; do
-		rm -rf ${deletableO_VDexFiles}
+	for deletableO_VDexFiles in $SYSTEM_DIR/app/*/*/*.odex $SYSTEM_DIR/app/*/*/*.vdex $SYSTEM_DIR/priv-app/*/*/*.odex $SYSTEM_DIR/priv-app/*/*/*.vdex \
+		$PRODUCT_DIR/app/*/*/*.odex $PRODUCT_DIR/priv-app/*/*/*.vdex
+		$VENDOR_DIR/app/*/*/*.odex $VENDOR_DIR/priv-app/*/*/*.vdex \
+		$SYSTEM_EXT_DIR/app/*/*/*.odex $SYSTEM_EXT_DIR/app/*/*/*.vdex $SYSTEM_EXT_DIR/priv-app/*/*/*.odex $SYSTEM_EXT_DIR/priv-app/*/*/*.vdex; do
+		[ -f "${deletableO_VDexFiles}" ] && rm -rf ${deletableO_VDexFiles}
 	done
 	console_print "Deodexed the rom successfully!"
 fi

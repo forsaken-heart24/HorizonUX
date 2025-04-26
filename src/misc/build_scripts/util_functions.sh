@@ -146,9 +146,7 @@ function build_and_sign() {
     local apk_file
 
     # Common checks
-    if [[ ! -d "$extracted_dir_path" || ! -f "$extracted_dir_path/apktool.yml" ]]; then
-        abort "Invalid Apkfile path: $extracted_dir_path"
-    fi
+    [[ ! -d "$extracted_dir_path" || ! -f "$extracted_dir_path/apktool.yml" ]] && abort "Invalid Apkfile path: $extracted_dir_path"
 
     # Extract APK file name from apktool.yml dynamically
     apkFileName=$(grep "apkFileName" "$extracted_dir_path/apktool.yml" | cut -d ':' -f 2 | tr -d ' "')
@@ -251,6 +249,7 @@ function tinkerWithCSCFeaturesFile() {
         --decode)
             for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
 	            [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
+                file ${EXPECTED_CSC_FEATURE_XML_PATH} | grep -q data || continue
                 if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>$thisConsoleTempLogFile; then
                     debugPrint "CSC feature file successfully decoded."
                 else
@@ -262,8 +261,10 @@ function tinkerWithCSCFeaturesFile() {
         --encode)
             for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
 	            [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
+                file ${EXPECTED_CSC_FEATURE_XML_PATH} | grep -q data && continue
                 if java -jar "$decoder_jar" -e -i "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" -o "${EXPECTED_CSC_FEATURE_XML_PATH}" &>$thisConsoleTempLogFile; then
                     debugPrint "CSC feature file successfully encoded."
+                    rm -f ${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml
                 else
                     abort "Failed to encode the CSC feature file, please try again..."
                 fi
@@ -702,7 +703,7 @@ function magiskboot() {
             ./src/dependencies/bin/magiskbootA64 "$@"
         ;;
         *)
-            abort "Undefined architecture $(uname -m)"
+            abort "Undefined architecture ${localMachineArchitecture}"
         ;;
     esac
 }
