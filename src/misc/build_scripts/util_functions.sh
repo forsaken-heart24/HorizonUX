@@ -209,7 +209,7 @@ function add_float_xml_values() {
 
 function add_csc_xml_values() {
     local feature_code
-    feature_code="$(string_format -u "$1")"
+    feature_code="$1"
     local feature_code_value="$2"
     for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
         if [ -f "$EXPECTED_CSC_FEATURE_XML_PATH" ]; then

@@ -38,7 +38,7 @@ done
 
 # ok, fbans dropped!
 for dependenciesRequiredForTheBuild in java python3 zip lz4; do
-	command -v ${dependenciesRequiredForTheBuild} || abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
+	command -v ${dependenciesRequiredForTheBuild} &>>$thisConsoleTempLogFile || abort "${dependenciesRequiredForTheBuild} is not found in the build environment, please check the guide again.."
 done
 
 # mako mako mako mako those who know💀
@@ -196,18 +196,18 @@ fi
 
 if [ "$TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN" == "true" ]; then
 	console_print "Enabling Game Launcher..."
-	change_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
 	console_print "Disabling Game Launcher..."
-	change_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
 if [ "$BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES" == "true" ]; then
 	console_print "Switching the default refresh rate to ${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}Hz..."
-	change_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
 	console_print "Switching the default refresh rate to 60Hz"
-	change_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "60" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "60" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
 if [ "$TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM" == "true" ]; then
@@ -223,24 +223,24 @@ fi
 
 if [ "$TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON" == "true" ]; then
 	console_print "Disabling the live clock icon from the launcher"
-	change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
 	console_print "Enabling the live clock icon from the launcher"
-	change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
 if [ "$TARGET_FLOATING_FEATURE_INCLUDE_EASY_MODE" == "true" ]; then
 	console_print "Enabling Easy Mode..."
-	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 else
 	console_print "Disabling Easy Mode..."
-	change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 fi
 
 if [ "$TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS" == "true" ]; then
 	console_print "Enabling live blur effects..."
 	for blur_effects in SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_PARTIAL_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_CAPTURED_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG; do
-		change_xml_values "$blur_effects" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+		add_float_xml_values "$blur_effects" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	done
 	if [ -f "${VENDOR_DIR}/etc/fstab.qcom" ]; then
 		if echo "${BUILD_TARGET_SDK_VERSION}" | grep -qE "33|34"; then
@@ -264,14 +264,14 @@ fi
 if [ "$TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING" == "true" ]; then
 	console_print "Enabling Enhanced Processing.."
 	for enhanced_gaming in SEC_FLOATING_FEATURE_SYSTEM_SUPPORT_LOW_HEAT_MODE SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE SEC_FLOATING_FEATURE_SYSTEM_SUPPORT_ENHANCED_CPU_RESPONSIVENESS; do
-		change_xml_values "$enhanced_gaming" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+		add_float_xml_values "$enhanced_gaming" "TRUE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	done
 fi
 
 if [ "$TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES" == "true" ]; then
 	console_print "Adding support for extra screen modes...."
 	for led_modes in SEC_FLOATING_FEATURE_LCD_SUPPORT_MDNIE_HW SEC_FLOATING_FEATURE_LCD_SUPPORT_WIDE_COLOR_GAMUT; do
-		change_xml_values "${led_modes}" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+		add_float_xml_values "${led_modes}" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	done
 fi
 
@@ -290,7 +290,7 @@ fi
 
 if [ "$TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH" == "true" ]; then
 	console_print "Disabling Smart Switch feature in setup...."
-	change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SMART_SWITCH" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SMART_SWITCH" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	apply_diff_patches "$SYSTEM_DIR/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
 fi
 
@@ -642,7 +642,7 @@ fi
 
 if [[ "${TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES}" == "true" && "${BUILD_TARGET_SDK_VERSION}" == "35" ]]; then
 	console_print "Enabling Voice Memo on Samsung Notes..."
-	change_xml_values "SEC_FLOATING_FEATURE_VOICERECORDER_CONFIG_DEF_MODE" "normal,interview,voicememo"
+	add_float_xml_values "SEC_FLOATING_FEATURE_VOICERECORDER_CONFIG_DEF_MODE" "normal,interview,voicememo"
 fi
 
 if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVICE" == "true" ]]; then
@@ -677,8 +677,8 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L99
 	} &>>$thisConsoleTempLogFile
 	debugPrint "Moved SmartManager and Device Care to a temporary directory.."
-	change_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
-	change_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+	add_float_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 	add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" "TRUE"
 	for i in ${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS[@]}; do
 		for j in ${SYSTEM_DIR}/${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS_SAVE_PATHS[@]}; do
@@ -739,12 +739,12 @@ if [[ -n "${BUILD_TARGET_BOOT_ANIMATION_FPS}" && "${BUILD_TARGET_BOOT_ANIMATION_
 	setprop --system "shutdown.fps" "${BUILD_TARGET_SHUTDOWN_ANIMATION_FPS}"
 fi
 default_language_configuration ${NEW_DEFAULT_LANGUAGE_ON_PRODUCT} ${NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT}
-change_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+add_float_xml_values "SEC_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE" "${TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 setprop --vendor "vendor.audio.offload.buffer.size.kb" "256"
 rm -rf "$SYSTEM_DIR/hidden" "$SYSTEM_DIR/preload" "$SYSTEM_DIR/recovery-from-boot.p" "$SYSTEM_DIR/bin/install-recovery.sh"
 cp -af ./src/misc/etc/ringtones_and_etc/media/audio/* "$SYSTEM_DIR/media/audio/"
-change_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
-[ "$TARGET_INCLUDE_CUSTOM_BRAND_NAME" == "true" ] && change_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SAMSUNG_MARKETING_INFO" "FALSE" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+[ "$TARGET_INCLUDE_CUSTOM_BRAND_NAME" == "true" ] && add_float_xml_values "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_BRAND_NAME" "${BUILD_TARGET_CUSTOM_BRAND_NAME}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
 [ -f "$SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so" ] && touch "$SYSTEM_DIR/$(fetch_rom_arch --libpath)/libhal.wsm.samsung.so"
 for i in "logcat.live disable" "sys.dropdump.on Off" "profiler.force_disable_err_rpt 1" "profiler.force_disable_ulog 1" \
 		 "sys.lpdumpd 0" "persist.device_config.global_settings.sys_traced 0" "persist.traced.enable 0" "persist.sys.lmk.reportkills false" \
