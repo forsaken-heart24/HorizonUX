@@ -106,18 +106,14 @@ function maybe_kill_daemons() {
     if [ -z "${daemon_pid}" ]; then
         horizon_log "DAEMON_KILLER" "- The $daemon_name wasn't running or it's removed i guess, well uhh i can't do anything about. Sorry!"
     else
-        if ! kill ${daemon_name}; then
-            horizon_log "DAEMON_KILLER" "- The $daemon_name can't be killed, well uhh i can't do anything about. Sorry!"
-        fi
+        kill ${daemon_name} || horizon_log "DAEMON_KILLER" "- The $daemon_name can't be killed, well uhh i can't do anything about. Sorry!"
     fi
 }
 
 function dawn() {
     local dir=$1
     local the_fifty_jeez=$(string_case -l $(du -h $dir | head -n 1 | cut -c 4-4))
-    if echo $the_fifty_jeez | grep -q m || echo $the_fifty_jeez | grep -q g; then
-        return 0
-    fi
+    echo $the_fifty_jeez | grep -q m || echo $the_fifty_jeez | grep -q g && return 0
     return 1
 }
 
@@ -142,7 +138,7 @@ function check_reset_prop() {
 if [[ "$(getprop service.bootanim.progress)" == '1' && "$(settings get secure device_provisioned)" == '0' ]]; then
     settings put secure ui_night_mode 2
     cmd uimode night yes
-    return 0
+    exit 0
 fi
 
 if [[ "$(getprop persist.horizonux.ellen)" == "available"  && is_boot_completed ]]; then

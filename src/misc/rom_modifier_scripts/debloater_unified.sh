@@ -131,7 +131,7 @@ debloat_the_crap() {
         full_path="${SYSTEM_DIR}/app/${app_name}"
         debugPrint "debloat_the_crap(): Removing ${full_path}..."
         if [ -d "${full_path}" ]; then
-            rm -rf "${full_path}" 2>>"./${thisConsoleTempLogFile}"
+            rm -rf "${full_path}" 2>>"${thisConsoleTempLogFile}"
         else
             debugPrint "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
         fi
@@ -141,7 +141,7 @@ debloat_the_crap() {
         full_path="${SYSTEM_DIR}/priv-app/${app_name}"
         debugPrint "debloat_the_crap(): Removing ${full_path}..."
         if [ -d "${full_path}" ]; then
-            rm -rf "${full_path}" 2>>"./${thisConsoleTempLogFile}"
+            rm -rf "${full_path}" 2>>"${thisConsoleTempLogFile}"
         else
             debugPrint "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
         fi
@@ -151,7 +151,7 @@ debloat_the_crap() {
         full_path="${SYSTEM_EXT_DIR}/priv-app/${app_name}"
         debugPrint "debloat_the_crap(): Removing ${full_path}..."
         if [ -d "${full_path}" ]; then
-            rm -rf "${full_path}" 2>>"./${thisConsoleTempLogFile}"
+            rm -rf "${full_path}" 2>>"${thisConsoleTempLogFile}"
         else
             debugPrint "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
         fi
@@ -161,7 +161,7 @@ debloat_the_crap() {
         full_path="${PRODUCT_DIR}/app/${app_name}"
         debugPrint "debloat_the_crap(): Removing ${full_path}..."
         if [ -d "${full_path}" ]; then
-            rm -rf "${full_path}" 2>>"./${thisConsoleTempLogFile}"
+            rm -rf "${full_path}" 2>>"${thisConsoleTempLogFile}"
         else
             debugPrint "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
         fi
@@ -171,7 +171,7 @@ debloat_the_crap() {
         full_path="${PRODUCT_DIR}/priv-app/${app_name}"
         debugPrint "debloat_the_crap(): Removing ${full_path}..."
         if [ -d "${full_path}" ]; then
-            rm -rf "${full_path}" 2>>"./${thisConsoleTempLogFile}"
+            rm -rf "${full_path}" 2>>"${thisConsoleTempLogFile}"
         else
             debugPrint "Couldn't find this application to remove, don't worry, i will debloat it somehow :D"
         fi
@@ -182,7 +182,7 @@ debloat_the_crap() {
     ${SYSTEM_DIR}/priv-app/SecCalculator* ${SYSTEM_DIR}/priv-app/UltraDataSaving* ${PRODUCT_DIR}/app/Gmail*
     do
         debugPrint "debloat_the_crap(): Removing ${unknown}..."
-        [ -d "${unknown}" ] && rm -rf "${unknown}" 2>>"./${thisConsoleTempLogFile}"
+        [ -d "${unknown}" ] && rm -rf "${unknown}" 2>>"${thisConsoleTempLogFile}"
     done
 }
 

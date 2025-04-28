@@ -27,22 +27,25 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 // FUCKING global FUCKING variables.
 extern bool WRITE_DEBUG_MESSAGES_TO_CONSOLE;
 extern char *LOG4HORIZONFILE;
  
 // FUCKING function FUCKING declarations.
-void error_print(const char *Message);
-void error_print_extended(const char *message, const char *additional_args);
-bool erase_file_content(const char *__file);
 int executeCommands(const char *command, bool requiresOutput);
 int executeScripts(const char *__script__file, const char *__args, bool requiresOutput);
 int searchBlockListedStrings(const char *__filename, const char *__search_str);
 int verifyScriptStatusUsingShell(const char *__filename);
 int checkBlocklistedStringsNChar(const char *__haystack);
+bool erase_file_content(const char *__file);
 char *combineShyt(const char *command, const char *value);
+char *cStringToLower(char *str);
+char *cStringToUpper(char *str);
 void consoleLog(char *text, char *extr_factor);
 void abort_instance(const char *text, const char *extr_factor);
+void error_print(const char *Message);
+void error_print_extended(const char *message, const char *additional_args);
 
 #endif

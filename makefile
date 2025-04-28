@@ -30,7 +30,7 @@ SAVIOUR_OUTPUT = ./local_build/binaries/bootloopSaviour
 
 # Source files for each target
 LOADER_SRCS = ./src/include/horizonux.c ./src/include/horizonutils.c
-SAVIOUR_SRCS = ./src/include/horizonux.c ./src/include/horizonutils.c
+SAVIOUR_SRCS = $(LOADER_SRCS)
 
 # Main source path
 LOADER_MAIN = ./src/bashScriptLoader/main.c

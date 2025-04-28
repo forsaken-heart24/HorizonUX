@@ -17,43 +17,6 @@
 
 #include <horizonutils.h>
 
-void error_print(const char *Message) {
-    FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
-    if(!log4horizon) {
-        printf("\e[0;31merror_print(): Failed to open log file: %s\e[0;37m\n", LOG4HORIZONFILE);
-        return;
-    }
-    fprintf(log4horizon, "%s\n", Message);
-    fclose(log4horizon);
-    fprintf(stderr, "\e[0;31m%s\e[0;37m\n", Message);
-}
-
-void error_print_extended(const char *message, const char *additional_args) {
-    if(!message) {
-        error_print("error_print_extended(): Message cannot be NULL!");
-        return;
-    }
-    const char *safe_args = additional_args ? additional_args : "";
-    size_t kimikimi_ = strlen(message) + strlen(safe_args) + 2;
-    char *kimikimi = malloc(kimikimi_);
-    if(!kimikimi) {
-        error_print("error_print_extended(): Failed to allocate memory.");
-        exit(1);
-    }
-    snprintf(kimikimi, kimikimi_, "%s %s", message, safe_args);
-    error_print(kimikimi);
-    free(kimikimi);
-}
-
-bool erase_file_content(const char *__file) {
-    FILE *fileConstantAgain = fopen(__file, "w");
-    if(!fileConstantAgain) {
-        return false;
-    }
-    fclose(fileConstantAgain);
-    return true;
-}
-
 int executeCommands(const char *command, bool requiresOutput) {
     if(command && (strstr(command, ";") || strstr(command, "&&") || strstr(command, "|") || strstr(command, "`") || strstr(command, "$("))) {
         error_print("executeScripts(): Nice try diddy!");
@@ -123,7 +86,7 @@ int executeScripts(const char *__script__file, const char *__args, bool requires
 // this searches some sensitive strings to ensure that the script is safe
 // please verify your scripts before running it PLEASE 🙏
 int searchBlockListedStrings(const char *__filename, const char *__search_str) {
-    size_t sizeOfTheseCraps = sizeof(__filename) + sizeof(__search_str) + 3;
+    size_t sizeOfTheseCraps = strlen(__filename) + strlen(__search_str) + 3;
     char *command = malloc(sizeOfTheseCraps);
     if(!command) {
         error_print("searchBlockListedStrings(): Failed to allocate memory.");
@@ -216,6 +179,15 @@ int checkBlocklistedStringsNChar(const char *__haystack) {
     return 0;
 }
 
+bool erase_file_content(const char *__file) {
+    FILE *fileConstantAgain = fopen(__file, "w");
+    if(!fileConstantAgain) {
+        return false;
+    }
+    fclose(fileConstantAgain);
+    return true;
+}
+
 char *combineShyt(const char *command, const char *value) {
     size_t nom_nom = strlen(command) + strlen(value) + 2;
     char *buffer = (char *)malloc(nom_nom);
@@ -225,6 +197,26 @@ char *combineShyt(const char *command, const char *value) {
     }
     snprintf(buffer, nom_nom, "%s %s", command, value);
     return buffer;
+}
+
+// idk what to do man :crying :flower :broken_heart
+char *cStringToLower(char *str) {
+    int i = 0;
+    while(str[i]) {
+        str[i] = tolower((unsigned char)str[i]);
+        i++;
+    }
+    return str;
+}
+
+// idk what to do man :crying :flower :broken_heart
+char *cStringToUpper(char *str) {
+    int i = 0;
+    while(str[i]) {
+        str[i] = toupper((unsigned char)str[i]);
+        i++;
+    }
+    return str;
 }
 
 // logs to console
@@ -239,4 +231,32 @@ void consoleLog(char *text, char *extr_factor) {
 void abort_instance(const char *text, const char *extr_factor) {
     error_print_extended(text, extr_factor);
     exit(1);
+}
+
+void error_print(const char *Message) {
+    FILE *log4horizon = fopen(LOG4HORIZONFILE, "a");
+    if(!log4horizon) {
+        printf("\e[0;31merror_print(): Failed to open log file: %s\e[0;37m\n", LOG4HORIZONFILE);
+        return;
+    }
+    fprintf(log4horizon, "%s\n", Message);
+    fclose(log4horizon);
+    fprintf(stderr, "\e[0;31m%s\e[0;37m\n", Message);
+}
+
+void error_print_extended(const char *message, const char *additional_args) {
+    if(!message) {
+        error_print("error_print_extended(): Message cannot be NULL!");
+        return;
+    }
+    const char *safe_args = additional_args ? additional_args : "";
+    size_t kimikimi_ = strlen(message) + strlen(safe_args) + 2;
+    char *kimikimi = malloc(kimikimi_);
+    if(!kimikimi) {
+        error_print("error_print_extended(): Failed to allocate memory.");
+        exit(1);
+    }
+    snprintf(kimikimi, kimikimi_, "%s %s", message, safe_args);
+    error_print(kimikimi);
+    free(kimikimi);
 }

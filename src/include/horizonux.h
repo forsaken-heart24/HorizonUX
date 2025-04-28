@@ -36,5 +36,9 @@ bool isTheDeviceisTurnedOn();
 char *getSystemProperty(const char *filepath, const char *propertyVariableName);
 void sendToastMessages(const char *service, const char *message);
 void sendNotification(const char *message);
+void prepareStockRecoveryCommandList(char *action, char *actionArg, char *actionArgExt);
+void prepareTWRPRecoveryCommandList(char *action, char *actionArg, char *actionArgExt);
+void startDaemon(const char *daemonName);
+void stopDaemon(const char *daemonName);
 
 #endif

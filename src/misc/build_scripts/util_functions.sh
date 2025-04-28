@@ -72,10 +72,8 @@ function setprop() {
         propValue="$4"
         propFile=$(if [ -f "$2" ]; then echo "$2"; else echo "$HORIZON_VENDOR_PROPERTY_FILE"; fi)
     fi
-    if ! cat ${stacked_temp_properties} | grep ${propVariableName} | grep -q ${propValue}; then
-        awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
-        mv ${propFile}.tmp ${propFile}
-    fi
+    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
+    mv ${propFile}.tmp ${propFile}
 }
 
 function abort() {
@@ -99,37 +97,30 @@ function console_print() {
 function default_language_configuration() {
     if [ "${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD}" == true ]; then
         debugPrint "Changing default language...."
+
+        # Convert to proper case
+        local language=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+        local country=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+        
+        # Validate length (ISO 639-1 for language, ISO 3166-1 alpha-2 for country)
+        [[ ! "$language" =~ ^[a-z]{2,3}$ ]] && abort "Invalid language code: $language"
+        [[ ! "$country" =~ ^[A-Z]{2,3}$ ]] && abort "Invalid country code: $country"
+        
+        for EXPECTED_CUSTOMER_XML_PATH in $PRODUCT_DIR/omc/*/conf/customer.xml $OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
+            [ -f "$EXPECTED_CUSTOMER_XML_PATH" ] || continue
+            # Skip modification if the values are already correct
+            if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$EXPECTED_CUSTOMER_XML_PATH" && grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$EXPECTED_CUSTOMER_XML_PATH"; then
+                debugPrint "Skipping $EXPECTED_CUSTOMER_XML_PATH (already set)"
+                continue
+            fi
+            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$EXPECTED_CUSTOMER_XML_PATH" 2>>"$thisConsoleTempLogFile"
+            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$EXPECTED_CUSTOMER_XML_PATH" 2>>"$thisConsoleTempLogFile"
+            debugPrint "Updated default language in $EXPECTED_CUSTOMER_XML_PATH"
+        done
     else
         console_print "Skipping changing default language, reason: \"SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD\" set to ${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD} instead of true"
         return 0;
     fi
-    # Default values
-    [ -z "$language" ] && language="en"
-    [ -z "$country" ] && country="US"
-
-    # Convert to proper case
-    language=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-    country=$(echo "$2" | tr '[:lower:]' '[:upper:]')
-    
-    # Validate length (ISO 639-1 for language, ISO 3166-1 alpha-2 for country)
-    if [[ ! "$language" =~ ^[a-z]{2,3}$ ]]; then
-        abort "Invalid language code: $language"
-    fi
-    if [[ ! "$country" =~ ^[A-Z]{2,3}$ ]]; then
-        abort "Invalid country code: $country"
-    fi
-    
-    for EXPECTED_CUSTOMER_XML_PATH in $PRODUCT_DIR/omc/*/conf/customer.xml $OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
-        [ -f "$EXPECTED_CUSTOMER_XML_PATH" ] || continue
-        # Skip modification if the values are already correct
-        if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$EXPECTED_CUSTOMER_XML_PATH" && grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$EXPECTED_CUSTOMER_XML_PATH"; then
-            debugPrint "Skipping $EXPECTED_CUSTOMER_XML_PATH (already set)"
-            continue
-        fi
-        sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$EXPECTED_CUSTOMER_XML_PATH" 2>>"$thisConsoleTempLogFile"
-        sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$EXPECTED_CUSTOMER_XML_PATH" 2>>"$thisConsoleTempLogFile"
-        debugPrint "Updated default language in $EXPECTED_CUSTOMER_XML_PATH"
-    done
 }
 
 function custom_setup_finished_messsage() {
@@ -175,11 +166,11 @@ function build_and_sign() {
     [ ! -f "$apk_file" ] && abort "No APK found in $extracted_dir_path/dist/"
 
     # Signing the APK
-    if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
-        java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" &>>"$thisConsoleTempLogFile"
-    else
-        java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" &>>"$thisConsoleTempLogFile"
-    fi
+    java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" &>>"$thisConsoleTempLogFile"
+    #if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
+    #    java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" &>>"$thisConsoleTempLogFile"
+    #else
+    #fi
 
     # Check if the signed APK exists
     signed_apk=$(find "$extracted_dir_path/dist/" -type f -name "${apk_base_name}*-debugSigned.apk" | head -n 1)
@@ -222,14 +213,14 @@ function add_csc_xml_values() {
     local feature_code_value="$2"
     for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
         if [ -f "$EXPECTED_CSC_FEATURE_XML_PATH" ]; then
-            if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == "0" ]; then
+            if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == 0 ]; then
                 xmlstarlet ed \
                     -L \
                     -s "/SamsungMobileFeature" \
                     -t elem \
                     -n "${feature_code}" \
                     -v "${feature_code_value}" \
-                    "$EXPECTED_CSC_FEATURE_XML_PATH"
+                    "$EXPECTED_CSC_FEATURE_XML_PATH"1
             else
                 change_xml_values "${feature_code}" "${feature_code_value}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
             fi
@@ -247,28 +238,36 @@ function tinkerWithCSCFeaturesFile() {
     # handle arg
     case "${action}" in
         --decode)
+            local decode_failed=0
             for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
-	            [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
-                file ${EXPECTED_CSC_FEATURE_XML_PATH} | grep -q data || continue
-                if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>$thisConsoleTempLogFile; then
-                    debugPrint "CSC feature file successfully decoded."
+                [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
+                [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" ] || continue
+                file "${EXPECTED_CSC_FEATURE_XML_PATH}" | grep -q data || continue
+                if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>>$thisConsoleTempLogFile; then
+                    debugPrint "CSC feature file successfully decoded: ${EXPECTED_CSC_FEATURE_XML_PATH}"
                 else
-                    abort "Failed to decode the CSC feature file, please try again..."
+                    debugPrint "Failed to decode: ${EXPECTED_CSC_FEATURE_XML_PATH}"
+                    decode_failed=1
                 fi
             done
-            debugPrint "CSC feature file successfully decoded."
+            [ $decode_failed -ne 0 ] && abort "One or more CSC feature files failed to decode. Check logs for details."
+            debugPrint "CSC feature file(s) successfully decoded."
         ;;
         --encode)
+            local encode_failed=0
             for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
-	            [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
-                file ${EXPECTED_CSC_FEATURE_XML_PATH} | grep -q data && continue
-                if java -jar "$decoder_jar" -e -i "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" -o "${EXPECTED_CSC_FEATURE_XML_PATH}" &>$thisConsoleTempLogFile; then
-                    debugPrint "CSC feature file successfully encoded."
-                    rm -f ${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml
+                [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
+                [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" ] || continue
+                file "${EXPECTED_CSC_FEATURE_XML_PATH}" | grep -q data && continue
+                if java -jar "$decoder_jar" -e -i "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" -o "${EXPECTED_CSC_FEATURE_XML_PATH}" &>>$thisConsoleTempLogFile; then
+                    debugPrint "CSC feature file successfully encoded: ${EXPECTED_CSC_FEATURE_XML_PATH}"
+                    rm -f "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml"
                 else
-                    abort "Failed to encode the CSC feature file, please try again..."
+                    debugPrint "Failed to encode: ${EXPECTED_CSC_FEATURE_XML_PATH}"
+                    encode_failed=1
                 fi
             done
+            [ $encode_failed -ne 0 ] && abort "One or more CSC feature files failed to encode. Check logs for details."
         ;;
         *)
             abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode"
@@ -432,41 +431,13 @@ function generate_random_hash() {
 }
 
 function fetch_rom_arch() {
-    local arch_file=""
-    local arch=$(grep_prop ro.product.cpu.abi "$arch_file" | tr '[:upper:]' '[:lower:]')
-    local arg="$1"
-
-    # Find build.prop file containing architecture info
-    for file in "$SYSTEM_DIR/build.prop" "$SYSTEM_EXT_DIR/build.prop" "$PRODUCT_DIR/build.prop"; do
-        if grep -q "ro.product.cpu.abi" "$file"; then
-            arch_file="$file"
-            break
-        fi
-    done
-
-    # Check if no file was found
-    if [ -z "$arch_file" ]; then
-        abort "Error: Could not determine ROM architecture!"
-        return 1
+    if [[ ! -f "${SYSTEM_DIR}/lib/libbluetooth.so" && -f "${SYSTEM_DIR}/lib64/libbluetooth.so" && ${BUILD_TARGET_SDK_VERSION} -le "30" ]]; then
+        [ "$1" == "--libpath" ] && echo "lib64"
+    elif [[ ! -f "${SYSTEM_DIR}/lib/libbluetooth.so" && -f "${SYSTEM_DIR}/lib64/libbluetooth.so" && ${BUILD_TARGET_SDK_VERSION} -ge "31" ]]; then
+        [ "$1" == "--libpath" ] && echo "lib64"
+    else
+        echo "lib"
     fi
-
-    # Check architecture validity
-    case "$arch" in
-        arm64-v8a|armeabi-v7a)
-            if [ "$arg" == "--libpath" ]; then
-                case "$arch" in
-                    arm64-v8a) echo "lib64" ;;
-                    armeabi-v7a) echo "lib" ;;
-                esac
-            else
-                echo "$arch"
-            fi
-            ;;
-        *)
-            abort "Unsupported architecture: $arch"
-            return 1
-            ;;
-    esac
 }
 
 function debugPrint() {
@@ -672,12 +643,12 @@ function copyDeviceBlobsSafely() {
     console_print "Trying to copy ${blobFromSource} to ${blobInROM}"
     [ -f "$blobInROM" ] && cp -af "$blobInROM" "$backupBlob"; 
     if [ ! -f "$blobInROM" ] && ask "${blobFromSource} is not found on the ROM, do you wanna copy this blob to the device?"; then
-        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>${thisConsoleTempLogFile}; then
+        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>>${thisConsoleTempLogFile}; then
             warns "Failed to copy ${blobFromSource}, this might cause a bootloop, attempting to restore original blob." "copyDeviceBlobsSafely()"
             [ -f "$backupBlob" ] && cp -af "$backupBlob" "$blobInROM"
         fi
     else
-        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>"${thisConsoleTempLogFile}"; then
+        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>>"${thisConsoleTempLogFile}"; then
             warns "Failed to copy ${blobFromSource}, this might cause a bootloop, attempting to restore original blob." "copyDeviceBlobsSafely()"
             [ -f "$backupBlob" ] && cp -af "$backupBlob" "$blobInROM"
         fi
