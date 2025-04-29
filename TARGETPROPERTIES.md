@@ -5,7 +5,6 @@
 - **BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED**: Adds fastbootd support to stock recovery. Make sure to enter the image path to "RECOVERY_IMAGE_PATH" variable in makeconfigs.prop.
 - **BUILD_TARGET_SUPPORTS_WIRELESS_POWER_SHARING**: Enables wireless power sharing if supported by hardware.
 - **BUILD_TARGET_DISABLE_KNOX_PROPERTIES**: For android <= 11, try this at own risk because it disables knox via properties which are untested.
-- **BUILD_TARGET_FLOATING_FEATURE_PATH**: Put the exact Floating features dir for modifying the xml.
 - **BUILD_TARGET_BOOT_ANIMATION_FPS**: Add any integer value lesser than or equal to 60 if you have a bootanimation that has video/gif like transistions
 - **BUILD_TARGET_SHUTDOWN_ANIMATION_FPS**: Same applies to this variable
 - **BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE**: Sets the default refresh rate (60Hz is recommended).
@@ -17,3 +16,6 @@
 - **BUILD_TARGET_ADD_PATCHED_C2API_LIBRARY_FILE**: Brings camera2api via a patched lib. Thanks to @TBM13
 - **BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT**: Builds and adds the vendor overlay to fix the device cutout.
 - **BUILD_TARGET_ADD_EXTRA_CAMERA_MODE**: Adds extra camera mode if not available. (Don't use this in a newer or in a ported ROM)
+
+# For supported devices:
+- **BUILD_TARGET_REPLACE_REQUIRED_PROPERTIES**: Replaces some required properties, very useful in some cases.

@@ -1,12 +1,13 @@
---- retard.sh	2024-12-19 18:43:20.215664600 +0530
-+++ retard_patched.sh	2024-12-19 19:14:28.480665800 +0530
+--- retard.sh	2025-03-15 13:47:23.976294800 +0000
++++ retard_patched.sh	2025-03-15 13:47:23.976294800 +0000
 @@ -1,9 +1,48 @@
  #!/system/bin/sh
  # Copyright (c) 2016, Samsung Electronics Co., Ltd.
  
 -control=`getprop ro.vendor.use_data_netmgrd`
 +is_integer() {
-+    [[ "$1" =~ ^-?[0-9]+$ ]]
++    [[ "$1" =~ ^-?[0-9]+$ ]] && return 0
++    return 1
 +}
  
 -if [ "$control" = "true" ]; then

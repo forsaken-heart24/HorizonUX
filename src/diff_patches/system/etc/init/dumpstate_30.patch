@@ -1,5 +1,5 @@
---- dumpstate_30.rc	2025-03-15 14:12:41.121752600 +0000
-+++ dumpstate_30_edited.rc	2025-03-15 14:13:48.071838700 +0000
+--- dumpstate_30.rc	2025-03-15 13:47:23.976294800 +0000
++++ dumpstate_30_edited.rc	2025-03-15 13:47:23.976294800 +0000
 @@ -45,4 +45,10 @@
  service bugreportm /system/bin/dumpstate -m -d -z
      class main

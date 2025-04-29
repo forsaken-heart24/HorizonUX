@@ -1,5 +1,5 @@
---- bootchecker_31.rc	2025-03-15 13:59:00.564849000 +0000
-+++ bootchecker_31_edited.rc	2025-03-15 13:59:16.522500100 +0000
+--- bootchecker_31.rc	2025-03-15 13:47:23.976294800 +0000
++++ bootchecker_31_edited.rc	2025-03-15 13:47:23.976294800 +0000
 @@ -1,13 +1,4 @@
  # bootchecker rc file, 
 -on early-init

@@ -155,8 +155,7 @@ function build_and_sign() {
     change_yaml_values "versionCode" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
 
     # Build the package
-    mkdir -p "$extracted_dir_path/dist/"
-    if java -jar ./src/dependencies/bin/apktool.jar build "$extracted_dir_path" &>>"$thisConsoleTempLogFile"; then
+    if java -jar ./src/dependencies/bin/apktool.jar build "$extracted_dir_path" &>>$thisConsoleTempLogFile; then
         debugPrint "Successfully built: $apkFileName"
     else
         abort "Apktool build failed for $extracted_dir_path"
@@ -166,15 +165,14 @@ function build_and_sign() {
     [ ! -f "$apk_file" ] && abort "No APK found in $extracted_dir_path/dist/"
 
     # Signing the APK
-    java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" &>>"$thisConsoleTempLogFile"
-    #if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
-    #    java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" &>>"$thisConsoleTempLogFile"
-    #else
-    #fi
+    if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
+        signed_apk="$(java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" 2>>$thisConsoleTempLogFile | grep -oP 'src/.*?-aligned-debugSigned\.apk')"
+    else
+        signed_apk="$(java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" 2>>$thisConsoleTempLogFile | grep -oP 'src/.*?-aligned-debugSigned\.apk')"
+    fi
 
-    # Check if the signed APK exists
-    signed_apk=$(find "$extracted_dir_path/dist/" -type f -name "${apk_base_name}*-debugSigned.apk" | head -n 1)
-    [ ! -f "$signed_apk" ] && abort "No signed APK found in $extracted_dir_path/dist/"
+    # Ensure signed APK exists
+    [[ ! -f "$signed_apk" || -z "$signed_apk" ]] && abort "No signed APK found in $extracted_dir_path/dist/"
 
     # Move signed APK to target directory and do a cleanup
     mv "$signed_apk" "$app_path/"
@@ -191,6 +189,17 @@ function catch_duplicates_in_xml() {
 function add_float_xml_values() {
     local feature_code="$(string_format -u "$1")"
     local feature_code_value="$2"   
+
+    # floating feature conf depending on SDK version:
+    case "${BUILD_TARGET_SDK_VERSION}" in
+        28|29|30)
+            BUILD_TARGET_FLOATING_FEATURE_PATH="${VENDOR_DIR}/etc/floating_feature.xml"
+        ;;
+        31|32|33|34|35)
+            BUILD_TARGET_FLOATING_FEATURE_PATH="${SYSTEM_DIR}/etc/floating_feature.xml"
+        ;;
+    esac
+
     # Check if the feature_code already exists in the XML file
     if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == "0" ]; then
         # Insert the new feature code into the XML under <SecFloatingFeatureSet>
@@ -216,11 +225,11 @@ function add_csc_xml_values() {
             if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == 0 ]; then
                 xmlstarlet ed \
                     -L \
-                    -s "/SamsungMobileFeature" \
+                    -s "/FeatureSet" \
                     -t elem \
                     -n "${feature_code}" \
                     -v "${feature_code_value}" \
-                    "$EXPECTED_CSC_FEATURE_XML_PATH"1
+                    "$EXPECTED_CSC_FEATURE_XML_PATH"
             else
                 change_xml_values "${feature_code}" "${feature_code_value}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
             fi
@@ -289,7 +298,7 @@ function change_xml_values() {
     # Check if the feature code is already set to the desired value
     if xmlstarlet sel -t -v "count(//${feature_code}[text() = '${feature_code_value}'])" "$file" | grep -q '1'; then
         debugPrint "change_xml_values(): ${feature_code} is already set to ${feature_code_value}, skipping."
-        return
+        return 0
     fi
 
     # If the feature code is an attribute (e.g., feature_code="value"), update it
@@ -399,24 +408,24 @@ EOF
     printf " - Enter the path to the default ${type^} wallpaper: "
     read path
     if [ -f "$path" ]; then
+        debugPrint "[INDEX: $index | TYPE: $type] $path -> ./res/drawable-nodpi/${filename}"
         cp -af "$path" "./res/drawable-nodpi/${filename}"
+    else
+        abort "Wrong wallpaper image path, aborting this build..."
     fi
     clear
 }
 
 function string_format() {
-    local string="$2"
     case "$1" in
         -l|--lower)
-            echo $string | tr '[:upper:]' '[:lower:]'
+            echo "$2" | tr '[:upper:]' '[:lower:]'
         ;;
-
         -u|--upper)
-            echo $string | tr '[:lower:]' '[:upper:]'
+            echo "$2" | tr '[:lower:]' '[:upper:]'
         ;;
-
         *)
-            echo $string
+            echo "$2"
         ;;
     esac
 }
@@ -436,13 +445,14 @@ function fetch_rom_arch() {
     elif [[ ! -f "${SYSTEM_DIR}/lib/libbluetooth.so" && -f "${SYSTEM_DIR}/lib64/libbluetooth.so" && ${BUILD_TARGET_SDK_VERSION} -ge "31" ]]; then
         [ "$1" == "--libpath" ] && echo "lib64"
     else
-        echo "lib"
+        [ "$1" == "--libpath" ] && echo "lib"
     fi
 }
 
 function debugPrint() {
     if [ -n "${DEBUG_SCRIPT}" ]; then
         console_print "$@"
+        sleep 0.5
     else
         echo "[$(date +%H:%M%p)] - $@" >> ${thisConsoleTempLogFile}
     fi
@@ -707,6 +717,56 @@ function javaKeyStoreToHex() {
         sed -i 's|\(const-string v1, "\)[^"]*|\1${hexKey}|' ${DIFF_UNIFIED_PATCHES[36]}
     elif [ "${BUILD_TARGET_SDK_VERSION}" == "35" ]; then
         sed -i 's|\(const-string v1, "\)[^"]*|\1${hexKey}|' ${DIFF_UNIFIED_PATCHES[37]}
+    else
+        console_print "Signature patch is not available for this SDK version."
+        return 1
+    fi
+
+    # error checks:
+    if [ "$?" == 0 ]; then
+        console_print "Successfully added your key into the patch file!!"
+        return 0
+    else
+        abort "Failed to add your key into the patch file!!"
+    fi
+}
+
+function javaKeyStoreToHex() {
+    # lky variables
+    local keystoreFileNameString="$(generate_random_hash 30)"
+    local keystorePemFileNameString="$(generate_random_hash 30)"
+    local keystoreKeyFileNameString="$(generate_random_hash 30)"
+    local hexKey
+    
+    # check up:
+    command -v openssl >/dev/null 2>&1 || abort "openssl not found. Please install it."
+    command -v keytool >/dev/null 2>&1 || abort "keytool not found. Please install JDK."
+
+    # override if prebuilt key exists:
+    if [ -f ${MY_KEYSTORE_PATH} ]; then
+        if [ "$MY_KEYSTORE_PATH" == "./test-keys/HorizonUX-testkey.jks" ]; then
+            console_print "PLEASE DONT USE THIS PUBLICALLY AVAILABLE KEY, GENERATE YOUR OWN KEY!!"
+            ask "By using this key on your release builds, the release builds will become vulnerable. Do you want to continue?" || exit 0
+        fi
+        keytool -exportcert -alias ${MY_KEYSTORE_ALIAS} -keystore ${MY_KEYSTORE_PATH} -storepass ${MY_KEYSTORE_PASSWORD} -rfc > ${keystoreKeyFileNameString}.x509.pem
+        ( openssl x509 -inform PEM -in ${keystoreKeyFileNameString}.x509.pem -outform DER | xxd -p | tr -d '\n' ) > hex.key
+        hexKey=$(cat hex.key)
+        rm ${keystoreKeyFileNameString}.x509.pem hex.key
+    else
+        # main():
+        openssl genrsa -out ${keystorePemFileNameString}.pem 2048
+        openssl pkcs8 -in ${keystorePemFileNameString}.pem -topk8 -outform DER -out ${keystoreKeyFileNameString}.pk8 -nocrypt
+        openssl req -new -x509 -key ${keystorePemFileNameString}.pem -out ${keystoreKeyFileNameString}.x509.pem -days 82435 -subj "/C=US/ST=Arizona/L=Scottsdale/O=Horizon/OU=HorizonUX_public/CN=Horizon/emailAddress=luna.realm.io.bennett24@outlook.com"
+        ( openssl x509 -inform PEM -in ${keystoreKeyFileNameString}.x509.pem -outform DER | xxd -p | tr -d '\n' ) > hex.key
+        hexKey=$(cat hex.key)
+        rm ${keystorePemFileNameString}.pem hex.key ${keystoreKeyFileNameString}.pk8 ${keystoreKeyFileNameString}.x509.pem
+    fi
+
+    # changes the hex in the patch file:
+    if [ "${BUILD_TARGET_SDK_VERSION}" == "34" ]; then
+        sed -i 's|\(const-string v1, "\)[^"]*|\1'${hexKey}'|' ${DIFF_UNIFIED_PATCHES[36]}
+    elif [ "${BUILD_TARGET_SDK_VERSION}" == "35" ]; then
+        sed -i 's|\(const-string v1, "\)[^"]*|\1'${hexKey}'|' ${DIFF_UNIFIED_PATCHES[37]}
     else
         console_print "Signature patch is not available for this SDK version."
         return 1
