@@ -1,5 +1,4 @@
-# to be handled by a bash script!
-
+#!/sbin/sh
 # Oh, she's sweet but a psycho
 # A little bit psycho
 # At night, she's screamin'
@@ -87,11 +86,10 @@
 # At night, she's screamin'
 # "I'm-ma-ma-ma out my mind"
 
-# setup the script environment and execute it
-export INSTALLER="$TMPDIR/install"
-mkdir -p "$INSTALLER" || exit 1
-for file in "scripts/installer.sh" scripts/util_functions.sh; do
-    unzip -o "$3" "$file" -d "${INSTALLER}/"; || exit 1
-done
+# unpack the script and execute it
+mkdir -p "/dev/tmp/install" || exit 1
+unzip -o "$3" "install.sh" -d "/dev/tmp/install" || exit 1
+exec sh "/dev/tmp/install/install.sh" "/dev/null" "$2" "$3" &>>/dev/tmp/install/horizonutils-partitionConverter.log
 
-exec sh "$INSTALLER/scripts/installer.sh" "/dev/null" "$2" "$3"
+# i'm proud of you because you open up these scripts just to know that these are safe or not
+# haha, thank you again my dear.
