@@ -1,12 +1,5 @@
 #!/sbin/sh
 
-# checks:
-command -v twrp || abort "Run this on twrp recovery environment. (0x6d6f746865726675636b65722072756e207468697320696e207468652066
-75636b696e6720747772702062697463680a)"
-[ "$(id -u)" == "0" ] || abort "Run this on twrp recovery environment (0x6d6f746865726675636b657220776865726527732074686520726f6f7420
-70726976696c616765733f3f0a)"
-# checks:
-
 # variables to use:
 userdataBlock=$(readlink -f /dev/block/platform/*/by-name/userdata) || abort "userdata block not found"
 cacheBlock=$(readlink -f /dev/block/platform/*/by-name/cache) || abort "cache block not found"
@@ -25,6 +18,13 @@ function abort() {
     exit 1    
 }
 # shell functions
+
+# checks:
+command -v twrp || abort "Run this on twrp recovery environment. (0x6d6f746865726675636b65722072756e207468697320696e207468652066
+75636b696e6720747772702062697463680a)"
+[ "$(id -u)" == "0" ] || abort "Run this on twrp recovery environment (0x6d6f746865726675636b657220776865726527732074686520726f6f7420
+70726976696c616765733f3f0a)"
+# checks:
 
 printr "#########################################################"
 printr " _   _            _                _   _ _   _ _"
