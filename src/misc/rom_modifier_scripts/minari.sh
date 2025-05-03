@@ -17,3 +17,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Placebo. Exists because i just don't want to rewrite the main script.

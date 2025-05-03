@@ -47,8 +47,7 @@ function download_stuffs() {
             fi
             console_print "❌ Failed to download the file | Attempt: $tries"
         done
-        console_print "⚠️ Failed to download the file after $((tries - 1)) attempts."
-        exit 1
+        abort "⚠️ Failed to download the file after $((tries - 1)) attempts."
     fi
 }
 
@@ -78,7 +77,7 @@ function setprop() {
 
 function abort() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
-    debugPrint "[:ABORT:] - $1"
+    debugPrint "$2(): $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
     rm -rf $TMPDIR ./local_build/* output
@@ -87,7 +86,7 @@ function abort() {
 
 function warns() {
     echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] / [:\e[0;36mWARN\e[0;37m:] / [:\e[0;32m$2\e[0;37m:] -\e[0;33m $1\e[0;37m"
-    debugPrint "[$(date +%d-%m-%Y) - $(date +%H:%M%p)] / [:WARN:] / [:$2:] - $1"
+    debugPrint "$1"
 }
 
 function console_print() {
@@ -96,29 +95,30 @@ function console_print() {
 
 function default_language_configuration() {
     if [ "${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD}" == true ]; then
-        debugPrint "Changing default language...."
+        debugPrint "default_language_configuration(): Changing default language...."
 
         # Convert to proper case
         local language=$(echo "$1" | tr '[:upper:]' '[:lower:]')
         local country=$(echo "$2" | tr '[:lower:]' '[:upper:]')
         
         # Validate length (ISO 639-1 for language, ISO 3166-1 alpha-2 for country)
-        [[ ! "$language" =~ ^[a-z]{2,3}$ ]] && abort "Invalid language code: $language"
-        [[ ! "$country" =~ ^[A-Z]{2,3}$ ]] && abort "Invalid country code: $country"
+        [[ ! "$language" =~ ^[a-z]{2,3}$ ]] && abort "Invalid language code: $language" "default_language_configuration"
+        [[ ! "$country" =~ ^[A-Z]{2,3}$ ]] && abort "Invalid country code: $country" "default_language_configuration"
         
         for EXPECTED_CUSTOMER_XML_PATH in $PRODUCT_DIR/omc/*/conf/customer.xml $OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
             [ -f "$EXPECTED_CUSTOMER_XML_PATH" ] || continue
             # Skip modification if the values are already correct
             if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$EXPECTED_CUSTOMER_XML_PATH" && grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$EXPECTED_CUSTOMER_XML_PATH"; then
-                debugPrint "Skipping $EXPECTED_CUSTOMER_XML_PATH (already set)"
+                debugPrint "default_language_configuration(): Skipping $EXPECTED_CUSTOMER_XML_PATH (already set)"
                 continue
             fi
-            sed -i "s|<DefLanguage>[^<]*</DefLanguage>|<DefLanguage>${language}-${country}</DefLanguage>|g" "$EXPECTED_CUSTOMER_XML_PATH" 2>>"$thisConsoleTempLogFile"
-            sed -i "s|<DefLanguageNoSIM>[^<]*</DefLanguageNoSIM>|<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>|g" "$EXPECTED_CUSTOMER_XML_PATH" 2>>"$thisConsoleTempLogFile"
-            debugPrint "Updated default language in $EXPECTED_CUSTOMER_XML_PATH"
+            for languages in DefLanguage DefLanguageNoSIM; do
+                change_xml_values "${languages}" "${language}-${country}" "$EXPECTED_CUSTOMER_XML_PATH"
+            done
+            debugPrint "default_language_configuration(): Updated default language in $EXPECTED_CUSTOMER_XML_PATH"
         done
     else
-        console_print "Skipping changing default language, reason: \"SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD\" set to ${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD} instead of true"
+        debugPrint "default_language_configuration(): Skipping changing default language, reason: \"SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD\" set to ${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD} instead of true"
         return 0;
     fi
 }
@@ -137,7 +137,7 @@ function build_and_sign() {
     local apk_file
 
     # Common checks
-    [[ ! -d "$extracted_dir_path" || ! -f "$extracted_dir_path/apktool.yml" ]] && abort "Invalid Apkfile path: $extracted_dir_path"
+    [[ ! -d "$extracted_dir_path" || ! -f "$extracted_dir_path/apktool.yml" ]] && abort "Invalid Apkfile path: $extracted_dir_path" "build_and_sign"
 
     # Extract APK file name from apktool.yml dynamically
     apkFileName=$(grep "apkFileName" "$extracted_dir_path/apktool.yml" | cut -d ':' -f 2 | tr -d ' "')
@@ -158,11 +158,11 @@ function build_and_sign() {
     if java -jar ./src/dependencies/bin/apktool.jar build "$extracted_dir_path" &>>$thisConsoleTempLogFile; then
         debugPrint "Successfully built: $apkFileName"
     else
-        abort "Apktool build failed for $extracted_dir_path"
+        abort "Apktool build failed for $extracted_dir_path" "build_and_sign"
     fi
 
     # Ensure built APK exists
-    [ ! -f "$apk_file" ] && abort "No APK found in $extracted_dir_path/dist/"
+    [ ! -f "$apk_file" ] && abort "No APK found in $extracted_dir_path/dist/" "build_and_sign"
 
     # Signing the APK
     if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
@@ -172,7 +172,7 @@ function build_and_sign() {
     fi
 
     # Ensure signed APK exists
-    [[ ! -f "$signed_apk" || -z "$signed_apk" ]] && abort "No signed APK found in $extracted_dir_path/dist/"
+    [[ ! -f "$signed_apk" || -z "$signed_apk" ]] && abort "No signed APK found in $extracted_dir_path/dist/" "build_and_sign"
 
     # Move signed APK to target directory and do a cleanup
     mv "$signed_apk" "$app_path/"
@@ -180,10 +180,8 @@ function build_and_sign() {
 }
 
 function catch_duplicates_in_xml() {
-    local feature_code="$1"
-    local file="$2"
-    [ ! -f "$file" ] && return 0
-    grep -c "${feature_code}" "$file"
+    [ ! -f "$2" ] && return 1
+    grep -c "$1" "$2"
 }
 
 function add_float_xml_values() {
@@ -201,7 +199,7 @@ function add_float_xml_values() {
     esac
 
     # Check if the feature_code already exists in the XML file
-    if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == "0" ]; then
+    if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == 0 ]; then
         # Insert the new feature code into the XML under <SecFloatingFeatureSet>
         xmlstarlet ed \
             -L \
@@ -242,28 +240,25 @@ function tinkerWithCSCFeaturesFile() {
     local decoder_jar="./src/dependencies/bin/omc-decoder.jar"
 
     # Ensure decoder exists
-    [ ! -f "$decoder_jar" ] && abort "Error: omc-decoder.jar not found!"
+    [ ! -f "$decoder_jar" ] && abort "Error: omc-decoder.jar not found!" "tinkerWithCSCFeaturesFile"
 
     # handle arg
     case "${action}" in
         --decode)
-            local decode_failed=0
             for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
+                debugPrint "tinkerWithCSCFeaturesFile(): File chosen: $EXPECTED_CSC_FEATURE_XML_PATH"
                 [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
                 [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" ] || continue
                 file "${EXPECTED_CSC_FEATURE_XML_PATH}" | grep -q data || continue
                 if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>>$thisConsoleTempLogFile; then
-                    debugPrint "CSC feature file successfully decoded: ${EXPECTED_CSC_FEATURE_XML_PATH}"
+                    debugPrint "tinkerWithCSCFeaturesFile(): CSC feature file successfully decoded: ${EXPECTED_CSC_FEATURE_XML_PATH}"
                 else
-                    debugPrint "Failed to decode: ${EXPECTED_CSC_FEATURE_XML_PATH}"
-                    decode_failed=1
+                    abort "Failed to decode CSC manifest. Check logs for details." "tinkerWithCSCFeaturesFile"
                 fi
             done
-            [ $decode_failed -ne 0 ] && abort "One or more CSC feature files failed to decode. Check logs for details."
             debugPrint "CSC feature file(s) successfully decoded."
         ;;
         --encode)
-            local encode_failed=0
             for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
                 [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
                 [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" ] || continue
@@ -272,17 +267,14 @@ function tinkerWithCSCFeaturesFile() {
                     debugPrint "CSC feature file successfully encoded: ${EXPECTED_CSC_FEATURE_XML_PATH}"
                     rm -f "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml"
                 else
-                    debugPrint "Failed to encode: ${EXPECTED_CSC_FEATURE_XML_PATH}"
-                    encode_failed=1
+                    abort "Failed to encode: ${EXPECTED_CSC_FEATURE_XML_PATH}. Check logs for details." "tinkerWithCSCFeaturesFile"
                 fi
             done
-            [ $encode_failed -ne 0 ] && abort "One or more CSC feature files failed to encode. Check logs for details."
         ;;
         *)
-            abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode"
+            abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode" "tinkerWithCSCFeaturesFile"
         ;;
     esac
-    return $?
 }
 
 function change_xml_values() {
@@ -292,8 +284,8 @@ function change_xml_values() {
 
     # do checks and put ts shyt in log
     debugPrint "change_xml_values(): Arguments: $1 $2 $3"
-    [ -z "$file" ] && abort "Error: No XML file specified!"
-    [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!"
+    [ -z "$file" ] && abort "Error: No XML file specified!" "change_xml_values"
+    [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!" "change_xml_values"
 
     # Check if the feature code is already set to the desired value
     if xmlstarlet sel -t -v "count(//${feature_code}[text() = '${feature_code_value}'])" "$file" | grep -q '1'; then
@@ -321,9 +313,9 @@ function change_yaml_values() {
     local file="$3"
 
     # do checks and put ts shyt in log
+    [ -z "$file" ] && abort "Error: No file specified!" "change_yaml_values"
+    [ ! -f "$file" ] && abort "Error: File '$file' not found!" "change_yaml_values"
     debugPrint "change_yaml_values(): Arguments: $1 $2 $3"
-    [ -z "$file" ] && abort "Error: No file specified!"
-    [ ! -f "$file" ] && abort "Error: File '$file' not found!"
 
     # ok lets go
     grep -Eq "^[[:space:]]*${key}:" "$file" && sed -i -E "s|(^[[:space:]]*${key}:)[[:space:]]*.*|\1 ${value}|" "$file"
@@ -335,8 +327,7 @@ function ask() {
     printf "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m $1\e[0;37m (y/n) : "
     read answer
     answer="$(echo "$answer" | tr '[:upper:]' '[:lower:]')"
-    [[ "${answer}" == "y" || "${answer}" == "yes" ]] && return 0
-    return 1
+    [[ "${answer}" == "y" || "${answer}" == "yes" ]]
 }
 
 function remove_attributes() {
@@ -346,8 +337,8 @@ function remove_attributes() {
     debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
 
     # Validate input
-    [ ! -f "$INPUT_FILE" ] && { console_print "Error: Input file not found!"; return 1; }
-    [ -z "$NAME_TO_SKIP" ] && { console_print "Error: Attribute to skip was not provided"; return 1; }
+    [ ! -f "$INPUT_FILE" ] && { debugPrint "remove_attributes(): Error: Input file not found!"; return 1; }
+    [ -z "$NAME_TO_SKIP" ] && { debugPrint "remove_attributes(): Error: Attribute to skip was not provided"; return 1; }
 
     # Backup original
     cp "$INPUT_FILE" "${INPUT_FILE}.bak"
@@ -358,11 +349,9 @@ function remove_attributes() {
         "$INPUT_FILE"
 
     if cmp -s "$INPUT_FILE" "${INPUT_FILE}.bak"; then
-        console_print "No changes made. <hal> with name=$NAME_TO_SKIP was not found."
         debugPrint "remove_attributes(): No changes made. <hal> with name=$NAME_TO_SKIP was not found."
         rm "${INPUT_FILE}.bak"
     else
-        console_print "Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
         debugPrint "remove_attributes(): Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
         rm "${INPUT_FILE}.bak"
     fi
@@ -411,7 +400,7 @@ EOF
         debugPrint "[INDEX: $index | TYPE: $type] $path -> ./res/drawable-nodpi/${filename}"
         cp -af "$path" "./res/drawable-nodpi/${filename}"
     else
-        abort "Wrong wallpaper image path, aborting this build..."
+        abort "Wrong wallpaper image path, aborting this build..." "ADD_THE_WALLPAPER_METADATA"
     fi
     clear
 }
@@ -434,7 +423,7 @@ function generate_random_hash() {
     local how_much="$1"
     local byte_count=$(( (how_much + 1) / 2 ))
     local hex=$(head -c "$byte_count" /dev/urandom | xxd -p | tr -d '\n')
-    [[ $# -eq 1 ]] || abort "generate_random_hash(): Expected 1 argument, got $#"
+    [[ $# -eq 1 ]] || abort "generate_random_hash(): Expected 1 argument, got $#" "generate_random_hash"
     debugPrint "generate_random_hash(): Requested random seed: ${how_much}"
     echo "${hex:0:how_much}"
 }
@@ -461,42 +450,22 @@ function debugPrint() {
 function apply_diff_patches() {
     local DiffPatchFile="$1"
     local TheFileToPatch="$2"
-    [ "$#" -ne 2 ] && abort "Error: Missing arguments. Usage: apply_diff_patches <patch file> <target file>"
+    [ "$#" -ne 2 ] && abort "Error: Missing arguments. Usage: apply_diff_patches <patch file> <target file>" "apply_diff_patches"
     if [ ! -f "$DiffPatchFile" ]; then
         debugPrint "apply_diff_patches(): Patch file '$DiffPatchFile' not found."
-        abort "Error: Patch file '${DiffPatchFile}' not found."
+        abort "Error: Patch file '${DiffPatchFile}' not found." "apply_diff_patches"
     elif [ ! -f "$TheFileToPatch" ]; then
         debugPrint "apply_diff_patches(): Target file '$TheFileToPatch' not found."
-        abort "Error: Target file '${TheFileToPatch}' not found."
+        abort "Error: Target file '${TheFileToPatch}' not found." "apply_diff_patches"
     fi
     debugPrint "apply_diff_patches(): ${DiffPatchFile} → ${TheFileToPatch}"
     patch "$TheFileToPatch" < "$DiffPatchFile" &>>$thisConsoleTempLogFile || console_print "Patch failed! Check logs for details."
 }
 
-function kang_dir() {
-    local dir
-    local WhySoSerious=$(string_format --lower "$1")
-    if [ "$WhySoSerious" == "prism" ]; then
-        dir="$PRISM_DIR"
-    elif [ "$WhySoSerious" == "product" ]; then
-        dir="$PRODUCT_DIR"
-    elif [ "$WhySoSerious" == "system" ]; then
-        dir="$SYSTEM_DIR"
-    elif [ "$WhySoSerious" == "system_ext" ]; then
-        dir="$SYSTEM_EXT_DIR"
-    elif [ "$WhySoSerious" == "vendor" ]; then
-        dir="$VENDOR_DIR"
-    elif [ "$WhySoSerious" == "optics" ]; then
-        dir="$OPTICS_DIR"
-    fi
-    [ -d "$dir/etc" ] && echo "$dir"
-    [ -d "$dir/$1/etc" ] && echo "$dir/$1"
-}
-
 function check_build_prop() {
-    local dir="$1"
-    [ -f "$dir/build.prop" ] && echo "$dir/build.prop"
-    [ -f "$dir/etc/build.prop" ] && echo "$dir/etc/build.prop"
+    [ -z "$1" ] && abort "Usage: check_build_prop <partition path>" "check_build_prop"
+    [ -f "$1/build.prop" ] && echo "$1/build.prop"
+    [ -f "$1/etc/build.prop" ] && echo "$1/etc/build.prop"
 }
 
 function download_glmodules() {
@@ -593,10 +562,7 @@ function check_internet_connection() {
 }
 
 function verify() {
-    local file="$1"
-    local fileHash="$2"
-    [ "$(sha512sum $file | awk '{print $1}')" = "$fileHash" ] && return 0
-    return 1
+    [ "$(sha512sum $1 | awk '{print $1}')" = "$2" ]
 }
 
 # needs fix actually.
@@ -665,7 +631,6 @@ function copyDeviceBlobsSafely() {
     fi
     console_print "Finished copying given blobs!"
     rm -f "$backupBlob"
-    return 0
 }
 
 function magiskboot() {
@@ -684,7 +649,7 @@ function magiskboot() {
             ./src/dependencies/bin/magiskbootA64 "$@"
         ;;
         *)
-            abort "Undefined architecture ${localMachineArchitecture}"
+            abort "Undefined architecture ${localMachineArchitecture}" "magiskboot"
         ;;
     esac
 }
@@ -702,51 +667,14 @@ function javaKeyStoreToHex() {
     local hexKey
     
     # check up:
-    command -v openssl >/dev/null 2>&1 || abort "openssl not found. Please install it."
-
-    # main():
-    openssl genrsa -out ${keystorePemFileNameString}.pem 2048
-    openssl pkcs8 -in ${keystorePemFileNameString}.pem -topk8 -outform DER -out ${keystoreKeyFileNameString}.pk8 -nocrypt
-    openssl req -new -x509 -key ${keystorePemFileNameString}.pem -out ${keystoreKeyFileNameString}.x509.pem -days 82435 -subj "/C=US/ST=Arizona/L=Scottsdale/O=Horizon/OU=HorizonUX_public/CN=Horizon/emailAddress=luna.realm.io.bennett24@outlook.com"
-    ( openssl x509 -inform PEM -in ${keystoreKeyFileNameString}.x509.pem -outform DER | xxd -p | tr -d '\n' ) > hex.key
-    hexKey=$(cat hex.key)
-    rm ${keystorePemFileNameString}.pem hex.key ${keystoreKeyFileNameString}.pk8
-
-    # changes the hex in the patch file:
-    if [ "${BUILD_TARGET_SDK_VERSION}" == "34" ]; then
-        sed -i 's|\(const-string v1, "\)[^"]*|\1${hexKey}|' ${DIFF_UNIFIED_PATCHES[36]}
-    elif [ "${BUILD_TARGET_SDK_VERSION}" == "35" ]; then
-        sed -i 's|\(const-string v1, "\)[^"]*|\1${hexKey}|' ${DIFF_UNIFIED_PATCHES[37]}
-    else
-        console_print "Signature patch is not available for this SDK version."
-        return 1
-    fi
-
-    # error checks:
-    if [ "$?" == 0 ]; then
-        console_print "Successfully added your key into the patch file!!"
-        return 0
-    else
-        abort "Failed to add your key into the patch file!!"
-    fi
-}
-
-function javaKeyStoreToHex() {
-    # lky variables
-    local keystoreFileNameString="$(generate_random_hash 30)"
-    local keystorePemFileNameString="$(generate_random_hash 30)"
-    local keystoreKeyFileNameString="$(generate_random_hash 30)"
-    local hexKey
-    
-    # check up:
-    command -v openssl >/dev/null 2>&1 || abort "openssl not found. Please install it."
-    command -v keytool >/dev/null 2>&1 || abort "keytool not found. Please install JDK."
+    command -v openssl >/dev/null 2>&1 || abort "openssl not found. Please install it." "javaKeyStoreToHex"
+    command -v keytool >/dev/null 2>&1 || abort "keytool not found. Please install JDK." "javaKeyStoreToHex"
 
     # override if prebuilt key exists:
     if [ -f ${MY_KEYSTORE_PATH} ]; then
         if [ "$MY_KEYSTORE_PATH" == "./test-keys/HorizonUX-testkey.jks" ]; then
             console_print "PLEASE DONT USE THIS PUBLICALLY AVAILABLE KEY, GENERATE YOUR OWN KEY!!"
-            ask "By using this key on your release builds, the release builds will become vulnerable. Do you want to continue?" || exit 0
+            ask "By using this key on your release builds, the release builds will become vulnerable. Do you want to continue?" || return 1
         fi
         keytool -exportcert -alias ${MY_KEYSTORE_ALIAS} -keystore ${MY_KEYSTORE_PATH} -storepass ${MY_KEYSTORE_PASSWORD} -rfc > ${keystoreKeyFileNameString}.x509.pem
         ( openssl x509 -inform PEM -in ${keystoreKeyFileNameString}.x509.pem -outform DER | xxd -p | tr -d '\n' ) > hex.key
@@ -775,15 +703,14 @@ function javaKeyStoreToHex() {
     # error checks:
     if [ "$?" == 0 ]; then
         console_print "Successfully added your key into the patch file!!"
-        return 0
     else
-        abort "Failed to add your key into the patch file!!"
+        abort "Failed to add your key into the patch file!!" "javaKeyStoreToHex"
     fi
 }
 
 function addHorizonROMInfo() {
     # check:
-    [ "${BUILD_TARGET_SDK_VERSION}" == "35" ] || continue
+    [ "${BUILD_TARGET_SDK_VERSION}" == "35" ] || return 1
 
     # internal variables, let's not break stuff yk.
     local input_file="$1"
@@ -792,7 +719,7 @@ function addHorizonROMInfo() {
     local runs=0
 
     # verify files:
-    [[ -f "${input_file}" && -f "${output_file}" ]] || abort "usage: addHorizonROMInfo <input / stock xml> <output (can be anything)>"
+    [[ -f "${input_file}" && -f "${output_file}" ]] || abort "usage: addHorizonROMInfo <input / stock xml> <output (can be anything)>" "addHorizonROMInfo"
 
     # nukes and recreates the output file
     rm -f $output_file

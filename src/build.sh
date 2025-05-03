@@ -31,7 +31,7 @@ for i in ./src/misc/build_scripts/util_functions.sh ./src/makeconfigs.prop ./src
 		sleep 0.5
 		exit 1
 	else
-		debugPrint "Executing ${i}.." 2>/dev/null
+		debugPrint "Executing ${i}.." "build"
 		source "$i"
 	fi
 done
@@ -46,7 +46,7 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 		system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
 		system/etc/init/ tmp/hux/; do
 	mkdir -p "./local_build/$i"
-	debugPrint "Making ./local_build/${i} directory.."
+	debugPrint "Making ./local_build/${i} directory.." "build"
 done
 
 # bruh
@@ -93,16 +93,16 @@ BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROP
 
 # device specific customization:
 if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
-	debugPrint "build.sh: Device specific config and blobs are found, customizing the rom...."
+	debugPrint "build.sh: Device specific config and blobs are found, customizing the rom...." "build"
 	source "./src/target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf"
 else
-	debugPrint "- Using genericTargetProperties.conf for configs..."
+	debugPrint "Using genericTargetProperties.conf for configs..." "build"
 	source "./src/genericTargetProperties.conf"
 fi
 
 ################ boom
 if [ "$TARGET_BUILD_IS_FOR_DEBUGGING" == "true" ]; then
-	debugPrint "Debug flags are getting enabled"
+	debugPrint "Debug flags are getting enabled" "build"
     for i in "logcat.live enable" "sys.lpdumpd 1" "persist.debug.atrace.boottrace 1" "persist.device_config.global_settings.sys_traced 1" \
 		"persist.traced.enable 1" "log.tag.ConnectivityManager V" "log.tag.ConnectivityService V" "log.tag.NetworkLogger V" "log.tag.IptablesRestoreController V" \
 		"log.tag.ClatdController V" "persist.sys.lmk.reportkills false" "security.dsmsd.enable true" "persist.log.ewlogd 1" \
@@ -290,7 +290,7 @@ if [ "$TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES" == "true" ]; then
 fi
 
 # let's download goodlook modules from corsicanu's repo.
-debugPrint "Starting to check and try to download goodlook modules, logs can be seen below if any errors spawn upon the process"
+debugPrint "Starting to check and try to download goodlook modules, logs can be seen below if any errors spawn upon the process" "build"
 [ "$TARGET_INCLUDE_SAMSUNG_THEMING_MODULES" == "true" ] && download_glmodules 2>> $thisConsoleTempLogFile
 
 # installs audio resampler.
@@ -313,14 +313,14 @@ fi
 
 # custom wallpaper-res resources_info.json generator.
 if [ "$CUSTOM_WALLPAPER_RES_JSON_GENERATOR" == "true" ]; then
-	debugPrint "Java path: $(command -v java)"
+	debugPrint "Java path: $(command -v java)" "build"
 	command -v java &>/dev/null || abort "\e[1;36m - Please install openjdk or any java toolchain to continue.\e[0;37m"
 	special_index=00
 	the_homescreen_wallpaper_has_been_set=false
 	the_lockscreen_wallpaper_has_been_set=false
 	printf "\e[1;36m - How many wallpapers do you need to add to the Wallpaper App?\e[0;37m "
 	read wallpaper_count
-	debugPrint "User requested ${wallpaper_count} metadata to generate for wallpaper-res"
+	debugPrint "User requested ${wallpaper_count} metadata to generate for wallpaper-res" "build"
 	[[ "$wallpaper_count" =~ ^[0-9]+$ ]] && abort "\e[0;31m - Invalid input. Please enter a valid number. Exiting...\e[0;37m"
 	clear
 	rm -rf resources_info.json
@@ -417,7 +417,6 @@ if [ "$TARGET_REMOVE_USELESS_VENDOR_STUFFS" == "true" ]; then
         fi
     fi
 	console_print "Finished removing useless vendor file(s)"
-	console_print "if you have bootloops, dm my bot with logs"
 fi
 
 # nukes display refresh rate overrides on some video platforms.
@@ -431,7 +430,7 @@ if [ "$DISABLE_DYNAMIC_RANGE_COMPRESSION" == "true" ]; then
 	console_print "Disabling Dynamic Range Compression..."
 	if [ -f "$VENDOR_DIR/etc/audio_policy_configuration.xml" ]; then
 		sed -i 's/speaker_drc_enabled="true"/speaker_drc_enabled="false"/g' "$VENDOR_DIR/etc/audio_policy_configuration.xml"
-		debugPrint "Disabled speaker DRC in audio_policy_configuration.xml"
+		debugPrint "Disabled speaker DRC in audio_policy_configuration.xml" "build"
 	else
 		abort "Error: audio_policy_configuration.xml not found!"
 	fi
@@ -467,7 +466,7 @@ if [ "$TARGET_BUILD_REMOVE_SYSTEM_LOGGING" == "true" ]; then
 	setprop --system "log.tag.NetworkLogger" "S"
 	setprop --system "log.tag.IptablesRestoreController" "S"
 	setprop --system "log.tag.ClatdController" "S"
-	debugPrint "Patching atrace, dumpstate, and logd for ${BUILD_TARGET_SDK_VERSION} if possible...."
+	debugPrint "Patching atrace, dumpstate, and logd for ${BUILD_TARGET_SDK_VERSION} if possible...." "build"
 	if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 28 && "${BUILD_TARGET_SDK_VERSION}" -le 31 ]]; then
 		if [[ "${BUILD_TARGET_SDK_VERSION}" -eq 28 ]]; then
 			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[6]}"
@@ -600,9 +599,7 @@ fi
 
 # init - ellen + bro board | Courtesy: @BrotherBoard
 if [[ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" || "${TARGET_INCLUDE_HORIZON_TOUCH_FIX}" == "true" ]]; then
-	console_print "Starting to compile bashScriptLoader.."
 	make loader &>>$thisConsoleTempLogFile
-	console_print "bashScriptLoader compiled successfully!"
 	mv ./local_build/binaries/bashScriptLoader $SYSTEM_DIR/bin/ || abort "Failed to move bashScriptLoader to $SYSTEM_DIR/bin/"
 	if [ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" ]; then
 		console_print "HorizonUX Ellen is enabled, please note that this feature is experimental and may cause bootloops, if you face any bootloops, please dm me with the logs."
@@ -639,7 +636,7 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 	./local_build/etc/app/SmartManager_v6_DeviceSecurity_CN ./local_build/etc/priv-app/SmartManager_v5 ./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity \
 	./local_build/etc/priv-app/SmartManagerCN ./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN ./local_build/etc/priv-app/SAppLock ./local_build/etc/priv-app/Firewall;
 	{
-		debugPrint "Moving SmartManager and Device Care to a temporary directory.."
+		debugPrint "Moving SmartManager and Device Care to a temporary directory.." "build"
 		# now move these for a quick revert if anything goes wrong.
 		# xmls
 		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "./local_build/etc/permissions/"
@@ -651,20 +648,20 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "./local_build/etc/permissions/"
 		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "./local_build/etc/permissions/"
 		# actual thing
-		mv "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/*" "./local_build/etc/app/SmartManager_v6_DeviceSecurity"
-		mv "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/*" "./local_build/etc/app/SmartManager_v6_DeviceSecurity_CN"
-		mv "$SYSTEM_DIR/priv-app/SmartManager_v5/*" "./local_build/etc/priv-app/SmartManager_v5"
-		mv "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/*" "./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity"
-		mv "$SYSTEM_DIR/priv-app/SmartManagerCN/*" "./local_build/etc/priv-app/SmartManagerCN"
-		mv "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN"
-		mv "$SYSTEM_DIR/priv-app/SAppLock/*" "./local_build/etc/priv-app/SAppLock"
-		mv "$SYSTEM_DIR/priv-app/Firewall/*" "./local_build/etc/priv-app/Firewall"
+		mv $SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/* "./local_build/etc/app/SmartManager_v6_DeviceSecurity"
+		mv $SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/* "./local_build/etc/app/SmartManager_v6_DeviceSecurity_CN"
+		mv $SYSTEM_DIR/priv-app/SmartManager_v5/* "./local_build/etc/priv-app/SmartManager_v5"
+		mv $SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/* "./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity"
+		mv $SYSTEM_DIR/priv-app/SmartManagerCN/* "./local_build/etc/priv-app/SmartManagerCN"
+		mv $SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/* "./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN"
+		mv $SYSTEM_DIR/priv-app/SAppLock/* "./local_build/etc/priv-app/SAppLock"
+		mv $SYSTEM_DIR/priv-app/Firewall/* "./local_build/etc/priv-app/Firewall"
 		# change float values, as per updater-script from @saadelasfur/SmartManager/Installers/SmartManagerCN/updater-script
 		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L87
 		#                                                          -                                                                           #
 		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L99
 	} &>>$thisConsoleTempLogFile
-	debugPrint "Moved SmartManager and Device Care to a temporary directory.."
+	debugPrint "Moved SmartManager and Device Care to a temporary directory.." "build"
 	add_float_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
 	add_float_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
 	add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" "TRUE"
@@ -672,16 +669,16 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 		for j in ${SYSTEM_DIR}/${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS_SAVE_PATHS[@]}; do
 			download_stuffs "${i}" "${j}" || {
 				{
-					debugPrint "Looks like one of the loop is failed, restoring the backup..."
+					debugPrint "Looks like one of the loop is failed, restoring the backup..." "build"
 					# actual thing
-					mv "./local_build/etc/priv-app/Firewall/*" "$SYSTEM_DIR/priv-app/Firewall/"
-					mv "./local_build/etc/priv-app/SAppLock/*" "$SYSTEM_DIR/priv-app/SAppLock/"
-					mv "./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN/*" "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/"
-					mv "./local_build/etc/priv-app/SmartManagerCN/*" "$SYSTEM_DIR/priv-app/SmartManagerCN/"
-					mv "./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity/*" "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/"
-					mv "./local_build/etc/priv-app/SmartManager_v5/*" "$SYSTEM_DIR/priv-app/SmartManager_v5/"
-					mv "./local_build/etc/app/SmartManager_v6_DeviceSecurity_CN/*" "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/"
-					mv "./local_build/etc/app/SmartManager_v6_DeviceSecurity/*" "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/"
+					mv ./local_build/etc/priv-app/Firewall/* "$SYSTEM_DIR/priv-app/Firewall/"
+					mv ./local_build/etc/priv-app/SAppLock/* "$SYSTEM_DIR/priv-app/SAppLock/"
+					mv ./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN/* "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity_CN/"
+					mv ./local_build/etc/priv-app/SmartManagerCN/* "$SYSTEM_DIR/priv-app/SmartManagerCN/"
+					mv ./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity/* "$SYSTEM_DIR/priv-app/SmartManager_v6_DeviceSecurity/"
+					mv ./local_build/etc/priv-app/SmartManager_v5/* "$SYSTEM_DIR/priv-app/SmartManager_v5/"
+					mv ./local_build/etc/app/SmartManager_v6_DeviceSecurity_CN/* "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity_CN/"
+					mv ./local_build/etc/app/SmartManager_v6_DeviceSecurity/* "$SYSTEM_DIR/app/SmartManager_v6_DeviceSecurity/"
 					# xmls
 					mv "./local_build/etc/permissions/privapp-permissions-com.sec.android.app.firewall.xml" "$SYSTEM_DIR/etc/permissions/"
 					mv "./local_build/etc/permissions/privapp-permissions-com.samsung.android.applock.xml" "$SYSTEM_DIR/etc/permissions/"
@@ -691,7 +688,7 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 					mv "./local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "$SYSTEM_DIR/etc/permissions/"
 					mv "./local_build/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "$SYSTEM_DIR/etc/permissions/"
 					mv "./local_build/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "$SYSTEM_DIR/etc/permissions/"
-					debugPrint "Seems like i did restore those files? didn't i?"
+					debugPrint "Seems like i did restore those files? didn't i?" "build"
 					warns "Failed to download stuffs from @saadelasfur github repo, moved everything to their places!" "FAILED_TO_DOWNLOAD_SMARTMANAGER"
 					break
 				} &>>$thisConsoleTempLogFile
@@ -711,7 +708,7 @@ fi
 [ -f "./src/target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh" ] && . ./src/target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
-debugPrint "End of the script, running misc stuffs.."
+debugPrint "End of the script, running misc stuffs.." "build"
 console_print "Running misc jobs..."
 add_csc_xml_values "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"

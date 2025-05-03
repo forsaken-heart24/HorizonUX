@@ -28,8 +28,8 @@ for dependencies in mkdtimg imjtool; do
     command -v $dependencies || { warns "Please install $i to continue" "DTHZ_MISSING_DEPENDENCIES"; errors=$(( $errors + 1 )); }
 done
 
-[ "$errors" -ge "1" ] && abort "Install those dependencies to continue."
-[ ! -f "./config.cfg" ] && abort "Device specific configuration file is not found"
+[ "$errors" -ge "1" ] && abort "Install those dependencies to continue." "refresh-rate-modifier"
+[ ! -f "./config.cfg" ] && abort "Device specific configuration file is not found" "refresh-rate-modifier"
 
 if [ "$THIS_IS_MY_DEVICE_MAX_REFRESH_RATE" -ge "70" ]; then
     warns "you've chose to overclock your device more than 70Hz, please do this at your own risk!" "OVERCLOCK_WARNING"
@@ -37,24 +37,24 @@ if [ "$THIS_IS_MY_DEVICE_MAX_REFRESH_RATE" -ge "70" ]; then
 fi
 
 # main
-echo " - Extracting image"
+debugPrint "refresh-rate-modifier(): Extracting image"
 imjtool $DTBO_IMAGE_PATH extract 
 mv extracted $OUTPUT
 cd $OUTPUT
-echo " - Converting dtb to dts"
+debugPrint "refresh-rate-modifier(): Converting dtb to dts"
 for DeviceTreeBlobs in DeviceTree*.dtb; do
     dtc -I dtb -O dts -o "${f%.dtb}.dts" "$f" 
 done
 rm -rf *.dtb
 
 # fix matches
-echo " - Overriding rate matches to ${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE} (${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__})"
+debugPrint "refresh-rate-modifier(): Overriding rate matches to ${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE} (${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__})"
 find . -type f -exec sed -i "s/timing,refresh = <0x..>/timing,refresh = <0x${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__}>/g" {} +
 find . -type f -exec sed -i "s/active_fps = <0x..>/active_fps = <0x${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__}>/g" {} +
 find . -type f -exec sed -i "s/display_mode = <0x438 0x968 0x.. 0x00 0x00 0x00 0x00/display_mode = <0x438 0x968 0x${THIS_IS_MY_DEVICE_MAX_REFRESH_RATE__} 0x00 0x00 0x00 0x00/g" {} +
 
 # convert these minions
-echo " - Converting dts to dtb"
+debugPrint "refresh-rate-modifier(): Converting dts to dtb"
 for DeviceTreeBlobs in DeviceTree*.dts; do
     dtc -I dts -O dtb -o "${f%.dts}.dtb" "$f" 
 done
@@ -66,11 +66,11 @@ if mkdtimg cfg_create ${OUTPUT}.img ../config.cfg -d .; then
     mv $OUTPUT ..
     mkdir dtb
     mv *.dtb dtb/
-    echo " - This build is successful, please do note that:"
-    echo "                                                  - no one is responsible for any damage you made to your device"
-    echo "                                                  - overclocking more than the stock refresh rate might brake display quality and it's lifetime if it's not capable of running such refresh rates."
-    echo -e "\n - The dtbo file is located at $(pwd)/$OUTPUT"
-    echo "- Thanks to brotherboard for the base script"
+    console_print "This build is successful, please do note that:"
+    console_print "- no one is responsible for any damage you made to your device"
+    console_print "- overclocking more than the stock refresh rate might brake display quality and it's lifetime if it's not capable of running such refresh rates."
+    console_print "\nThe dtbo file is located at $(pwd)/$OUTPUT"
+    console_print "Thanks to brotherboard for the base script"
 else
     warns "This build is failed" "DTHZ_BUILD_FAILED"
 fi
