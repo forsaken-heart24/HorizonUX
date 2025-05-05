@@ -23,6 +23,7 @@ rm -rf ./local_build/logs/*
 TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
 [ ! -f "${thisConsoleTempLogFile}" ] && touch $thisConsoleTempLogFile
+argOne="$1"
 
 # jst execve ts 2 fix bugs:
 for i in ./src/misc/build_scripts/util_functions.sh ./src/makeconfigs.prop ./src/monika.conf; do
@@ -44,7 +45,8 @@ done
 # shit was cringy before lfmao 💀🙏
 for i in system/product/priv-app system/product/etc system/product/overlay \
 		system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
-		system/etc/init/ tmp/hux/; do
+		system/etc/init/ tmp/hux/ etc/extract/super_extract etc/imageSetup/product etc/imageSetup/system etc/imageSetup/vendor etc/imageSetup/optics etc/downloadedContents \
+		etc/buildedContents; do
 	mkdir -p "./local_build/$i"
 	debugPrint "Making ./local_build/${i} directory.." "build"
 done
@@ -61,15 +63,65 @@ echo -e "                                                         "
 echo -e "########################################################################\033[0m"
 console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
 console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
-console_print "The Current Username : $BUILD_USERNAME"
 console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
 console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
-console_print "L2 Cache Memory Size : $(lscpu | grep L2 | awk '{print $3}')KB/MB"
-console_print "Available RAM Memory : $(free -h | grep Mem | awk '{print $7}')B"
+console_print "Available RAM Memory : $(free -h --giga | grep Mem | awk '{print $7}')"
 console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 
 # check:
-[[ ! -f "${SYSTEM_DIR}" || ! -f "${VENDOR_DIR}" ]] || abort "System or vendor partition is not a valid partition!"
+if [[ -n "$argOne" && $(lscpu | grep Architecture | awk '{print $2}') == "x86_64" ]]; then
+	if string_format "$(file $argOne)" | grep -q zip; then
+		console_print "You will be prompted to put your sudo password to mount stuff in ./local_build/etc/imageSetup"
+		console_print "if you are worried, you can always check the script before entering the sudo password."
+		sudo "echo Hi" &>/dev/null
+		if unzip -l "$argOne" | grep -qE "AP_|HOME_CSC"; then
+			# unzip -o test.zip nos/README_Kernel.txt -d nos | grep inflating | awk '{print $2}'
+			extractedAPFilePath=$(unzip -o $argOne $(unzip -l AP_) -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
+			[ -z "${extractedAPFilePath}" ] && abort "Failed to extract AP from $argOne"
+			debugPrint "Processing AP tar file from the given firmware package...."
+			tar -tf "$extractedAPFilePath" | grep -qE "system|super|vendor|optics" || abort "The $extractedAPFilePath doesn't have system, vendor, optics or even super. Try again with a samfw.com dump!"
+			extractedHomeCSCFilePath=$(unzip -o $argOne $(unzip -l HOME_CSC) -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
+			[ -z "${extractedHomeCSCFilePath}" ] && abort "Failed to extract HOME_CSC from $argOne"
+			# ight, so, basically even if we have both of these on our firmware, wwe dont need to worry cuz ive made sure that CSC features sets to omc/*/conf/cscfeature.xml
+			# like product/omc/*/conf/cscfeature.xml and optics/omc/*/conf/cscfeature.xml *ONLY* if that XML file was found!
+			for cscStuff in product optics; do
+				tar -tf "$extractedHomeCSCFilePath" | grep -q "${cscStuff}.img.lz4" && tar -xf $extractedHomeCSCFilePath ${cscStuff}.img.lz4 -C ./local_build/etc/extract/ >> ${thisConsoleTempLogFile}
+				lz4 -d ./local_build/etc/extract/${cscStuff}.img.lz4 ./local_build/etc/extract/ >> ${thisConsoleTempLogFile} || abort "Failed to extract $cscStuff from an lz4 archive."
+				rm -rf ./local_build/etc/extract/${cscStuff}.img.lz4
+				setupLocalImage ./local_build/etc/extract/${cscStuff}.img ./local_build/etc/imageSetup/${cscStuff}
+			done
+			for androidOS in super system vendor; do
+				if [ "${androidOS}" == "super" ]; then
+					tar -tf "$extractedAPFilePath" | grep -q "${androidOS}.img.lz4" && tar -xf "$extractedAPFilePath" "super.img.lz4" -C "./local_build/etc/extract/" >> ${thisConsoleTempLogFile} || abort "Failed to extract super.img.lz4 from the tar file."
+					lz4 -d "./local_build/etc/extract/super.img.lz4" "./local_build/etc/extract/" >> ${thisConsoleTempLogFile} || abort "Failed to extract super image from an lz4 archive."
+					rm -rf ./local_build/etc/extract/super.img.lz4
+					lpdump "./local_build/etc/extract/super.img" > ./local_build/etc/dumpOfTheSuperBlock &>>$thisConsoleTempLogFile || abort "Failed to dump metadata from super.img"
+					lpunpack "./local_build/etc/extract/super.img" "./local_build/etc/extract/super_extract/" &>>$thisConsoleTempLogFile || abort "Failed to unpack super.img"
+					for COMMON_FIRMWARE_BLOCKS in ./local_build/etc/extract/super_extract/*.img; do 
+						echo "$(basename "${COMMON_FIRMWARE_BLOCKS}" .img)" | grep -qE "system|vendor|product" || continue
+						mountPath="./local_build/etc/imageSetup/$(basename ${COMMON_FIRMWARE_BLOCKS} .img)"
+						setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
+					done
+				else
+					tar -tf "$extractedAPFilePath" | grep -q "${androidOS}.img.lz4" && tar -xf $extractedAPFilePath ${androidOS}.img.lz4 -C ./local_build/etc/extract >> ${thisConsoleTempLogFile} || abort "Failed to extract $androidOS from an tar file."
+					lz4 -d ./local_build/etc/extract/${androidOS}.img.lz4 ./local_build/etc/extract/ >> ${thisConsoleTempLogFile} || abort "Failed to extract $androidOS from an lz4 archive."
+					rm -rf ./local_build/etc/extract/${androidOS}.img.lz4
+					setupLocalImage ./local_build/etc/extract/${androidOS}.img ./local_build/etc/imageSetup/${androidOS}
+				fi
+			done
+			# source the props again to replace the values.
+			source "./src/makeconfigs.prop"
+			touch ./localFirmwareBuildPending
+		elif echo "$argOne" | grep -qE "samfw|samfwpremium"; then
+			check_internet_connection &>/dev/null || abort "I don't have internet access to download given samfw.com firmware package."
+			download_stuffs $argOne ./local_build/etc/downloadedContents/firmware.zip
+			# re-exec because we alr have code to manage with zip files.
+			./src/build.sh "./local_build/etc/downloadedContents/firmware.zip"
+		fi
+	fi
+elif [[ ! -f "${SYSTEM_DIR}" || ! -f "${VENDOR_DIR}" ]]; then
+	abort "System or vendor partition is not a valid partition!"
+fi
 
 # Locate build.prop files
 HORIZON_PRODUCT_PROPERTY_FILE=$(check_build_prop "${PRODUCT_DIR}")
@@ -775,3 +827,17 @@ if ask "Do you want to add a stub app for missing activities?"; then
 fi
 tinkerWithCSCFeaturesFile --encode
 rm -rf "$TMPDIR"
+
+if [ -f "./localFirmwareBuildPending" ]; then
+	if [ -f "./local_build/etc/extract/super_extract/system" ]; then
+		repackSuperFromDump "./local_build/etc/buildedContents/super.img" 
+		console_print "Super image can be found at: \"./local_build/etc/buildedContents/super.img\""
+		buildImage "./local_build/etc/imageSetup/optics" "/optics" 
+		console_print "Optics can be found at: \"./local_build/buildedContents/optics_built.img\""
+	else
+		buildImage "./local_build/etc/imageSetup/${buildableContents}" "/"
+		console_print "System image can be found at: \"./local_build/buildedContents/system_built.img\""
+		buildImage "./local_build/etc/imageSetup/${buildableContents}" "/vendor"
+		console_print "Vendor image can be found at: \"./local_build/buildedContents/vendor_built.img\""
+	fi
+fi

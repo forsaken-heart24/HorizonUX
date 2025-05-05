@@ -1,4 +1,4 @@
-![whypaimonismadbroiswear](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/missing_deprecated.png?raw=true)
+![whypaimonismad](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/missing_deprecated.png?raw=true)
 # Supported Devices
 
 ## Current List of Supported Devices
@@ -7,7 +7,6 @@
 |-----------------------|--------------|-------------------|--------------------------------------------------------------------------------|
 | Samsung Galaxy A30    | a30          | Exynos 7904       | [Luna](https://github.com/forsaken-heart24)                                    |
 | Samsung Galaxy S20 FE | r8q          | Snapdragon 865    | [Robin](https://github.com/SAKMOTO)                                           |
-| Samsung Galaxy A23    | a23xq        | Snapdragon 680    | [Prettysir](https://github.com/Prettysir)                                     |
 
 ✨ *More devices will be added soon! Stay tuned for updates.* ✨
 

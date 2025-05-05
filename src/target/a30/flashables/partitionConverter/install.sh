@@ -9,8 +9,7 @@ OUTFD="$2"
 
 # shell functions
 function printr() {
-    local text="$1"
-    echo -e "ui_print $text\nui_print" >> /proc/self/fd/$OUTFD
+    echo -e "ui_print $1\nui_print" >> /proc/self/fd/$OUTFD
 }
 
 function abort() {

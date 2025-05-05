@@ -7,7 +7,6 @@ The following files and directories were created by me and should not be used wi
 - `scripts/`
 - `META-INF/com/google/android/aroma/a1.png`
 - `META-INF/com/google/android/aroma/themes/horizon/`
-- `META-INF/com/google/android/aroma/ttf/GoogleSansRegular.ttf`
 
 Special thanks to [Amarullz](https://github.com/amarullz/) for their [AROMA Installer Project](https://github.com/amarullz/AROMA-Installer/).
 

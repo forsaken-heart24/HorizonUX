@@ -1,31 +1,69 @@
 ![emergency_food](https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/emergency_food.png?raw=true)
 
-# Building / Modifying Your Own Stock-Based MOD
-**Attention:** This project is solely made for Exynos and Snapdragon devices and is not meant for others. Some might work because nothing gets changed much, but still, proceed at your own risk.
+# Building or Modifying Your Own Stock-Based MOD
 
-## Dependencies:
-- Java
-- Python (only used for patching recovery)
-- wget
-- curl
-- Android NDK
-**Attention:** You shall not proceed without these dependencies, if you do so. You might end up with a unbootable rom.
-
-## 1️⃣ Configure `src/makeconfigs.prop`
-- Open **`src/makeconfigs.prop`** in a text editor and adjust the included variables to your preference.
-- <a href="https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/MAKECONFIGS.md">If you're unsure about `makeconfigs.prop`, consider clicking this blue text</a>
-
-## 2️⃣ Configure `src/genericTargetPropeties.conf`
-- if your device is not maintained (<a href="https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/SUPPORTED_DEVICES.md">Click to check if your device is supported or not</a>), open **`src/genericTargetPropeties.conf`** in a text editor and adjust the included variables to your preference.
-- <a href="https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/TARGETPROPERTIES.md">If you're unsure about `genericTargetPropeties.conf`, consider clicking this blue text</a>
-
-## 3️⃣ Build the ROM
-- After editing **`src/makeconfigs.prop`**, simply run:  
-  ```./src/build.sh```
-  inside the cloned directory.
+**Disclaimer:** This project is designed exclusively for Exynos and Snapdragon devices. While it may work on other devices due to minimal changes, proceed at your own risk.
 
 ---
 
-# Final Steps
-- Boot the ROM and test it.
-- If you encounter any issues, **feel free to reach out** via my socials on **GitHub**. 🚀
+## Prerequisites
+
+Ensure the following dependencies are installed before proceeding:
+
+- **Java**
+- **Python** (used for patching recovery)
+- **aria2c**
+- **Android NDK** (used for building programs)
+
+**Warning:** Missing any of these dependencies may result in an unbootable ROM.
+
+---
+
+## Steps to Build or Modify the ROM
+
+### 1️⃣ Configure `src/makeconfigs.prop`
+
+- Open the file **`src/makeconfigs.prop`** in a text editor.
+- Adjust the variables to suit your preferences.
+- [Need help? Click here for detailed guidance on `makeconfigs.prop`.](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/MAKECONFIGS.md)
+
+---
+
+### 2️⃣ Configure `src/genericTargetPropeties.conf`
+
+- If your device is not officially supported ([Check supported devices here](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/SUPPORTED_DEVICES.md)), open **`src/genericTargetPropeties.conf`** and make the necessary adjustments.
+- If your device is officially supported, no changes are required.
+- [Need help? Click here for detailed guidance on `genericTargetPropeties.conf`.](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/TARGETPROPERTIES.md)
+
+---
+
+### 3️⃣ Build the ROM
+
+- To build the ROM, provide either:
+  - A URL to the firmware package, or
+  - The path to a locally saved firmware file.
+
+- Use the following command in a terminal or command prompt:
+  ```bash
+  ./src/build.sh <link_to_firmware_online> | <path_to_firmware_on_your_computer>
+  ```
+  - Replace `<link_to_firmware_online>` with the firmware package URL.
+  - Replace `<path_to_firmware_on_your_computer>` with the local file path.
+
+- If everything is pre-configured, you can simply run:
+  ```bash
+  ./src/build.sh
+  ```
+
+**Important:** Verify that the firmware package matches your device model. Using incompatible firmware can cause severe issues.
+
+---
+
+### 4️⃣ Test the ROM
+
+- Boot the ROM and thoroughly test it.
+- If you encounter any issues, [reach out via GitHub](https://github.com/forsaken-heart24)
+
+---
+
+**Note:** Always back up your data before proceeding with any modifications.

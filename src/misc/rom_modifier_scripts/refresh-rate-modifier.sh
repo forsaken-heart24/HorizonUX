@@ -28,7 +28,7 @@ for dependencies in mkdtimg imjtool; do
     command -v $dependencies || { warns "Please install $i to continue" "DTHZ_MISSING_DEPENDENCIES"; errors=$(( $errors + 1 )); }
 done
 
-[ "$errors" -ge "1" ] && abort "Install those dependencies to continue." "refresh-rate-modifier"
+[ "$errors" -ge "1" ] && abort "Install those specified dependencies to continue." "refresh-rate-modifier"
 [ ! -f "./config.cfg" ] && abort "Device specific configuration file is not found" "refresh-rate-modifier"
 
 if [ "$THIS_IS_MY_DEVICE_MAX_REFRESH_RATE" -ge "70" ]; then

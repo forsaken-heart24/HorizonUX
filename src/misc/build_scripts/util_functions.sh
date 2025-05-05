@@ -76,17 +76,17 @@ function setprop() {
 }
 
 function abort() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m"
+    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m" >&2
     debugPrint "$2(): $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    rm -rf $TMPDIR ./local_build/* output
+    rm -rf $TMPDIR $TMPFILE
     exit 1
 }
 
 function warns() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] / [:\e[0;36mWARN\e[0;37m:] / [:\e[0;32m$2\e[0;37m:] -\e[0;33m $1\e[0;37m"
-    debugPrint "$1"
+    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] / [:\e[0;36mWARN\e[0;37m:] / [:\e[0;32m$2\e[0;37m:] -\e[0;33m $1\e[0;37m" >&2
+    debugPrint "warns(): $1 | $2"
 }
 
 function console_print() {
@@ -624,7 +624,7 @@ function copyDeviceBlobsSafely() {
             [ -f "$backupBlob" ] && cp -af "$backupBlob" "$blobInROM"
         fi
     else
-        if ! cp -af "${blobFromSource}" "${blobInROM}" 2>>"${thisConsoleTempLogFile}"; then
+        if ! cp -af "${blobFromSource}" "${blobInROM}"; then
             warns "Failed to copy ${blobFromSource}, this might cause a bootloop, attempting to restore original blob." "copyDeviceBlobsSafely()"
             [ -f "$backupBlob" ] && cp -af "$backupBlob" "$blobInROM"
         fi
@@ -753,4 +753,205 @@ function addHorizonROMInfo() {
             needToAddAttrOnNextRun=false
         fi
     done < "$input_file"
+}
+
+function setMakeConfigs() {
+    local propVariableName="$1"
+    local propValue="$2"
+    local propFile="$3"
+    if grep -qE "^${propVariableName}=" "$propFile"; then
+        awk -v key="$propVariableName" -v val="$propValue" '
+        BEGIN { updated=0 }
+        {
+            if ($0 ~ "^" key "=") {
+                print key "=" val
+                updated=1
+            } else {
+                print
+            }
+        }
+        END {
+            if (!updated) print key "=" val
+        }' "$propFile" > "${propFile}.tmp"
+    else
+        cp "$propFile" "${propFile}.tmp"
+        echo "${propVariableName}=${propValue}" >> "${propFile}.tmp"
+    fi
+    mv "${propFile}.tmp" "$propFile"
+}
+
+function lpdump() {
+    if [ ${HOSTTYPE} == "x86_64" ]; then
+        ./src/dependencies/bin/lpdumpX64 "$@"
+    else
+        abort "Unsupported architecture: ${HOSTTYPE}"
+    fi
+}
+
+function lpunpack() {
+    if [ ${HOSTTYPE} == "x86_64" ]; then
+        ./src/dependencies/bin/lpdumpX64 "$@"
+    else
+        abort "Unsupported architecture: ${HOSTTYPE}"
+    fi
+}
+
+function lpmake() {
+    if [ ${HOSTTYPE} == "x86_64" ]; then
+        ./src/dependencies/bin/lpmakeX64 "$@"
+    else
+        abort "Unsupported architecture: ${HOSTTYPE}"
+    fi
+}
+
+function lpadd() {
+    if [ ${HOSTTYPE} == "x86_64" ]; then
+        ./src/dependencies/bin/lpaddX64 "$@"
+    else
+        abort "Unsupported architecture: ${HOSTTYPE}"
+    fi
+}
+
+function getImageFileSystem() {
+    local image="$1"
+    for knownFileSystems in F2FS ext4 EROFS; do
+        file ${image} | grep -q $knownFileSystems && string_format --lower "${knownFileSystems}" && return 0
+    done
+    # reached this far means: undefined / unsupported filesystem.
+    echo "undefined"
+    return 1
+}
+
+function setupLocalImage() {
+    local imagePath="$1"
+    local mountPath="$2"
+    local imageBlock="$(basename "$imagePath" | sed -E 's/\.img(\..+)?$//')"
+    local dirt
+    local fsType
+
+    fsType="$(getImageFileSystem "${imagePath}")"
+    console_print "Detected filesystem: ${fsType}"
+
+    case "$fsType" in
+        "erofs")
+            console_print "${fsType} image detected, attempting read-write mount..."
+            dirt="${mountPath}__rw"
+            mkdir -p "$dirt"
+            sudo fuse.erofs "${imagePath}" "${mountPath}" 2>>$thisConsoleTempLogFile || abort "Failed to mount EROFS image: ${imagePath}"
+            sudo cp -a --preserve=all "${mountPath}" "${dirt}/" || abort "Failed to copy contents to writable directory: ${dirt}"
+            [ -f "${dirt}/system/build.prop" ] && setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${dirt}/system" ./src/makeconfigs.prop
+            [ -f "${dirt}/build.prop" ] && setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${dirt}" ./src/makeconfigs.prop
+        ;;
+        "f2fs"|"ext4")
+            console_print "${fsType} image detected, preparing for mount..."
+            sudo mount -o rw,relatime "${imagePath}" "${mountPath}" || abort "Failed to mount ${imageBlock} as read-write"
+            setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${mountPath}" ./src/makeconfigs.prop
+        ;;
+        *)
+            abort "Filesystem type '${fsType}' not supported. Image path: ${imagePath}"
+        ;;
+    esac
+}
+
+function repackSuperFromDump() {
+    local dump_file="./local_build/etc/dumpOfTheSuperBlock"
+    local image_dir="./local_build/etc/extract/super_extract/"
+    local output_img="$1"
+    local total_size=0
+    local part
+    local group
+    local img_path
+    local size=0
+    local device_size=0
+    local buffer=0
+    local cmd
+    local metadata_size=$(grep -i "Metadata max size:" "$dump_file" | grep -o '[0-9]\+')
+    local current_slot=$(grep -i "Current slot:" "$dump_file" | grep -oE "_[ab]")
+    declare -A part_to_group
+    declare -A added_groups
+    local partitions=()
+
+	# basic checks:
+	if [[ -z "${image_dir}" || -z "${output_img}" ]]; then
+        abort "❌ Invalid paths for image directory or output image."
+	elif [[ ! -f "$dump_file" ]]; then
+        abort "❌ Dump file not found: $dump_file"
+	elif [[ -z "$metadata_size" ]]; then
+		abort "❌ Failed to extract metadata size from dump."
+	elif [[ -z "$current_slot" ]]; then
+		abort "❌ Could not detect current slot from dump."
+	fi
+
+	# main stuffs start from here:
+    while IFS= read -r line; do
+		[[ $line == "Super partition layout:" ]] && break;
+        if [[ $line =~ ^\ {2}Name:\ (.+) ]]; then
+            part="${BASH_REMATCH[1]}"
+			[[ "$part" == *_${current_slot/_/} ]] || continue
+        elif [[ $line =~ ^\ {2}Group:\ (.+) ]]; then
+            group="${BASH_REMATCH[1]}"
+            part_to_group["$part"]="$group"
+		fi
+    done < "$dump_file"
+
+    for part in "${!part_to_group[@]}"; do
+        img_path="$image_dir/$part.img"
+        if [[ -f "$img_path" ]]; then
+            size=$(stat -c%s "$img_path")
+            total_size=$((total_size + size))
+            partitions+=("$part:$img_path:${part_to_group[$part]}")
+        fi
+    done
+
+    [[ ${#partitions[@]} -eq 0 ]] && abort "❌ No valid .img files found in $image_dir"
+
+	# dynamic buffer: 64MiB per partition
+	buffer=$((64 * 1024 * 1024 * ${#partitions[@]}))
+    device_size=$((total_size + buffer))
+
+    cmd="lpmake \
+		--metadata-size $metadata_size \
+		--super-name super \
+		--device super:$device_size"
+
+    for entry in "${partitions[@]}"; do
+        IFS=':' read -r part path group <<< "$entry"
+        if [[ -z "${added_groups[$group]}" ]]; then
+            cmd+=" --group $group:$device_size"
+            added_groups[$group]=1
+        fi
+    done
+
+    for entry in "${partitions[@]}"; do
+        IFS=':' read -r part path group <<< "$entry"
+        cmd+=" --partition $part:readonly:$group"
+        cmd+=" --image $part=\"$path\""
+    done
+	# main stuffs ends from here
+
+    cmd+=" --output \"$output_img\""
+    eval "$cmd"
+
+	[ $? -eq 0 ] || abort "❌ Failed to pack image."
+}
+
+function buildImage() {
+    local blockPath="$1"
+    local block="$2"
+    local imagePath=$(mount | grep "${blockPath}" | awk '{print $1}')
+    [[ -f "$blockPath" ]] || return 1
+    mkdir -p ./local_build/buildedContents/
+    if [[ "$blockPath" =~ __rw$ ]]; then
+        console_print "EROFS fs detected, building an EROFS image..."
+        sudo mkfs.erofs -z lz4 --mount-point="${block}" "./local_build/buildedContents/${block}_built.img" "${blockPath}/" &>>$thisConsoleTempLogFile || abort "Failed to build EROFS image from ${blockPath}"
+    else 
+        console_print "F2FS/EXT4 fs detected, unmounting the image..."
+        sudo umount "${blockPath}" || abort "Failed to unmount ${blockPath}, aborting this instance..."
+        console_print "Successfully unmounted ${blockPath}."
+    fi
+    if [[ -f "$imagePath" ]]; then
+        cp "$imagePath" "./local_build/buildedContents/${block}_built.img" &>>$thisConsoleTempLogFile || abort "Failed to copy the image to the build directory."
+        rm "$imagePath"
+    fi
+    console_print "Successfully built ${block}.img"
 }
