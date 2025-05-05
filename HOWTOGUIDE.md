@@ -62,7 +62,7 @@ Ensure the following dependencies are installed before proceeding:
 ### 4️⃣ Test the ROM
 
 - Boot the ROM and thoroughly test it.
-- If you encounter any issues, [reach out via GitHub](https://github.com/forsaken-heart24)
+- If you encounter any issues, [reach out via socials mentioned in my Git](https://github.com/forsaken-heart24)
 
 ---
 
