@@ -3,13 +3,15 @@
 # Build Configuration Variables
 
 ## TODO: Should be filled by the builder
+> **Note:** Do not fill these variables if you are providing a URL or a firmware package instead of extracted folders.
+
 - **SYSTEM_DIR**: Put your extracted system folder path there.
 - **SYSTEM_EXT_DIR**: Put your extracted system_ext folder path there.
 - **VENDOR_DIR**: Put your extracted vendor folder path there.
 - **PRODUCT_DIR**: Put your extracted product folder path there.
 - **PRISM_DIR**: Put your extracted prism folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
 - **OPTICS_DIR**: Put your extracted optics folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
-- **TARGET_BUILD_PRODUCT_NAME**: Ensure ro.product.system.device (from /system/build.prop) matches in all. Fallback to genericTargetProperties.conf if device blobs are missing.
+- **TARGET_BUILD_PRODUCT_NAME**: Ensure this matches `ro.product.system.device` (from `/system/build.prop`). This variable **must** be filled by the builder. Fallback to `genericTargetProperties.conf` if device blobs are missing.
 
 ## Device Name & Setup
 - **TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES**: Enables custom welcome message during setup.
