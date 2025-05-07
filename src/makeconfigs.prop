@@ -28,10 +28,10 @@ MY_KEYSTORE_PATH=./test-keys/HorizonUX-testkey.jks
 MY_KEYSTORE_ALIAS_KEY_PASSWORD="${MY_KEYSTORE_ALIAS}"
 
 # replace these with your dir
-SYSTEM_DIR=
-SYSTEM_EXT_DIR=
-VENDOR_DIR=
-PRODUCT_DIR=
+SYSTEM_DIR=./local_build/etc/imageSetup/system/system
+SYSTEM_EXT_DIR=./local_build/etc/imageSetup/system/system/system_ext
+VENDOR_DIR=./local_build/etc/imageSetup/vendor
+PRODUCT_DIR=./local_build/etc/imageSetup/product
 PRISM_DIR=
 OPTICS_DIR=
 

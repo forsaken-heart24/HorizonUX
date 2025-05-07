@@ -2,7 +2,7 @@
 
 # Device Specific Configuration Variables
 
-- **BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH_BY_RATCODED**: Adds fastbootd support to stock recovery. Make sure to enter the image path to "RECOVERY_IMAGE_PATH" variable in makeconfigs.prop.
+- **BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH**: Adds fastbootd support to stock recovery. Make sure to enter the image path to "RECOVERY_IMAGE_PATH" variable in makeconfigs.prop.
 - **BUILD_TARGET_SUPPORTS_WIRELESS_POWER_SHARING**: Enables wireless power sharing if supported by hardware.
 - **BUILD_TARGET_DISABLE_KNOX_PROPERTIES**: For android <= 11, try this at own risk because it disables knox via properties which are untested.
 - **BUILD_TARGET_BOOT_ANIMATION_FPS**: Add any integer value lesser than or equal to 60 if you have a bootanimation that has video/gif like transistions

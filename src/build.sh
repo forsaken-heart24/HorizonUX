@@ -17,13 +17,17 @@
 #
 
 # misc variables
-BUILD_USERNAME="$(tr '[:lower:]' '[:upper:]' <<< "$(id -un | cut -c1-1)")$(id -un | cut -c2-)"
+BUILD_USERNAME="$2"
+[ -z "${BUILD_USERNAME}" ] && BUILD_USERNAME="$(tr '[:lower:]' '[:upper:]' <<< "$(id -un | cut -c1-1)")$(id -un | cut -c2-)"
 thisConsoleTempLogFile="./local_build/logs/hux_build.log"
 rm -rf ./local_build/logs/*
 TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
 [ ! -f "${thisConsoleTempLogFile}" ] && touch $thisConsoleTempLogFile
 argOne="$1"
+
+# Trap the SIGINT signal (Ctrl+C) and call handle_sigint when it's caught
+trap 'abort "Aborting the build....."' SIGINT
 
 # jst execve ts 2 fix bugs:
 for i in ./src/misc/build_scripts/util_functions.sh ./src/makeconfigs.prop ./src/monika.conf; do
@@ -32,7 +36,7 @@ for i in ./src/misc/build_scripts/util_functions.sh ./src/makeconfigs.prop ./src
 		sleep 0.5
 		exit 1
 	else
-		debugPrint "Executing ${i}.." "build"
+		debugPrint "build.sh: Executing ${i}.."
 		source "$i"
 	fi
 done
@@ -48,8 +52,20 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 		system/etc/init/ tmp/hux/ etc/extract/super_extract etc/imageSetup/product etc/imageSetup/system etc/imageSetup/vendor etc/imageSetup/optics etc/downloadedContents \
 		etc/buildedContents; do
 	mkdir -p "./local_build/$i"
-	debugPrint "Making ./local_build/${i} directory.." "build"
+	debugPrint "build.sh: Making ./local_build/${i} directory.."
 done
+
+# TODO: re-run the script with root permissions to manage mounted images
+if [[ $(id -u) == 0 ]]; then
+	debugPrint "build.sh: Script ran once again with root privilages."
+else
+	if string_format -l "$(file "$argOne")" | grep -q zip || echo "$argOne" | grep -qE "samfw|samfwpremium"; then
+		console_print "You will be prompted to put your sudo password to mount stuff in ./local_build/etc/imageSetup"
+		console_print "if you are worried, you can always check the script before entering the sudo password."
+		sudo "$0" "$argOne" "$BUILD_USERNAME"
+		debugPrint "build.sh: Relaunching the script with root privilages..."
+	fi
+fi
 
 # bruh
 clear
@@ -69,31 +85,45 @@ console_print "Available RAM Memory : $(free -h --giga | grep Mem | awk '{print 
 console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 
 # check:
-if [[ -n "$argOne" && $(lscpu | grep Architecture | awk '{print $2}') == "x86_64" ]]; then
-	if string_format "$(file $argOne)" | grep -q zip; then
-		console_print "You will be prompted to put your sudo password to mount stuff in ./local_build/etc/imageSetup"
-		console_print "if you are worried, you can always check the script before entering the sudo password."
-		sudo "echo Hi" &>/dev/null
+if [[ -n "$argOne" && "$(uname -m)" == "x86_64" ]]; then
+	if string_format --lower "$(file $argOne)" | grep -q zip; then
 		if unzip -l "$argOne" | grep -qE "AP_|HOME_CSC"; then
-			# unzip -o test.zip nos/README_Kernel.txt -d nos | grep inflating | awk '{print $2}'
-			extractedAPFilePath=$(unzip -o $argOne $(unzip -l AP_) -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
-			[ -z "${extractedAPFilePath}" ] && abort "Failed to extract AP from $argOne"
-			debugPrint "Processing AP tar file from the given firmware package...."
-			tar -tf "$extractedAPFilePath" | grep -qE "system|super|vendor|optics" || abort "The $extractedAPFilePath doesn't have system, vendor, optics or even super. Try again with a samfw.com dump!"
-			extractedHomeCSCFilePath=$(unzip -o $argOne $(unzip -l HOME_CSC) -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
-			[ -z "${extractedHomeCSCFilePath}" ] && abort "Failed to extract HOME_CSC from $argOne"
+			# skip extracting if the archives were found.
+			if [[ -f "$(echo -e ./local_build/etc/extract/AP_*.tar.md5)" && -f "$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)" ]]; then
+				console_print "Skipping firmware extraction, target firmware files are already extracted and saved."
+				extractedAPFilePath="$(echo -e ./local_build/etc/extract/AP_*.tar.md5)"
+				extractedHomeCSCFilePath="$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)"
+			else
+				# unzip -o test.zip nos/README_Kernel.txt -d nos | grep inflating | awk '{print $2}'
+				console_print "Trying to extract $(unzip -l $argOne | grep AP_ | awk '{print $4}') from the archive...."
+				extractedAPFilePath=$(unzip -o $argOne $(unzip -l $argOne | grep AP_ | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
+				[ -z "${extractedAPFilePath}" ] && abort "Failed to extract AP from $argOne"
+				debugPrint "Processing AP tar file from the given firmware package...."
+				tar -tf "$extractedAPFilePath" | grep -qE "system|super|vendor|optics" || abort "The $extractedAPFilePath doesn't have system, vendor, optics or even super. Try again with a samfw.com dump!"
+				console_print "Trying to extract $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') from the archive...."
+				extractedHomeCSCFilePath=$(unzip -o $argOne $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
+				[ -z "${extractedHomeCSCFilePath}" ] && abort "Failed to extract HOME_CSC from $argOne"
+			fi
 			# ight, so, basically even if we have both of these on our firmware, wwe dont need to worry cuz ive made sure that CSC features sets to omc/*/conf/cscfeature.xml
 			# like product/omc/*/conf/cscfeature.xml and optics/omc/*/conf/cscfeature.xml *ONLY* if that XML file was found!
 			for cscStuff in product optics; do
-				tar -tf "$extractedHomeCSCFilePath" | grep -q "${cscStuff}.img.lz4" && tar -xf $extractedHomeCSCFilePath ${cscStuff}.img.lz4 -C ./local_build/etc/extract/ >> ${thisConsoleTempLogFile}
-				lz4 -d ./local_build/etc/extract/${cscStuff}.img.lz4 ./local_build/etc/extract/ >> ${thisConsoleTempLogFile} || abort "Failed to extract $cscStuff from an lz4 archive."
+				tar -tf "$extractedHomeCSCFilePath" | grep -q "${cscStuff}.img.lz4" || continue
+				console_print "Extracting ${cscStuff}..."
+				tar -C ./local_build/etc/extract/ -xf $extractedHomeCSCFilePath ${cscStuff}.img.lz4 &>> ${thisConsoleTempLogFile}
+				logInterpreter "Trying to extract ${cscStuff}.img from an LZ4 archive..." "lz4 -d ./local_build/etc/extract/${cscStuff}.img.lz4 ./local_build/etc/extract/${cscStuff}.img" || abort "Failed to extract $cscStuff from an lz4 archive." "logInterpreter"
 				rm -rf ./local_build/etc/extract/${cscStuff}.img.lz4
+				# TODO: convert images into raw if not already:
+				logInterpreter "Converting $cscStuff from sparse to raw image factor...." "simg2img ./local_build/etc/extract/${cscStuff}.img ./local_build/etc/extract/${cscStuff}_raw.img"
+				rm ./local_build/etc/extract/${cscStuff}.img
+				mv ./local_build/etc/extract/${cscStuff}_raw.img ./local_build/etc/extract/${cscStuff}.img
 				setupLocalImage ./local_build/etc/extract/${cscStuff}.img ./local_build/etc/imageSetup/${cscStuff}
 			done
 			for androidOS in super system vendor; do
 				if [ "${androidOS}" == "super" ]; then
-					tar -tf "$extractedAPFilePath" | grep -q "${androidOS}.img.lz4" && tar -xf "$extractedAPFilePath" "super.img.lz4" -C "./local_build/etc/extract/" >> ${thisConsoleTempLogFile} || abort "Failed to extract super.img.lz4 from the tar file."
-					lz4 -d "./local_build/etc/extract/super.img.lz4" "./local_build/etc/extract/" >> ${thisConsoleTempLogFile} || abort "Failed to extract super image from an lz4 archive."
+					tar -tf "$extractedAPFilePath" | grep -q "super.img.lz4" || continue
+					console_print "Extracting super..."
+					tar -C "./local_build/etc/extract/" -xf "$extractedAPFilePath" "super.img.lz4" &>> ${thisConsoleTempLogFile} || abort "Failed to extract super.img.lz4 from the tar file."
+					logInterpreter "Trying to extract super.img from an LZ4 archive..." "lz4 -d ./local_build/etc/extract/super.img.lz4 ./local_build/etc/extract/" || abort "Failed to extract super image from an lz4 archive."
 					rm -rf ./local_build/etc/extract/super.img.lz4
 					lpdump "./local_build/etc/extract/super.img" > ./local_build/etc/dumpOfTheSuperBlock &>>$thisConsoleTempLogFile || abort "Failed to dump metadata from super.img"
 					lpunpack "./local_build/etc/extract/super.img" "./local_build/etc/extract/super_extract/" &>>$thisConsoleTempLogFile || abort "Failed to unpack super.img"
@@ -103,24 +133,31 @@ if [[ -n "$argOne" && $(lscpu | grep Architecture | awk '{print $2}') == "x86_64
 						setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
 					done
 				else
-					tar -tf "$extractedAPFilePath" | grep -q "${androidOS}.img.lz4" && tar -xf $extractedAPFilePath ${androidOS}.img.lz4 -C ./local_build/etc/extract >> ${thisConsoleTempLogFile} || abort "Failed to extract $androidOS from an tar file."
-					lz4 -d ./local_build/etc/extract/${androidOS}.img.lz4 ./local_build/etc/extract/ >> ${thisConsoleTempLogFile} || abort "Failed to extract $androidOS from an lz4 archive."
+					console_print "Extracting $androidOS..."
+					tar -tf "$extractedAPFilePath" | grep -q "${androidOS}.img.lz4" && tar -C ./local_build/etc/extract -xf $extractedAPFilePath ${androidOS}.img.lz4 &>> ${thisConsoleTempLogFile} || abort "Failed to extract $androidOS from an tar file."
+					logInterpreter "Trying to extract ${androidOS}.img from an LZ4 archive..." "lz4 -d ./local_build/etc/extract/${androidOS}.img.lz4 ./local_build/etc/extract/${androidOS}.img" || abort "Failed to extract $androidOS from an lz4 archive."
 					rm -rf ./local_build/etc/extract/${androidOS}.img.lz4
+					# TODO: convert images into raw if not already:
+					logInterpreter "Converting $androidOS from sparse to raw image factor...." "simg2img ./local_build/etc/extract/${androidOS}.img ./local_build/etc/extract/${androidOS}_raw.img"
+					rm ./local_build/etc/extract/${androidOS}.img
+					mv ./local_build/etc/extract/${androidOS}_raw.img ./local_build/etc/extract/${androidOS}.img
 					setupLocalImage ./local_build/etc/extract/${androidOS}.img ./local_build/etc/imageSetup/${androidOS}
 				fi
 			done
+			# TODO: switch to device config if the ro.product.system.device is supported
 			# source the props again to replace the values.
 			source "./src/makeconfigs.prop"
 			touch ./localFirmwareBuildPending
 		elif echo "$argOne" | grep -qE "samfw|samfwpremium"; then
-			check_internet_connection &>/dev/null || abort "I don't have internet access to download given samfw.com firmware package."
+			check_internet_connection &>/dev/null || abort "I don't have internet access to download given samfw firmware package." "build.sh"
 			download_stuffs $argOne ./local_build/etc/downloadedContents/firmware.zip
 			# re-exec because we alr have code to manage with zip files.
 			./src/build.sh "./local_build/etc/downloadedContents/firmware.zip"
 		fi
 	fi
-elif [[ ! -f "${SYSTEM_DIR}" || ! -f "${VENDOR_DIR}" ]]; then
-	abort "System or vendor partition is not a valid partition!"
+else
+	# TODO: Check system,vendor before modding stuffs:
+	[[ ! -f "${SYSTEM_DIR}" || ! -f "${VENDOR_DIR}" ]] && abort "System or vendor partition is not a valid partition!" "build.sh"
 fi
 
 # Locate build.prop files
@@ -145,16 +182,16 @@ BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROP
 
 # device specific customization:
 if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
-	debugPrint "build.sh: Device specific config and blobs are found, customizing the rom...." "build"
+	debugPrint "build.sh: Device specific config and blobs are found, customizing the rom...."
 	source "./src/target/${TARGET_BUILD_PRODUCT_NAME}/buildTargetProperties.conf"
 else
-	debugPrint "Using genericTargetProperties.conf for configs..." "build"
+	debugPrint "build.sh: Using genericTargetProperties.conf for configs..."
 	source "./src/genericTargetProperties.conf"
 fi
 
 ################ boom
 if [ "$TARGET_BUILD_IS_FOR_DEBUGGING" == "true" ]; then
-	debugPrint "Debug flags are getting enabled" "build"
+	debugPrint "build.sh: Debug flags are getting enabled"
     for i in "logcat.live enable" "sys.lpdumpd 1" "persist.debug.atrace.boottrace 1" "persist.device_config.global_settings.sys_traced 1" \
 		"persist.traced.enable 1" "log.tag.ConnectivityManager V" "log.tag.ConnectivityService V" "log.tag.NetworkLogger V" "log.tag.IptablesRestoreController V" \
 		"log.tag.ClatdController V" "persist.sys.lmk.reportkills false" "security.dsmsd.enable true" "persist.log.ewlogd 1" \
@@ -342,7 +379,7 @@ if [ "$TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES" == "true" ]; then
 fi
 
 # let's download goodlook modules from corsicanu's repo.
-debugPrint "Starting to check and try to download goodlook modules, logs can be seen below if any errors spawn upon the process" "build"
+debugPrint "build.sh: Starting to check and try to download goodlook modules, logs can be seen below if any errors spawn upon the process"
 [ "$TARGET_INCLUDE_SAMSUNG_THEMING_MODULES" == "true" ] && download_glmodules 2>> $thisConsoleTempLogFile
 
 # installs audio resampler.
@@ -365,14 +402,14 @@ fi
 
 # custom wallpaper-res resources_info.json generator.
 if [ "$CUSTOM_WALLPAPER_RES_JSON_GENERATOR" == "true" ]; then
-	debugPrint "Java path: $(command -v java)" "build"
+	debugPrint "build.sh: Java path: $(command -v java)"
 	command -v java &>/dev/null || abort "\e[1;36m - Please install openjdk or any java toolchain to continue.\e[0;37m"
 	special_index=00
 	the_homescreen_wallpaper_has_been_set=false
 	the_lockscreen_wallpaper_has_been_set=false
 	printf "\e[1;36m - How many wallpapers do you need to add to the Wallpaper App?\e[0;37m "
 	read wallpaper_count
-	debugPrint "User requested ${wallpaper_count} metadata to generate for wallpaper-res" "build"
+	debugPrint "build.sh: User requested ${wallpaper_count} metadata to generate for wallpaper-res"
 	[[ "$wallpaper_count" =~ ^[0-9]+$ ]] && abort "\e[0;31m - Invalid input. Please enter a valid number. Exiting...\e[0;37m"
 	clear
 	rm -rf resources_info.json
@@ -460,7 +497,7 @@ if [ "$TARGET_REMOVE_USELESS_VENDOR_STUFFS" == "true" ]; then
         rm -rf "${VENDOR_DIR}/overlay/AccentColorBlack" "${VENDOR_DIR}/overlay/AccentColorCinnamon" "${VENDOR_DIR}/overlay/AccentColorGreen" \
         "${VENDOR_DIR}/overlay/AccentColorOcean" "${VENDOR_DIR}/overlay/AccentColorOrchid" "${VENDOR_DIR}/overlay/AccentColorPurple" \
         "${VENDOR_DIR}/etc/init/boringssl_self_test.rc" "${VENDOR_DIR}/etc/init/dumpstate-default.rc" "${VENDOR_DIR}/etc/init/vendor_flash_recovery.rc" \
-		"${VENDOR_DIR}/etc/vintf/manifest/dumpstate-default.xml" "${VENDOR_DIR}/overlay/AccentColorSpace" &>> "$thisConsoleTempLogFile"
+		"${VENDOR_DIR}/etc/vintf/manifest/dumpstate-default.xml" "${VENDOR_DIR}/overlay/AccentColorSpace" &>/dev/null
         if [ "${TARGET_DISABLE_FILE_BASED_ENCRYPTION}" == "true" ]; then
             for fstab__ in $VENDOR_DIR/etc/fstab.*; do
 				[ "${fstab__}" == "fstab.ramplus" ] && continue
@@ -482,7 +519,7 @@ if [ "$DISABLE_DYNAMIC_RANGE_COMPRESSION" == "true" ]; then
 	console_print "Disabling Dynamic Range Compression..."
 	if [ -f "$VENDOR_DIR/etc/audio_policy_configuration.xml" ]; then
 		sed -i 's/speaker_drc_enabled="true"/speaker_drc_enabled="false"/g' "$VENDOR_DIR/etc/audio_policy_configuration.xml"
-		debugPrint "Disabled speaker DRC in audio_policy_configuration.xml" "build"
+		debugPrint "build.sh: Disabled speaker DRC in audio_policy_configuration.xml"
 	else
 		abort "Error: audio_policy_configuration.xml not found!"
 	fi
@@ -518,7 +555,7 @@ if [ "$TARGET_BUILD_REMOVE_SYSTEM_LOGGING" == "true" ]; then
 	setprop --system "log.tag.NetworkLogger" "S"
 	setprop --system "log.tag.IptablesRestoreController" "S"
 	setprop --system "log.tag.ClatdController" "S"
-	debugPrint "Patching atrace, dumpstate, and logd for ${BUILD_TARGET_SDK_VERSION} if possible...." "build"
+	debugPrint "build.sh: Patching atrace, dumpstate, and logd for ${BUILD_TARGET_SDK_VERSION} if possible...."
 	if [[ "${BUILD_TARGET_SDK_VERSION}" -ge 28 && "${BUILD_TARGET_SDK_VERSION}" -le 31 ]]; then
 		if [[ "${BUILD_TARGET_SDK_VERSION}" -eq 28 ]]; then
 			apply_diff_patches "$SYSTEM_DIR/etc/init/dumpstate.rc" "${DIFF_UNIFIED_PATCHES[6]}"
@@ -688,7 +725,7 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 	./local_build/etc/app/SmartManager_v6_DeviceSecurity_CN ./local_build/etc/priv-app/SmartManager_v5 ./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity \
 	./local_build/etc/priv-app/SmartManagerCN ./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN ./local_build/etc/priv-app/SAppLock ./local_build/etc/priv-app/Firewall;
 	{
-		debugPrint "Moving SmartManager and Device Care to a temporary directory.." "build"
+		debugPrint "build.sh: Moving SmartManager and Device Care to a temporary directory.."
 		# now move these for a quick revert if anything goes wrong.
 		# xmls
 		mv "$SYSTEM_DIR/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "./local_build/etc/permissions/"
@@ -713,7 +750,7 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 		#                                                          -                                                                           #
 		# https://github.com/saadelasfur/SmartManager/blob/5a547850d8049ce0bfd6528d660b2735d6a18291/Installers/SmartManagerCN/updater-script#L99
 	} &>>$thisConsoleTempLogFile
-	debugPrint "Moved SmartManager and Device Care to a temporary directory.." "build"
+	debugPrint "build.sh: Moved SmartManager and Device Care to a temporary directory.."
 	add_float_xml_values "SEC_FLOATING_FEATURE_SMARTMANAGER_CONFIG_PACKAGE_NAME" "com.samsung.android.sm_cn"
 	add_float_xml_values "SEC_FLOATING_FEATURE_SECURITY_CONFIG_DEVICEMONITOR_PACKAGE_NAME" "com.samsung.android.sm.devicesecurity.tcm"
 	add_float_xml_values "SEC_FLOATING_FEATURE_COMMON_SUPPORT_NAL_PRELOADAPP_REGULATION" "TRUE"
@@ -721,7 +758,7 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 		for j in ${SYSTEM_DIR}/${SMARTMANAGER_CN_DOWNLOADABLE_CONTENTS_SAVE_PATHS[@]}; do
 			download_stuffs "${i}" "${j}" || {
 				{
-					debugPrint "Looks like one of the loop is failed, restoring the backup..." "build"
+					debugPrint "build.sh:  like one of the loop is failed, restoring the backup..."
 					# actual thing
 					mv ./local_build/etc/priv-app/Firewall/* "$SYSTEM_DIR/priv-app/Firewall/"
 					mv ./local_build/etc/priv-app/SAppLock/* "$SYSTEM_DIR/priv-app/SAppLock/"
@@ -740,7 +777,7 @@ if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVI
 					mv "./local_build/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity_v6.xml" "$SYSTEM_DIR/etc/permissions/"
 					mv "./local_build/etc/permissions/signature-permissions-com.samsung.android.lool.xml" "$SYSTEM_DIR/etc/permissions/"
 					mv "./local_build/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" "$SYSTEM_DIR/etc/permissions/"
-					debugPrint "Seems like i did restore those files? didn't i?" "build"
+					debugPrint "build.sh: Seems like i did restore those files? didn't i?"
 					warns "Failed to download stuffs from @saadelasfur github repo, moved everything to their places!" "FAILED_TO_DOWNLOAD_SMARTMANAGER"
 					break
 				} &>>$thisConsoleTempLogFile
@@ -760,7 +797,7 @@ fi
 [ -f "./src/target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh" ] && . ./src/target/${TARGET_BUILD_PRODUCT_NAME}/customizer.sh
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
-debugPrint "End of the script, running misc stuffs.." "build"
+debugPrint "build.sh: End of the script, running misc stuffs.."
 console_print "Running misc jobs..."
 add_csc_xml_values "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"
 add_csc_xml_values "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"
@@ -833,11 +870,9 @@ if [ -f "./localFirmwareBuildPending" ]; then
 		repackSuperFromDump "./local_build/etc/buildedContents/super.img" 
 		console_print "Super image can be found at: \"./local_build/etc/buildedContents/super.img\""
 		buildImage "./local_build/etc/imageSetup/optics" "/optics" 
-		console_print "Optics can be found at: \"./local_build/buildedContents/optics_built.img\""
 	else
 		buildImage "./local_build/etc/imageSetup/${buildableContents}" "/"
-		console_print "System image can be found at: \"./local_build/buildedContents/system_built.img\""
 		buildImage "./local_build/etc/imageSetup/${buildableContents}" "/vendor"
-		console_print "Vendor image can be found at: \"./local_build/buildedContents/vendor_built.img\""
+		buildImage "./local_build/etc/imageSetup/product" "/product" 
 	fi
 fi

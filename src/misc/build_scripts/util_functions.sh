@@ -80,7 +80,8 @@ function abort() {
     debugPrint "$2(): $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    rm -rf $TMPDIR $TMPFILE
+    rm -rf $TMPDIR $TMPFILE ./local_build/etc/extract/*.img ./local_build/etc/extract/*.img.lz4
+    sudo umount ./local_build/etc/imageSetup/* &>/dev/null
     exit 1
 }
 
@@ -197,6 +198,9 @@ function add_float_xml_values() {
             BUILD_TARGET_FLOATING_FEATURE_PATH="${SYSTEM_DIR}/etc/floating_feature.xml"
         ;;
     esac
+
+    #TODO:
+    debugPrint "add_float_xml_values(): Floating feature path: ${BUILD_TARGET_SDK_VERSION}"
 
     # Check if the feature_code already exists in the XML file
     if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == 0 ]; then
@@ -814,7 +818,7 @@ function lpadd() {
 
 function getImageFileSystem() {
     local image="$1"
-    for knownFileSystems in F2FS ext4 EROFS; do
+    for knownFileSystems in F2FS ext2 ext4 EROFS; do
         file ${image} | grep -q $knownFileSystems && string_format --lower "${knownFileSystems}" && return 0
     done
     # reached this far means: undefined / unsupported filesystem.
@@ -826,29 +830,30 @@ function setupLocalImage() {
     local imagePath="$1"
     local mountPath="$2"
     local imageBlock="$(basename "$imagePath" | sed -E 's/\.img(\..+)?$//')"
+    local fsType="$(getImageFileSystem "${imagePath}")"
     local dirt
-    local fsType
-
-    fsType="$(getImageFileSystem "${imagePath}")"
-    console_print "Detected filesystem: ${fsType}"
 
     case "$fsType" in
         "erofs")
-            console_print "${fsType} image detected, attempting read-write mount..."
             dirt="${mountPath}__rw"
             mkdir -p "$dirt"
-            sudo fuse.erofs "${imagePath}" "${mountPath}" 2>>$thisConsoleTempLogFile || abort "Failed to mount EROFS image: ${imagePath}"
-            sudo cp -a --preserve=all "${mountPath}" "${dirt}/" || abort "Failed to copy contents to writable directory: ${dirt}"
-            [ -f "${dirt}/system/build.prop" ] && setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${dirt}/system" ./src/makeconfigs.prop
-            [ -f "${dirt}/build.prop" ] && setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${dirt}" ./src/makeconfigs.prop
+            sudo fuse.erofs "${imagePath}" "${mountPath}" 2>>$thisConsoleTempLogFile || abort "Failed to mount EROFS image: ${imagePath}" "setupLocalImage"
+            sudo cp -a --preserve=all "${mountPath}" "${dirt}/" || abort "Failed to copy contents to writable directory: ${dirt}" "setupLocalImage"
+            [ -f "${dirt}/system/build.prop" ] && setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${dirt}/system" "./src/makeconfigs.prop"
+            [ -d "${dirt}/system/system_ext" ] && setMakeConfigs "SYSTEM_EXT_DIR" "${dirt}/system/system_ext" "./src/makeconfigs.prop"
+            [ -f "${dirt}/build.prop" ] && setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${dirt}" "./src/makeconfigs.prop"
         ;;
-        "f2fs"|"ext4")
-            console_print "${fsType} image detected, preparing for mount..."
-            sudo mount -o rw,relatime "${imagePath}" "${mountPath}" || abort "Failed to mount ${imageBlock} as read-write"
-            setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${mountPath}" ./src/makeconfigs.prop
+        "f2fs"|"ext4"|"ext2")
+            sudo mount -o rw,relatime "${imagePath}" "${mountPath}" || abort "Failed to mount ${imageBlock} as read-write" "setupLocalImage"
+            if [ -f "${mountPath}/system/build.prop" ]; then
+                setMakeConfigs "SYSTEM_DIR" "${mountPath}/system" "./src/makeconfigs.prop"
+                setMakeConfigs "SYSTEM_EXT_DIR" "${mountPath}/system/system_ext" "./src/makeconfigs.prop"
+            elif [ -f "${mountPath}/build.prop" ]; then
+                setMakeConfigs "$(echo "${imageBlock}" | tr '[:lower:]' '[:upper:]')_DIR" "${mountPath}" "./src/makeconfigs.prop"
+            fi
         ;;
         *)
-            abort "Filesystem type '${fsType}' not supported. Image path: ${imagePath}"
+            abort "Filesystem type '${fsType}' not supported. Image path: ${imagePath}" "setupLocalImage"
         ;;
     esac
 }
@@ -948,10 +953,20 @@ function buildImage() {
         console_print "F2FS/EXT4 fs detected, unmounting the image..."
         sudo umount "${blockPath}" || abort "Failed to unmount ${blockPath}, aborting this instance..."
         console_print "Successfully unmounted ${blockPath}."
-    fi
-    if [[ -f "$imagePath" ]]; then
-        cp "$imagePath" "./local_build/buildedContents/${block}_built.img" &>>$thisConsoleTempLogFile || abort "Failed to copy the image to the build directory."
+        [ -f "$imagePath" ] && cp "$imagePath" "./local_build/buildedContents/${block}_built.img" &>>$thisConsoleTempLogFile || abort "Failed to copy the image to the build directory."
         rm "$imagePath"
     fi
     console_print "Successfully built ${block}.img"
+    console_print "$block can be found at ./local_build/buildedContents/${block}_built.img"
+}
+
+function logInterpreter() {
+    local debugMessage="$1"
+    local command="$2"
+    local returnStatus
+    debugPrint "$(echo $command | awk '{print $1}')(): $debugMessage" 
+    eval "$command" &> "$TMPFILE"
+    returnStatus=$?
+    [[ ! -z "$(cat "$TMPFILE")" ]] && echo "[$(date +%H:%M%p)] - $(echo $command | awk '{print $1}') output: $(xargs < "$TMPFILE")" >> "$thisConsoleTempLogFile"
+    return $?
 }
