@@ -1,0 +1,11 @@
+--- vold_30.rc	2025-03-15 13:47:23.976294800 +0000
++++ vold_30_edited.rc	2025-03-15 13:47:23.976294800 +0000
+@@ -3,8 +3,6 @@
+         --fsck_context=u:r:fsck:s0 --fsck_untrusted_context=u:r:fsck_untrusted:s0
+     class core
+     ioprio be 2
+-## Frigatebird
+-    socket frigate stream 0660 system system
+     onrestart restart zygote
+     writepid /dev/cpuset/foreground/tasks
+     shutdown critical

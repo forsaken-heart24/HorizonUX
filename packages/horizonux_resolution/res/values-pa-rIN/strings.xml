@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">ਲਾਗੂ ਕਰੋ</string>
-    <string name="screen_resolution_desc_summary">ਜਦੋਂ ਤੁਸੀਂ ਰਿਜ਼ੋਲਿਉਸ਼ਨ ਨੂੰ ਬਦਲੋਗੇ ਤਾਂ ਕੁਝ ਐਪਸ ਬੰਦ ਹੋ ਸਕਦੀਆਂ ਹਨ।</string>
-    <string name="screen_resolution_fhd_description">ਬਿਹਤਰ ਵਿਜ਼ੁਅਲਸ, ਮੱਧਮ ਬੈਟਰੀ ਦੀ ਵਰਤੋਂ</string>
-    <string name="screen_resolution_hd_description">ਮੂਲ ਵਿਜ਼ੁਅਲ, ਘੱਟ ਬੈਟਰੀ ਦੀ ਵਰਤੋਂ</string>
-    <string name="screen_resolution_title">ਸਕ੍ਰੀਨ ਰਿਜ਼ੋਲਿਉਸ਼ਨ</string>
-    <string name="screen_resolution_wqhd_description">ਸਭ ਤੋਂ ਤੇਜ਼ ਵਿਜ਼ੁਅਲਸ, ਜ਼ਿਆਦਾ ਬੈਟਰੀ ਦੀ ਵਰਤੋਂ</string>
-</resources>

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">යොදන්න</string>
-    <string name="screen_resolution_desc_summary">ඔබ විභේදනය වෙනස් කරන විට සමහර යෙදුම් වැසිය හැක.</string>
-    <string name="screen_resolution_fhd_description">වැඩි දියුණු කළ දර්ශන, මධ්‍යස්ථ බැටරි භාවිතය</string>
-    <string name="screen_resolution_hd_description">මූලික දර්ශන, අවම බැටරි භාවිතය</string>
-    <string name="screen_resolution_title">තිර විභේදනය</string>
-    <string name="screen_resolution_wqhd_description">තියුණු දර්ශන, බොහෝ බැටරි භාවිතය</string>
-</resources>

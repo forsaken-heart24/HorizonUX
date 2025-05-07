@@ -1,0 +1,53 @@
+--- wifi_28.rc	2025-01-21 06:35:50.336276400 -0800
++++ wifi_28_edited.rc	2025-01-21 06:37:42.165483400 -0800
+@@ -5,32 +5,19 @@
+     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
+     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
+     mkdir /data/vendor/log/wifi 0770 wifi system
+-
+-    # for WIFI TRP/TIS
++    write /data/vendor/conn/.memdump.info 2
+     chown wifi root /data/vendor/conn/.psm.info
+     chmod 0660 /data/vendor/conn/.psm.info
+-
+-    # for WIFI Antenna Selection
+     chown wifi root /data/vendor/conn/.ant.info
+     chmod 0660 /data/vendor/conn/.ant.info
+-
+-    # for WIFI Version
+     chown wifi root /data/vendor/conn/.wifiver.info
+     chmod 0664 /data/vendor/conn/.wifiver.info
+-
+-    # for WIFI MEMDUMP
+-    # The default value of below memdump file is set in SecProductFeature
+-    write /data/vendor/conn/.memdump.info 2
+     chown wifi root /data/vendor/conn/.memdump.info
+     chmod 0660 /data/vendor/conn/.memdump.info
+-
+-    # for WIFI hotspot
+     chown wifi root /data/vendor/conn/.softap.info
+     chmod 0664 /data/vendor/conn/.softap.info
+     chown system wifi /vendor/etc/wifi/indoorchannel.info
+     chmod 0664 /vendor/etc/wifi/indoorchannel.info
+-
+-    # for WIFI MAC
+     chown wifi root /sys/wifi/mac_addr
+     chmod 0660 /sys/wifi/mac_addr
+     
+@@ -45,14 +32,6 @@
+     disabled
+     oneshot
+ 
+-# start for WiFi MFG (TestMode)
+-service mfgloader /system/vendor/bin/hw/mfgloader
+-    class main
+-    disabled
+-    oneshot
+-
+ service macloader /system/vendor/bin/hw/macloader
+     class main
+-    oneshot
+-
+-# end of WiFi MFG (TestMode)
++    oneshot
+\ No newline at end of file

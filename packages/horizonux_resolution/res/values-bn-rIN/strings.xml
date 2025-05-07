@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">প্রয়োগ করুন</string>
-    <string name="screen_resolution_desc_summary">আপনি রেজোলিউশন পরিবর্তন করলে কিছু অ্যাপ বন্ধ হতে পারে।</string>
-    <string name="screen_resolution_fhd_description">উন্নত ভিজ্যুয়াল, মাঝারি ব্যাটারির ব্যবহার</string>
-    <string name="screen_resolution_hd_description">মৌলিক ভিজ্যুয়াল, সবচেয়ে কম ব্যাটারির ব্যবহার</string>
-    <string name="screen_resolution_title">স্ক্রিন রেজোলিউশন</string>
-    <string name="screen_resolution_wqhd_description">স্পষ্টতম ভিজ্যুয়াল, বেশিরভাগ ব্যাটারির ব্যবহার</string>
-</resources>

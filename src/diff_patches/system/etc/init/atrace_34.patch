@@ -1,0 +1,22 @@
+--- atrace_34.rc	2025-03-15 13:47:23.976294800 +0000
++++ atrace_34_edited.rc	2025-03-15 13:47:23.976294800 +0000
+@@ -538,7 +538,8 @@
+ 
+ 
+ on property:persist.debug.atrace.boottrace=1
+-    start boottrace
++    setprop persist.debug.atrace.boottrace 0
++    stop boottrace
+ 
+ # Run atrace with the categories written in a file
+ service boottrace /system/bin/atrace --async_start -f /data/misc/boottrace/categories
+@@ -548,7 +549,8 @@
+ 
+ on property:sys.boot_completed=1 && property:ro.boot.fastboot.boottrace=enabled
+     setprop debug.atrace.tags.enableflags 0
+-    setprop persist.traced.enable 1
++    setprop persist.traced.enable 0
++    setprop ro.boot.fastboot.boottrace disabled
+     write /sys/kernel/tracing/events/binder/binder_transaction/enable 0
+     write /sys/kernel/tracing/events/binder/binder_transaction_received/enable 0
+     write /sys/kernel/tracing/events/binder/binder_transaction_alloc_buf/enable 0

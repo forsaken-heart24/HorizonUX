@@ -1,0 +1,14 @@
+--- bootchecker_29.rc	2025-03-15 13:47:23.976294800 +0000
++++ bootchecker_29_edited.rc	2025-03-15 13:47:23.976294800 +0000
+@@ -1,11 +1,6 @@
+ # bootchecker rc file, 
+ # SA part, System team.
+ 
+-on early-init
+-    #Read ahead systemfonts and systemframework
+-    readahead systemfonts --fully
+-    readahead systemframework --fully
+-
+ service bootchecker systembinbootchecker
+     class late_start
+     user system

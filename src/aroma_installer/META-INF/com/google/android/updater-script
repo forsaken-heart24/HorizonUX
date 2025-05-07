@@ -1,0 +1,97 @@
+# to be handled by a bash script!
+
+# Oh, she's sweet but a psycho
+# A little bit psycho
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# Oh, she's hot but a psycho
+# So left but she's right, though
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# 
+# She'll make you curse, but she a blessin'
+# She'll rip your shirt within a second
+# You'll be coming back, back for seconds
+# With your plate, you just can't help it
+# 
+# No, no, you'll play along
+# Let her lead you on
+# You'll be saying, "No, no"
+# Then saying, "Yes, yes, yes"
+# 'Cause she messin' with your head
+# 
+# Oh, she's sweet but a psycho
+# A little bit psycho
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# Oh, she's hot but a psycho
+# So left but she's right, though
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# 
+# "Grab a cop gun" kinda crazy
+# She's poison but tasty
+# Yeah, people say, "Run, don't walk away"
+# 'Cause she's sweet but a psycho
+# A little bit psycho
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# 
+# See, someone said, "Don't drink her potions
+# She'll kiss your neck with no emotion
+# When she's mean, you know you love it
+# 'Cause she tastes so sweet, don't sugarcoat it"
+# 
+# No, no, you'll play along
+# Let her lead you on
+# You'll be saying, "No (no, no, no), no (no)"
+# Then saying, "Yes, yes, yes"
+# 'Cause she messin' with your head (hey)
+# 
+# Oh, she's sweet but a psycho
+# A little bit psycho
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# Oh, she's hot but a psycho
+# So left but she's right, though
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# 
+# "Grab a cop gun" kinda crazy
+# She's poison but tasty
+# Yeah, people say, "Run, don't walk away"
+# 'Cause she's sweet but a psycho
+# A little bit psycho
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# 
+# You're just like me, you're out your mind
+# I know it's strange, we're both the crazy kind
+# You're tellin' me that I'm insane
+# Boy, don't pretend that you don't love the pain
+# 
+# Oh, she's sweet but a psycho
+# A little bit psycho
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# Oh, she's hot but a psycho
+# So left but she's right, though
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+# 
+# "Grab a cop gun" kinda crazy
+# She's poison but tasty
+# Yeah, people say, "Run, don't walk away"
+# 'Cause she's sweet but a psycho
+# A little bit psycho
+# At night, she's screamin'
+# "I'm-ma-ma-ma out my mind"
+
+# setup the script environment and execute it
+export INSTALLER="$TMPDIR/install"
+mkdir -p "$INSTALLER" || exit 1
+for file in "scripts/installer.sh" scripts/util_functions.sh; do
+    unzip -o "$3" "$file" -d "${INSTALLER}/"; || exit 1
+done
+
+exec sh "$INSTALLER/scripts/installer.sh" "/dev/null" "$2" "$3"

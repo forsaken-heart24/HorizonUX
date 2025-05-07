@@ -1,0 +1,50 @@
+ini_set("force_colorspace", "rgba");
+ini_set("rom_name",             "HorizonUX");
+ini_set("rom_version",          "Birds");
+ini_set("rom_author",           "Luna");
+ini_set("rom_device",           "Galaxy XXX");
+ini_set("rom_date",             "dd-mm-yyyy");
+splash(2000, "a1");
+fontresload( "0", "ttf/GoogleSansRegular.ttf", "11" );
+fontresload( "1", "ttf/GoogleSansRegular.ttf", "14" );
+theme("horizon");
+viewbox(
+    "Example Startup header",
+    "This is Aroma Installer: "+
+    "<b><#selectbg_g>For HorizonUX</#></b>."+
+    "It will help you to configure your Rom installation.\n\n"+
+    "Press <b>Next</b> to continue...",
+	"@install"
+);
+agreebox(
+    "Example Terms &amp; Conditions Header",
+    "Please Read The Terms Of Use Carefully Below.",
+    "@example_terms_box_icon_filename",
+    resread("tc.txt"),
+    "I Agree with this Terms and Conditions",
+    "<@center>You must accept the terms and conditions</@>"
+);
+textbox(
+    "Example Changelogs Header",
+    "ROM Changelog",
+    "@example_changelog_icon_filename",
+    resread("changelogs.txt")
+);
+checkbox(
+    "Example Checkbox Header",
+    "Selected Apps and Services will be installed this is 1st list",
+    "@example_checkbox_icon_filename",
+    "example.prop",
+    "Example Selection Box Title:",                "",                                             2,
+    "Option 1",                                    "Explanatory for option 1",                     0,
+    "Option 2",                                    "Explanatory for option 2",                     0,
+	"Option 3",                                    "Explanatory for option 3",                     0
+);
+setvar("retstatus",
+  	install(
+      	"Example Installer Header",
+      	"Aroma is flashing the rom.\n"+
+      	"@example_installer_icon_filename",
+      	"Installation finished!"
+  	)
+);

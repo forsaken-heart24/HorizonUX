@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">IDS_SA_BUTTON_APPLY</string>
-    <string name="screen_resolution_desc_summary">DREAM_ST_SBODY_SELECT_A_RESOLUTION_SOME_CURRENTLY_RUNNING_APPS_MAY_CLOSE_WHEN_YOU_CHANGE_THE_RESOLUTION</string>
-    <string name="screen_resolution_title">IDS_ST_MBODY_SCREEN_RESOLUTION</string>
-</resources>

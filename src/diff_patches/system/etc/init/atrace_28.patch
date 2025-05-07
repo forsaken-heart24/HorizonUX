@@ -1,0 +1,12 @@
+--- atrace_28.rc	2025-04-29 15:02:59.000004835 +0000
++++ atrace_28_edited.rc	2025-04-29 15:02:59.000004835 +0000
+@@ -126,7 +126,8 @@
+     chmod 0666 /sys/kernel/tracing/trace
+ 
+ on property:persist.debug.atrace.boottrace=1
+-    start boottrace
++    setprop persist.debug.atrace.boottrace 0
++    stop boottrace
+ 
+ # Run atrace with the categories written in a file
+ service boottrace /system/bin/atrace --async_start -f /data/misc/boottrace/categories

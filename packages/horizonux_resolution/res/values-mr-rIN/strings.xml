@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">लागू करा</string>
-    <string name="screen_resolution_desc_summary">आपण रिझॉल्यूशन बदलत असताना काही अनुप्रयोग बंद होऊ शकतात.</string>
-    <string name="screen_resolution_fhd_description">सुधारित व्हिज्युअल, बॅटरीचा मध्यम वापर</string>
-    <string name="screen_resolution_hd_description">मूलभूत व्हिज्युअल, सर्वात कमी बॅटरी वापर</string>
-    <string name="screen_resolution_title">स्‍क्रीन रिझोल्युशन</string>
-    <string name="screen_resolution_wqhd_description">तीव्र व्हिज्युअल, बॅटरीचा सर्वाधिक वापर</string>
-</resources>

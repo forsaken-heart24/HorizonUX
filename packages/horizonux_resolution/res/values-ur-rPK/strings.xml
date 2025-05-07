@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">منطبق کریں</string>
-    <string name="screen_resolution_desc_summary">آپ کے ذریعے جزیات کاری تبدیل کرنے پر کچھ ایپلیکیشنز بند ہوسکتے ہیں۔</string>
-    <string name="screen_resolution_fhd_description">بہتر ویژوئلز، بیٹری کا معتدل استعمال</string>
-    <string name="screen_resolution_hd_description">بنیادی ویژوئلز، بیٹری کا کمتر استعمال</string>
-    <string name="screen_resolution_title">اسکرین کی جزیات کاری</string>
-    <string name="screen_resolution_wqhd_description">بہترین ویژوئلز، بیٹری کا سب سے زیادہ استعمال</string>
-</resources>

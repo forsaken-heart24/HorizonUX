@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">Aplicar</string>
-    <string name="screen_resolution_desc_summary">É posible que algunhas aplicacións se pechen cando cambies a resolución.</string>
-    <string name="screen_resolution_fhd_description">Elementos visuais mellorados, uso moderado da batería</string>
-    <string name="screen_resolution_hd_description">Elementos visuais básicos, uso mínimo da batería</string>
-    <string name="screen_resolution_title">Resolución da pantalla</string>
-    <string name="screen_resolution_wqhd_description">Elementos visuais de alta calidade, uso máximo da batería</string>
-</resources>

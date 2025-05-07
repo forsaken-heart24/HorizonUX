@@ -1,0 +1,3 @@
+ro.config.pageboost.io_prefetch.enabled=false
+ro.config.pageboost.io_prefetch.level=2
+ro.frp.pst=""

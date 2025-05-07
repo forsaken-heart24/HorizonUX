@@ -1,0 +1,23 @@
+--- bootchecker_34.rc	2025-03-15 13:47:23.976294800 +0000
++++ bootchecker_34_patched.rc	2025-03-15 13:47:23.976294800 +0000
+@@ -1,13 +1,4 @@
+ # bootchecker rc file, 
+-on early-init
+-    readahead /system/framework --fully
+-    readahead /system/etc/sysconfig --fully
+-    readahead /vendor/etc/sysconfig --fully
+-    readahead /product/etc/sysconfig --fully
+-    readahead /system/etc/permissions --fully
+-    readahead /vendor/etc/permissions --fully
+-    readahead /product/etc/permissions --fully
+-
+ service bootchecker /system/bin/bootchecker
+     class late_start
+     user system
+@@ -26,4 +17,4 @@
+     oneshot
+ 
+ on property:dev.bootcomplete=1
+-    start bootchecker-bootc
++    start bootchecker-bootc
+\ No newline at end of file

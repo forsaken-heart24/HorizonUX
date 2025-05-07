@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">వర్తించు</string>
-    <string name="screen_resolution_desc_summary">మీరు రిజల్యూషన్‌ని మార్చినప్పుడు కొన్ని అప్లికేషన్‌లు మూసివేయబడవచ్చు.</string>
-    <string name="screen_resolution_fhd_description">మెరుగైన విజువల్‌లు, మోస్తరుగా బ్యాటరీని ఉపయోగిస్తుంది</string>
-    <string name="screen_resolution_hd_description">ప్రాథమిక విజువల్‌లు, తక్కువ బ్యాటరీని ఉపయోగిస్తుంది</string>
-    <string name="screen_resolution_title">స్క్రీన్ రిజల్యూషన్</string>
-    <string name="screen_resolution_wqhd_description">పదునైన విజువల్‌లు, ఎక్కువ బ్యాటరీని ఉపయోగిస్తుంది</string>
-</resources>

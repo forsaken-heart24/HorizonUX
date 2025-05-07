@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">Cuir i bhfeidhm</string>
-    <string name="screen_resolution_desc_summary">Is féidir go ndúnfar roinnt feidhmchlár tar éis duit an taifeach a athrú.</string>
-    <string name="screen_resolution_fhd_description">Íomhánna feabhsaithe, meánúsáid ceallra</string>
-    <string name="screen_resolution_hd_description">Íomhánna bunúsacha, íosúsáid ceallra</string>
-    <string name="screen_resolution_title">Taifeach an scáileáin</string>
-    <string name="screen_resolution_wqhd_description">Íomhánna is grinne, úsáid ceallra is mó</string>
-</resources>

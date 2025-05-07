@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="common_apply">Оруулах</string>
-    <string name="screen_resolution_desc_summary">Та нягтралыг өөрчлөх үед зарим хэрэглүүрүүд хаагдаж магадгүй.</string>
-    <string name="screen_resolution_fhd_description">Сайжруулсан визуалууд, дунд зэргийн зайн хэрэглээ</string>
-    <string name="screen_resolution_hd_description">Үндсэн визуал, зайн хамгийн бага хэрэглээ</string>
-    <string name="screen_resolution_title">Дэлгэцийн нягтрал</string>
-    <string name="screen_resolution_wqhd_description">Хамгийн хурц визуалууд, ихэнх зайн хэрэглээ</string>
-</resources>

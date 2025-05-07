@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HorizonStub</string>
+    <string name="message_not_supported">"No tienes una aplicación que pueda manejar esta tarea"</string>
+    <string name="stub_name">Ninguno</string>
+</resources>
