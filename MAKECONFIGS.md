@@ -90,6 +90,7 @@
 - **RECOVERY_IMAGE_PATH**: To be filled by the builder if they want to patch their device's recovery.
 - **TARGET_INCLUDE_HORIZONUX_ELLEN**: Ellen, a script that spoofs and does some misc jobs when the device is booting. (kinda like a "tweaker" but it doesn't do anything to performance)
 - **TARGET_BUILD_MAKE_DEODEXED_ROM**: Deodex'es the rom. Learn about deodex'ing here: <a href="https://xdaforums.com/t/complete-guide-what-is-odex-and-deodex-rom.2200349">What is ODEX and DEODEX in Custom ROMS</a>
+- **TARGET_BUILD_FIX_ANDROID_SYSTEM_DEVICE_WARNING**: Fixes that one annoying warning from Android System after boot.
 
 ---
 

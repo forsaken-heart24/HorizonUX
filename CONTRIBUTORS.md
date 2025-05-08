@@ -2,52 +2,40 @@
   <img src="https://github.com/selimdoyranli/selimdoyranli/blob/master/preview.gif" width="400" alt="Project HorizonUX Contributors" />
 </p>
 
-# 🚀 HorizonUX Contributors Squad 💖  
+# HorizonUX Contributors  
 
-Shoutout to the **real MVPs** who made this project pop! Without you, this would just be a vibe with no substance. **Y’all are the backbone of HorizonUX!** 💯🙌  
-
-### 🌟 **Hall of Fame**  
-
-- [Salvo](https://github.com/salvogiangri)
-- [Royna](https://github.com/Royna2544)
-- [Yanndroid](https://github.com/Yanndroid)
-- [Ratcoded](https://github.com/ratcoded)
-- [Furiousdroid](https://github.com/furiousdroid)
-- [Vedraj](https://github.com/gawasvedraj)
-- [Razvan](https://github.com/corsicanu) 
-- [yzyhk904](https://github.com/yzyhk904)
-- [Nobletaro](https://t.me/nobletaro)
-- [Ian Macdonald](https://github.com/ianmacd)
-- [BrotherBoard](https://github.com/BrotherBoard)
-- [Meizishandev](https://github.com/meizishandev)
-- [Ravindu Deshan](https://github.com/ravindu644)
-- [Pranav](https://github.com/Pranav-Game-Dev)
-- [Selimdoyranli](https://github.com/selimdoyranli)
-- [Saadelasfur](https://github.com/saadelasfur)
-- [TBM13](https://github.com/TBM13)
-- [ZG089](https://github.com/ZG089)
-- [Winner](https://github.com/Winner3157)
-- [Fede2782](https://github.com/Fede2782)
-- [Amarullz](https://github.com/amarullz)
-- [Ley](https://t.me/leynox64)
----
-
-## 🔥 Let’s Make This Project Lit  
-
-### **💡 What’s This About?**  
-HorizonUX is all about **personalizing Samsung One UI** and making the UX **smoother, better, and truly yours.**  
-
-### **🚀 Wanna Contribute? Join the Fun!**  
-Pull up and help make this project even doper! Here’s how:  
-1️⃣ **Fork the repo**  
-2️⃣ **Make your changes** (add, tweak, remix!)  
-3️⃣ **Submit a pull request**  
-
-**Your contributions keep this project alive!** 💪✨  
-
-### **📜 License**  
-This project is licensed under the **GNU GENERAL PUBLIC LICENSE (v3)**, so you can **vibe freely and remix responsibly!** 🔓🎶  
+A heartfelt thank you to everyone who has contributed to this project. Your efforts have been instrumental in shaping HorizonUX into what it is today.  
 
 ---
 
-**Thanks for being part of this journey! Y’all are absolute legends.** 💖🚀  
+## Contributors  
+
+- [Salvo](https://github.com/salvogiangri)  
+- [Royna](https://github.com/Royna2544)  
+- [Yanndroid](https://github.com/Yanndroid)  
+- [Ratcoded](https://github.com/ratcoded)  
+- [Furiousdroid](https://github.com/furiousdroid)  
+- [Vedraj](https://github.com/gawasvedraj)  
+- [Razvan](https://github.com/corsicanu)  
+- [yzyhk904](https://github.com/yzyhk904)  
+- [Nobletaro](https://t.me/nobletaro)  
+- [Ian Macdonald](https://github.com/ianmacd)  
+- [BrotherBoard](https://github.com/BrotherBoard)  
+- [Meizishandev](https://github.com/meizishandev)  
+- [Ravindu Deshan](https://github.com/ravindu644)  
+- [Pranav](https://github.com/Pranav-Game-Dev)  
+- [Selimdoyranli](https://github.com/selimdoyranli)  
+- [Saadelasfur](https://github.com/saadelasfur)  
+- [TBM13](https://github.com/TBM13)  
+- [ZG089](https://github.com/ZG089)  
+- [Winner](https://github.com/Winner3157)  
+- [Fede2782](https://github.com/Fede2782)  
+- [Amarullz](https://github.com/amarullz)  
+- [Ley](https://t.me/leynox64)  
+- [Alex](https://github.com/AlexFurina)
+
+---
+
+## About HorizonUX  
+
+HorizonUX is a project focused on enhancing and personalizing Samsung One UI. It aims to provide a smoother and more tailored user experience.  

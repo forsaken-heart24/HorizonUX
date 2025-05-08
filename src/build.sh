@@ -97,12 +97,12 @@ if [[ -n "$argOne" && "$(uname -m)" == "x86_64" ]]; then
 				# unzip -o test.zip nos/README_Kernel.txt -d nos | grep inflating | awk '{print $2}'
 				console_print "Trying to extract $(unzip -l $argOne | grep AP_ | awk '{print $4}') from the archive...."
 				extractedAPFilePath=$(unzip -o $argOne $(unzip -l $argOne | grep AP_ | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
-				[ -z "${extractedAPFilePath}" ] && abort "Failed to extract AP from $argOne"
+				[ -z "${extractedAPFilePath}" ] && abort "Failed to extract AP from $argOne" "build.sh"
 				debugPrint "Processing AP tar file from the given firmware package...."
-				tar -tf "$extractedAPFilePath" | grep -qE "system|super|vendor|optics" || abort "The $extractedAPFilePath doesn't have system, vendor, optics or even super. Try again with a samfw.com dump!"
+				tar -tf "$extractedAPFilePath" | grep -qE "system|super|vendor|optics" || abort "The $extractedAPFilePath doesn't have system, vendor, optics or even super. Try again with a samfw.com dump!" "build.sh"
 				console_print "Trying to extract $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') from the archive...."
 				extractedHomeCSCFilePath=$(unzip -o $argOne $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
-				[ -z "${extractedHomeCSCFilePath}" ] && abort "Failed to extract HOME_CSC from $argOne"
+				[ -z "${extractedHomeCSCFilePath}" ] && abort "Failed to extract HOME_CSC from $argOne" "build.sh"
 			fi
 			# ight, so, basically even if we have both of these on our firmware, wwe dont need to worry cuz ive made sure that CSC features sets to omc/*/conf/cscfeature.xml
 			# like product/omc/*/conf/cscfeature.xml and optics/omc/*/conf/cscfeature.xml *ONLY* if that XML file was found!
@@ -122,11 +122,11 @@ if [[ -n "$argOne" && "$(uname -m)" == "x86_64" ]]; then
 				if [ "${androidOS}" == "super" ]; then
 					tar -tf "$extractedAPFilePath" | grep -q "super.img.lz4" || continue
 					console_print "Extracting super..."
-					tar -C "./local_build/etc/extract/" -xf "$extractedAPFilePath" "super.img.lz4" &>> ${thisConsoleTempLogFile} || abort "Failed to extract super.img.lz4 from the tar file."
-					logInterpreter "Trying to extract super.img from an LZ4 archive..." "lz4 -d ./local_build/etc/extract/super.img.lz4 ./local_build/etc/extract/" || abort "Failed to extract super image from an lz4 archive."
+					tar -C "./local_build/etc/extract/" -xf "$extractedAPFilePath" "super.img.lz4" &>> ${thisConsoleTempLogFile} || abort "Failed to extract super.img.lz4 from the tar file." "build.sh"
+					logInterpreter "Trying to extract super.img from an LZ4 archive..." "lz4 -d ./local_build/etc/extract/super.img.lz4 ./local_build/etc/extract/" || abort "Failed to extract super image from an lz4 archive." "build.sh"
 					rm -rf ./local_build/etc/extract/super.img.lz4
-					lpdump "./local_build/etc/extract/super.img" > ./local_build/etc/dumpOfTheSuperBlock &>>$thisConsoleTempLogFile || abort "Failed to dump metadata from super.img"
-					lpunpack "./local_build/etc/extract/super.img" "./local_build/etc/extract/super_extract/" &>>$thisConsoleTempLogFile || abort "Failed to unpack super.img"
+					lpdump "./local_build/etc/extract/super.img" > ./local_build/etc/dumpOfTheSuperBlock &>>$thisConsoleTempLogFile || abort "Failed to dump metadata from super.img" "build.sh"
+					lpunpack "./local_build/etc/extract/super.img" "./local_build/etc/extract/super_extract/" &>>$thisConsoleTempLogFile || abort "Failed to unpack super.img" "build.sh"
 					for COMMON_FIRMWARE_BLOCKS in ./local_build/etc/extract/super_extract/*.img; do 
 						echo "$(basename "${COMMON_FIRMWARE_BLOCKS}" .img)" | grep -qE "system|vendor|product" || continue
 						mountPath="./local_build/etc/imageSetup/$(basename ${COMMON_FIRMWARE_BLOCKS} .img)"
@@ -134,8 +134,8 @@ if [[ -n "$argOne" && "$(uname -m)" == "x86_64" ]]; then
 					done
 				else
 					console_print "Extracting $androidOS..."
-					tar -tf "$extractedAPFilePath" | grep -q "${androidOS}.img.lz4" && tar -C ./local_build/etc/extract -xf $extractedAPFilePath ${androidOS}.img.lz4 &>> ${thisConsoleTempLogFile} || abort "Failed to extract $androidOS from an tar file."
-					logInterpreter "Trying to extract ${androidOS}.img from an LZ4 archive..." "lz4 -d ./local_build/etc/extract/${androidOS}.img.lz4 ./local_build/etc/extract/${androidOS}.img" || abort "Failed to extract $androidOS from an lz4 archive."
+					tar -tf "$extractedAPFilePath" | grep -q "${androidOS}.img.lz4" && tar -C ./local_build/etc/extract -xf $extractedAPFilePath ${androidOS}.img.lz4 &>> ${thisConsoleTempLogFile} || abort "Failed to extract $androidOS from an tar file." "build.sh"
+					logInterpreter "Trying to extract ${androidOS}.img from an LZ4 archive..." "lz4 -d ./local_build/etc/extract/${androidOS}.img.lz4 ./local_build/etc/extract/${androidOS}.img" || abort "Failed to extract $androidOS from an lz4 archive." "build.sh"
 					rm -rf ./local_build/etc/extract/${androidOS}.img.lz4
 					# TODO: convert images into raw if not already:
 					logInterpreter "Converting $androidOS from sparse to raw image factor...." "simg2img ./local_build/etc/extract/${androidOS}.img ./local_build/etc/extract/${androidOS}_raw.img"
@@ -178,6 +178,7 @@ HORIZON_FALLBACK_OVERLAY_PATH="${HORIZON_VENDOR_OVERLAY}"
 # fix: "grep: /build.prop: No such file or directory" moved to build.sh to fix that error.
 BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
+BUILD_TARGET_VENDOR_SDK_VERSION="$(grep_prop "ro.vndk.version" "${HORIZON_VENDOR_PROPERTY_FILE}")"
 BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 
 # device specific customization:
@@ -234,7 +235,7 @@ fi
 
 if [ "$BUILD_TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES" == "true" ]; then
 	console_print "Patching bluetooth...."
-	[ -f "$SYSTEM_DIR/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found"
+	[ -f "$SYSTEM_DIR/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found" "build.sh"
 	magiskboot hexpatch "$SYSTEM_DIR/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052" || warns "Failed to patch the bluetooth library, please try again!" "BLUETOOTH_PATCH_FAIL"
 fi
 
@@ -403,14 +404,14 @@ fi
 # custom wallpaper-res resources_info.json generator.
 if [ "$CUSTOM_WALLPAPER_RES_JSON_GENERATOR" == "true" ]; then
 	debugPrint "build.sh: Java path: $(command -v java)"
-	command -v java &>/dev/null || abort "\e[1;36m - Please install openjdk or any java toolchain to continue.\e[0;37m"
+	command -v java &>/dev/null || abort "\e[1;36m - Please install openjdk or any java toolchain to continue.\e[0;37m" "build.sh"
 	special_index=00
 	the_homescreen_wallpaper_has_been_set=false
 	the_lockscreen_wallpaper_has_been_set=false
 	printf "\e[1;36m - How many wallpapers do you need to add to the Wallpaper App?\e[0;37m "
 	read wallpaper_count
 	debugPrint "build.sh: User requested ${wallpaper_count} metadata to generate for wallpaper-res"
-	[[ "$wallpaper_count" =~ ^[0-9]+$ ]] && abort "\e[0;31m - Invalid input. Please enter a valid number. Exiting...\e[0;37m"
+	[[ "$wallpaper_count" =~ ^[0-9]+$ ]] && abort "\e[0;31m - Invalid input. Please enter a valid number. Exiting...\e[0;37m" "build.sh"
 	clear
 	rm -rf resources_info.json
 	echo -e "{\n\t\"version\": \"0.0.1\",\n\t\"phone\": [" > resources_info.json
@@ -521,7 +522,7 @@ if [ "$DISABLE_DYNAMIC_RANGE_COMPRESSION" == "true" ]; then
 		sed -i 's/speaker_drc_enabled="true"/speaker_drc_enabled="false"/g' "$VENDOR_DIR/etc/audio_policy_configuration.xml"
 		debugPrint "build.sh: Disabled speaker DRC in audio_policy_configuration.xml"
 	else
-		abort "Error: audio_policy_configuration.xml not found!"
+		abort "Error: audio_policy_configuration.xml not found!" "build.sh"
 	fi
 fi
 
@@ -689,11 +690,11 @@ fi
 # init - ellen + bro board | Courtesy: @BrotherBoard
 if [[ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" || "${TARGET_INCLUDE_HORIZON_TOUCH_FIX}" == "true" ]]; then
 	make loader &>>$thisConsoleTempLogFile
-	mv ./local_build/binaries/bashScriptLoader $SYSTEM_DIR/bin/ || abort "Failed to move bashScriptLoader to $SYSTEM_DIR/bin/"
+	mv ./local_build/binaries/bashScriptLoader $SYSTEM_DIR/bin/ || abort "Failed to move bashScriptLoader to $SYSTEM_DIR/bin/" "build.sh"
 	if [ "${TARGET_INCLUDE_HORIZONUX_ELLEN}" == "true" ]; then
 		console_print "HorizonUX Ellen is enabled, please note that this feature is experimental and may cause bootloops, if you face any bootloops, please dm me with the logs."
 		setprop --system "persist.horizonux.ellen" "available"
-		cp -af ./src/horizon/rom_tweaker_script/horizonux_ellen.sh $SYSTEM_DIR/bin/ || abort "Failed to move horizonux_ellen.sh to $SYSTEM_DIR/bin/"
+		cp -af ./src/horizon/rom_tweaker_script/horizonux_ellen.sh $SYSTEM_DIR/bin/ || abort "Failed to move horizonux_ellen.sh to $SYSTEM_DIR/bin/" "build.sh"
 	fi
 	if [ "${TARGET_INCLUDE_HORIZON_TOUCH_FIX}" == "true" ]; then
 		console_print "Adding brotherboard's GSI touch fix..."
@@ -717,6 +718,12 @@ fi
 if [[ "${TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES}" == "true" && "${BUILD_TARGET_SDK_VERSION}" == "35" ]]; then
 	console_print "Enabling Voice Memo on Samsung Notes..."
 	add_float_xml_values "SEC_FLOATING_FEATURE_VOICERECORDER_CONFIG_DEF_MODE" "normal,interview,voicememo"
+fi
+
+# Use xmlstarlet to update the version inside vendor-ndk
+if [ "${TARGET_BUILD_FIX_ANDROID_SYSTEM_DEVICE_WARNING}" == "true" ]; then
+	console_print "Fixing android warning after boot. Thanks to @AlexFurina (github)"
+	xmlstarlet ed -L -u "/manifest/vendor-ndk/version" -v "${BUILD_TARGET_VENDOR_SDK_VERSION}" "${SYSTEM_EXT_DIR}/etc/vintf/manifest.xml" || abort "Failed to fix android warning, please try again" "build.sh"
 fi
 
 if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && "$BRINGUP_CN_SMARTMANAGER_DEVICE" == "true" ]]; then
