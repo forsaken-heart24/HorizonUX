@@ -733,6 +733,7 @@ if [ "${TARGET_BUILD_ADD_SCREENRESOLUTION_CHANGER}" == "true" ]; then
 		. ${SCRIPTS[1]}
 		rm -rf $SYSTEM_DIR/priv-app/screenResolution
 		mkdir -p $SYSTEM_DIR/priv-app/screenResolution
+		tar -C "./src/horizon/packages/" -xf "${DECODEDAPKTOOLPATHS[6]}.tar"
 		build_and_sign "${DECODEDAPKTOOLPATHS[6]}" "$SYSTEM_DIR/priv-app/screenResolution"
 	else
 		console_print "Your display resolution is not valid, skipping the building process..."
