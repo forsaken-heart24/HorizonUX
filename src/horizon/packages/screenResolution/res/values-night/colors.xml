@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_color">#ff000000</color>
+    <color name="button_ripple_color">#ff515151</color>
+    <color name="contained_button_default_text">#fffafafa</color>
+    <color name="divider_color">#2afafafa</color>
+    <color name="item_background_color">#ff171717</color>
+    <color name="ota_changelog_text_color">@color/sesl_white</color>
+    <color name="sec_display_resolution_help_desc_text_color">#fffafafa</color>
+    <color name="sesl_ripple_color">#33ffffff</color>
+</resources>
