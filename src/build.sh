@@ -56,16 +56,19 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 done
 
 # TODO: re-run the script with root permissions to manage mounted images
-if [[ $(id -u) == 0 ]]; then
-	debugPrint "build.sh: Script ran once again with root privilages."
-else
-	if string_format -l "$(file "$argOne")" | grep -q zip || echo "$argOne" | grep -qE "samfw|samfwpremium"; then
-		console_print "You will be prompted to put your sudo password to mount stuff in ./local_build/etc/imageSetup"
-		console_print "if you are worried, you can always check the script before entering the sudo password."
-		sudo "$0" "$argOne" "$BUILD_USERNAME"
-		debugPrint "build.sh: Relaunching the script with root privilages..."
-	fi
-fi
+case "$(id -u)" in
+	0)
+		debugPrint "build.sh: Script ran once again with root privilages."
+	;;
+	*)
+		if string_format -l "$(file "${argOne}")" | grep -q zip || echo "$argOne" | grep -qE "samfw|samfwpremium"; then
+			console_print "You will be prompted to put your sudo password to mount stuff in ./local_build/etc/imageSetup"
+			console_print "if you are worried, you can always check the script before entering the sudo password."
+			debugPrint "build.sh: Relaunching the script with root privilages..."
+			sudo "$0" "$argOne" "$BUILD_USERNAME"
+		fi
+	;;
+esac
 
 # bruh
 clear
