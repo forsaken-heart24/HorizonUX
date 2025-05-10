@@ -33,6 +33,7 @@ A heartfelt thank you to everyone who has contributed to this project. Your effo
 - [Amarullz](https://github.com/amarullz)  
 - [Ley](https://t.me/leynox64)  
 - [Alex](https://github.com/AlexFurina) 
+- [Yann](https://github.com/Yanndroid) 
 
 ---
 

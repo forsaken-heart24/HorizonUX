@@ -65,6 +65,7 @@
 - **TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN**: Brings Game Launcher into the homescreen.
 - **TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS**: The battery health level thing, like the one from iPhone. Thnx to UN1CA!
 - **BRINGUP_CN_SMARTMANAGER_DEVICE**: Brings Chinese version of Smartmanager and Device Care, thnx @saadelasfur (Load Chinese applications with your own risk!) [Only works on UI6 and UI7]
+- **TARGET_BUILD_ADD_SCREENRESOLUTION_CHANGER**: Adds screen resolution switcher to devices with 2340x1080 resolution. Thanks to @Yanndroid for their <a href="https://github.com/Yanndroid/ScreenResolution">Project on GitHub</a>
 
 ## Language & Locale
 - **SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD**: Sets default language and region for the first boot, fill these variables to switch to your language **NEW_DEFAULT_LANGUAGE_ON_PRODUCT** **NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT**
