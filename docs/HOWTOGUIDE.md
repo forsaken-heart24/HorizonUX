@@ -11,9 +11,9 @@
 Ensure the following dependencies are installed before proceeding:
 
 - **Java**
-- **Python** (used for patching recovery)
+- **Python**
 - **aria2c**
-- **Android NDK** (used for building programs)
+- **Android NDK**
 
 **Warning:** Missing any of these dependencies may result in an unbootable ROM.
 
@@ -25,15 +25,15 @@ Ensure the following dependencies are installed before proceeding:
 
 - Open the file **`src/makeconfigs.prop`** in a text editor.
 - Adjust the variables to suit your preferences.
-- [Need help? Click here for detailed guidance on `makeconfigs.prop`.](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/MAKECONFIGS.md)
+- [Need help? Click here for detailed guidance on `makeconfigs.prop`.](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/docs/MAKECONFIGS.md)
 
 ---
 
 ### 2️⃣ Configure `src/genericTargetPropeties.conf`
 
-- If your device is not officially supported ([Check supported devices here](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/SUPPORTED_DEVICES.md)), open **`src/genericTargetPropeties.conf`** and make the necessary adjustments.
+- If your device is not officially supported ([Check supported devices here](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/docs/SUPPORTED_DEVICES.md)), open **`src/genericTargetPropeties.conf`** and make the necessary adjustments.
 - If your device is officially supported, no changes are required.
-- [Need help? Click here for detailed guidance on `genericTargetPropeties.conf`.](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/blob/main/TARGETPROPERTIES.md)
+- [Need help? Click here for detailed guidance on `genericTargetPropeties.conf`.](https://github.com/forsaken-heart24/HorizonXOneUI-HorizonUX/docs/TARGETPROPERTIES.md)
 
 ---
 

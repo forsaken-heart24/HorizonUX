@@ -36,7 +36,3 @@ A heartfelt thank you to everyone who has contributed to this project. Your effo
 - [Yann](https://github.com/Yanndroid) 
 
 ---
-
-## About HorizonUX  
-
-HorizonUX is a project focused on enhancing and personalizing Samsung One UI. It aims to provide a smoother and more tailored user experience.  
