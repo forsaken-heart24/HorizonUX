@@ -204,7 +204,7 @@ function add_float_xml_values() {
     esac
 
     #TODO:
-    debugPrint "add_float_xml_values(): Floating feature path: ${BUILD_TARGET_SDK_VERSION}"
+    [ "$loggedFloatingFeaturePATH" == "no" ] && { debugPrint "add_float_xml_values(): Floating feature path: ${BUILD_TARGET_FLOATING_FEATURE_PATH}"; loggedFloatingFeaturePATH="yes"; }
 
     # Check if the feature_code already exists in the XML file
     if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == 0 ]; then
@@ -223,8 +223,7 @@ function add_float_xml_values() {
 }
 
 function add_csc_xml_values() {
-    local feature_code
-    feature_code="$1"
+    local feature_code="$1"
     local feature_code_value="$2"
     for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
         if [ -f "$EXPECTED_CSC_FEATURE_XML_PATH" ]; then

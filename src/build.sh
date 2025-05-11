@@ -25,6 +25,7 @@ TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
 [ ! -f "${thisConsoleTempLogFile}" ] && touch $thisConsoleTempLogFile
 argOne="$1"
+loggedFloatingFeaturePATH="no"
 
 # Trap the SIGINT signal (Ctrl+C) and call handle_sigint when it's caught
 trap 'abort "Aborting the build....."' SIGINT
@@ -51,8 +52,9 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 		system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
 		system/etc/init/ tmp/hux/ etc/extract/super_extract etc/imageSetup/product etc/imageSetup/system etc/imageSetup/vendor etc/imageSetup/optics etc/downloadedContents \
 		etc/buildedContents; do
-	mkdir -p "./local_build/$i"
-	debugPrint "build.sh: Making ./local_build/${i} directory.."
+			[ -f "./local_build/${i}" ] || continue
+			mkdir -p "./local_build/$i"
+			debugPrint "build.sh: Making ./local_build/${i} directory.."
 done
 
 # TODO: re-run the script with root permissions to manage mounted images
@@ -178,7 +180,7 @@ if [ -n "$argOne" ]; then
 	fi
 else
 	# TODO: Check system,vendor before modding stuffs:
-	[[ ! -f "${SYSTEM_DIR}" || ! -f "${VENDOR_DIR}" ]] && abort "System or vendor partition is not a valid partition!" "build.sh"
+	[[ -f "${SYSTEM_DIR}/build.prop" && -f "${VENDOR_DIR}/build.prop" ]] || abort "System or vendor partition is not a valid partition!" "build.sh"
 fi
 
 # Locate build.prop files
@@ -201,6 +203,7 @@ BUILD_TARGET_ANDROID_VERSION="$(grep_prop "ro.build.version.release" "${HORIZON_
 BUILD_TARGET_SDK_VERSION="$(grep_prop "ro.build.version.sdk" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 BUILD_TARGET_VENDOR_SDK_VERSION="$(grep_prop "ro.vndk.version" "${HORIZON_VENDOR_PROPERTY_FILE}")"
 BUILD_TARGET_MODEL="$(grep_prop "ro.product.system.model" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
+[ -z "${TARGET_BUILD_PRODUCT_NAME}" ] && TARGET_BUILD_PRODUCT_NAME="$(grep_prop "ro.product.system.device" "${HORIZON_SYSTEM_PROPERTY_FILE}")"
 
 # device specific customization:
 if [ -d "./target/${TARGET_BUILD_PRODUCT_NAME}" ]; then
