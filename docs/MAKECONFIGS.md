@@ -13,10 +13,6 @@
 - **OPTICS_DIR**: Put your extracted optics folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
 - **TARGET_BUILD_PRODUCT_NAME**: Ensure this matches `ro.product.system.device` (from `/system/build.prop`). This variable **must** be filled by the builder. Fallback to `genericTargetProperties.conf` if device blobs are missing.
 
-## Device Name & Setup
-- **TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES**: Enables custom welcome message during setup.
-- **CUSTOM_SETUP_WELCOME_MESSAGE**: Fill-up your custom setup wizard welcome and goodbye texts, requires `TARGET_INCLUDE_CUSTOM_SETUP_WELCOME_MESSAGES` to be set to true
-
 ## Debugging & Performance
 - **TARGET_BUILD_IS_FOR_DEBUGGING**: Enables verbose logging for debugging, which impacts performance.
 - **TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING**: Tries to boost performance at the cost of overheating and battery life.

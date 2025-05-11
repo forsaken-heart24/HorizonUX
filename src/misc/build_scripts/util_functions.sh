@@ -70,6 +70,16 @@ function setprop() {
         propVariableName="$3"
         propValue="$4"
         propFile=$(if [ -f "$2" ]; then echo "$2"; else echo "$HORIZON_VENDOR_PROPERTY_FILE"; fi)
+    elif string_format --lower "$1" | grep -q "deleteifExpectationsMet"; then
+        propFile="$2"
+        propVariableName="$3"
+        propValue="$4"
+        [ "$(grep_prop "$propVariableName" "${propFile}")" == "${propValue}" ] && sed -i "/^${propVariableName}=/d" "$propFile"
+    elif string_format --lower "$1" | grep -q "force-delete"; then
+        propFile="$2"
+        propVariableName="$3"
+        propValue="$4"
+        sed -i "/^${propVariableName}=/d" "$propFile"
     fi
     awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
     mv ${propFile}.tmp ${propFile}
@@ -122,12 +132,6 @@ function default_language_configuration() {
         debugPrint "default_language_configuration(): Skipping changing default language, reason: \"SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD\" set to ${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD} instead of true"
         return 0;
     fi
-}
-
-function custom_setup_finished_messsage() {
-    [ -z "${CUSTOM_SETUP_WELCOME_MESSAGE}" ] && CUSTOM_SETUP_WELCOME_MESSAGE="Welcome to HorizonUX"
-    [ "${CUSTOM_SETUP_WELCOME_MESSAGE}" == "xxx" ] && CUSTOM_SETUP_WELCOME_MESSAGE="Welcome to HorizonUX"
-    sed -i "s|<string name=\"outro_title\">.*</string>|<string name=\"outro_title\">&quot;${CUSTOM_SETUP_WELCOME_MESSAGE}&quot;</string>|" ./src/horizon/overlay_packages/sec_setup_wizard_horizonux_overlay/res/values/strings.xml
 }
 
 function build_and_sign() {
@@ -401,8 +405,8 @@ EOF
     printf " - Enter the path to the default ${type^} wallpaper: "
     read path
     if [ -f "$path" ]; then
-        debugPrint "[INDEX: $index | TYPE: $type] $path -> ./res/drawable-nodpi/${filename}"
-        cp -af "$path" "./res/drawable-nodpi/${filename}"
+        debugPrint "[INDEX: $index | TYPE: $type] $path -> ./src/horizon/packages/flosspaper_purezza/res/drawable-nodpi/${filename}"
+        cp -af "$path" "./src/horizon/packages/flosspaper_purezza/res/drawable-nodpi/${filename}"
     else
         abort "Wrong wallpaper image path, aborting this build..." "ADD_THE_WALLPAPER_METADATA"
     fi
