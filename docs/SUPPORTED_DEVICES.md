@@ -50,6 +50,22 @@
 7. **Confidentiality**  
      Respect privacy by not sharing private chats, test builds, or unreleased features.
 
+8. **Patches**
+     You will get likely rejected if you don't want to upload your Device specific patch(es).
+     You have 10-20 days to either upload patches or just quit the maintainership.
+
+9. **Release Builds**
+     The following behaviours are not tolorated
+     and the maintainer will be forced to remove their device
+     each maintainer will have upto 5 warns and if they violate it,
+     their device and it's patches will get dropped.
+     Things to not do:-
+     - Releasing the ROM with test keys.
+     - Leaking signing key in favor of other's benifit.
+     - Intentionally adding any unwanted bloats or any piece that affects the user experience.
+     - Releasing the ROM with test build contents.
+     - Totally removing log daemons instead of keeping them and force stopping them after ```sys.boot_completed=1```
+     
 ---
 
 ## Ready to Join?

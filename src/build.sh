@@ -58,6 +58,7 @@ done
 # TODO: re-run the script with root permissions to manage mounted images
 case "$(id -u)" in
 	0)
+		clear
 		debugPrint "build.sh: Script ran once again with root privilages."
 	;;
 	*)
@@ -83,13 +84,30 @@ echo -e "#######################################################################
 console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
 console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
-console_print "CPU Manufacturer and model : $(lscpu | grep 'Model name' | awk -F: '{print $2}' | xargs)"
 console_print "Available RAM Memory : $(free -h --giga | grep Mem | awk '{print $7}')"
 console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
 
 # check:
-if [[ -n "$argOne" && "$(uname -m)" == "x86_64" ]]; then
+if [ -n "$argOne" ]; then
 	if string_format --lower "$(file $argOne)" | grep -q zip; then
+		if [ ! -f "./local_build/lpunpack_and_lpmake" ]; then
+			check_internet_connection &>/dev/null || abort "Please proceed with an active internet connection to build LonelyFool's lptools from source."
+			cd ./local_build/
+			branchToFork=android10
+			ask "Your build SDK version is above or equal to 30 right?" && branchToFork=android11
+			git clone --branch $branchToFork "https://github.com/LonelyFool/lpunpack_and_lpmake.git"
+			cd lpunpack_and_lpmake
+			chmod +x ./make.sh
+			console_print "Building LonelyFool's lptools from source, this might take sometime..."
+			console_print "This is a one time build, future builds won't rebuild the tool or require internet connection to build."
+			./make.sh &>/dev/ || abort "Failed to build lptools, please try again.." "build.sh"
+			cd ../
+			# we are outside local_build
+			mv ./local_build/lpunpack_and_lpmake/bin/* ./src/dependencies/bin/
+			export PATH="$PATH:$(dirname "$(realpath "$0")")/src/dependencies/bin"
+		else
+			export PATH="$PATH:$(dirname "$(realpath "$0")")/src/dependencies/bin"
+		fi
 		if unzip -l "$argOne" | grep -qE "AP_|HOME_CSC"; then
 			# skip extracting if the archives were found.
 			if [[ -f "$(echo -e ./local_build/etc/extract/AP_*.tar.md5)" && -f "$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)" ]]; then

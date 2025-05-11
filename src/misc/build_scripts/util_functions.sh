@@ -784,38 +784,6 @@ function setMakeConfigs() {
     mv "${propFile}.tmp" "$propFile"
 }
 
-function lpdump() {
-    if [ ${HOSTTYPE} == "x86_64" ]; then
-        ./src/dependencies/bin/lpdumpX64 "$@"
-    else
-        abort "Unsupported architecture: ${HOSTTYPE}"
-    fi
-}
-
-function lpunpack() {
-    if [ ${HOSTTYPE} == "x86_64" ]; then
-        ./src/dependencies/bin/lpdumpX64 "$@"
-    else
-        abort "Unsupported architecture: ${HOSTTYPE}"
-    fi
-}
-
-function lpmake() {
-    if [ ${HOSTTYPE} == "x86_64" ]; then
-        ./src/dependencies/bin/lpmakeX64 "$@"
-    else
-        abort "Unsupported architecture: ${HOSTTYPE}"
-    fi
-}
-
-function lpadd() {
-    if [ ${HOSTTYPE} == "x86_64" ]; then
-        ./src/dependencies/bin/lpaddX64 "$@"
-    else
-        abort "Unsupported architecture: ${HOSTTYPE}"
-    fi
-}
-
 function getImageFileSystem() {
     local image="$1"
     for knownFileSystems in F2FS ext2 ext4 EROFS; do
