@@ -15,10 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# must be the same from (ro.product.system.device in /system/build.prop)
-# and also, this will switch the config file to genericTargetProperties.conf if the device blobs weren't available in the source.
-TARGET_BUILD_PRODUCT_NAME=
-
 # signature key configs, please proceed with caution before playing with this
 # be sure to fill if you are going to use your own key to sign app packages
 # don't upload your rom if you have used the testkey to sign packages.

@@ -11,7 +11,6 @@
 - **PRODUCT_DIR**: Put your extracted product folder path there.
 - **PRISM_DIR**: Put your extracted prism folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
 - **OPTICS_DIR**: Put your extracted optics folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
-- **TARGET_BUILD_PRODUCT_NAME**: Ensure this matches `ro.product.system.device` (from `/system/build.prop`). This variable **must** be filled by the builder. Fallback to `genericTargetProperties.conf` if device blobs are missing.
 
 ## Debugging & Performance
 - **TARGET_BUILD_IS_FOR_DEBUGGING**: Enables verbose logging for debugging, which impacts performance.
@@ -88,6 +87,7 @@
 - **TARGET_INCLUDE_HORIZONUX_ELLEN**: Ellen, a script that spoofs and does some misc jobs when the device is booting. (kinda like a "tweaker" but it doesn't do anything to performance)
 - **TARGET_BUILD_MAKE_DEODEXED_ROM**: Deodex'es the rom. Learn about deodex'ing here: <a href="https://xdaforums.com/t/complete-guide-what-is-odex-and-deodex-rom.2200349">What is ODEX and DEODEX in Custom ROMS</a>
 - **TARGET_BUILD_FIX_ANDROID_SYSTEM_DEVICE_WARNING**: Fixes that one annoying warning from Android System after boot.
+- **TARGET_DISABLE_FILE_BASED_ENCRYPTION**: Disables fbe (file based encryption) on internal storage. (it was already a thing in the script but it wasn't added to this doc)
 
 ---
 
