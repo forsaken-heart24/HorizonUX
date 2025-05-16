@@ -24,6 +24,7 @@ rm -rf ./local_build/logs/*
 TMPDIR="$(mktemp -d)"
 TMPFILE="$(mktemp)"
 argOne="$1"
+[[ -f "./local_build/etc/FirmwareZipDownloadedWithoutErrors" && "./local_build/etc/downloadedContents/firmware.zip" ]] && argOne="./local_build/etc/downloadedContents/firmware.zip"
 loggedFloatingFeaturePATH="no"
 
 # Trap the SIGINT signal (Ctrl+C) and call handle_sigint when it's caught
@@ -192,7 +193,7 @@ if [ -n "$argOne" ]; then
 			touch ./localFirmwareBuildPending
 		elif echo "$argOne" | grep -qE "samfw|samfwpremium"; then
 			checkInternetConnection &>/dev/null || abort "I don't have internet access to download given samfw firmware package." "build.sh"
-			downloadRequestedFile "${argOne}" "./local_build/etc/downloadedContents/firmware.zip"
+			downloadRequestedFile "${argOne}" "./local_build/etc/downloadedContents/firmware.zip" && touch ./local_build/etc/FirmwareZipDownloadedWithoutErrors
 			# re-exec because we alr have code to manage with zip files.
 			./src/build.sh "./local_build/etc/downloadedContents/firmware.zip"
 		fi
