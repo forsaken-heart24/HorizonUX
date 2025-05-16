@@ -59,7 +59,7 @@ if [[ "$(grep_prop "ro.product.vendor.device" "$HORIZON_VENDOR_PROPERTY_FILE")" 
             copyDeviceBlobsSafely "$selected_lib" "$VENDOR_DIR/lib64/libexynoscamera3.so" && debugPrint "Brought camera2api!!!"
         fi
     fi
-    [ "${BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT}" == "true" ] && build_and_sign "./target/a30/overlay/framework-res/" "${VENDOR_DIR}"
+    [ "${BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT}" == "true" ] && buildAndSignThePackage "./target/a30/overlay/framework-res/" "${VENDOR_DIR}"
     if [ "${BUILD_TARGET_ADD_EXTRA_CAMERA_MODE}" == "true" ]; then
         console_print "Removing Pro Lite Mode and replacing with Pro mode.."
         manageCameraFeatures --remove "SHOOTING_MODE_PRO_LITE" "${SYSTEM_DIR}/cameradata/camera-feature.xml"

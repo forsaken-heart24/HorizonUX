@@ -23,7 +23,7 @@ if [[ "$(grep_prop "ro.product.vendor.device" "$HORIZON_VENDOR_PROPERTY_FILE")" 
     console_print "Customizing experience for Galaxy S20 FE..."
     setprop --custom "${VENDOR_DIR}/default.prop" "log.tag.stats_log" "D"
     setprop --custom "${VENDOR_DIR}/default.prop" "persist.sys.usb.config" "mtp,adb"
-    [ "${BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT}" == "true" ] && build_and_sign "./target/r8q/overlay/framework-res/" "${VENDOR_DIR}"
+    [ "${BUILD_TARGET_ADD_FRAMEWORK_OVERLAY_TO_FIX_CUTOUT}" == "true" ] && buildAndSignThePackage "./target/r8q/overlay/framework-res/" "${VENDOR_DIR}"
     if [ "${BUILD_TARGET_ADD_EXTRA_CAMERA_MODE}" == "true" ]; then
         if ask "Enabling extra camera modes can cause it to crash, please add or remove stuffs if you have any issues, do you wanna proceed?"; then
             for experimentalCameraFeatures in SUPPORT_BACK_WIDE_NORMAL_DUAL_PORTRAIT SUPPORT_SEAMLESS_ZOOM SUPPORT_FOOD_SEAMLESS_ZOOM SUPPORT_WIDE_LENS_CORRECTION SUPPORT_NIGHT_MODE_ZOOM SUPPORT_NIGHT_MODE_REAR_LENS \

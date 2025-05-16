@@ -28,10 +28,10 @@ for dependencies in mkdtimg imjtool; do
     command -v $dependencies || { warns "Please install $i to continue" "DTHZ_MISSING_DEPENDENCIES"; errors=$(( $errors + 1 )); }
 done
 
-[ "$errors" -ge "1" ] && abort "Install those specified dependencies to continue." "refresh-rate-modifier"
+[ $errors -ge 1 ] && abort "Install those specified dependencies to continue." "refresh-rate-modifier"
 [ ! -f "./config.cfg" ] && abort "Device specific configuration file is not found" "refresh-rate-modifier"
 
-if [ "$THIS_IS_MY_DEVICE_MAX_REFRESH_RATE" -ge "70" ]; then
+if [ $THIS_IS_MY_DEVICE_MAX_REFRESH_RATE -ge 70 ]; then
     warns "you've chose to overclock your device more than 70Hz, please do this at your own risk!" "OVERCLOCK_WARNING"
     warns "revert back to the stock or try to change refresh rate configs again if the device is unable to boot" "OVERCLOCK_WARNING"
 fi

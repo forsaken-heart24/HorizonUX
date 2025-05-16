@@ -40,3 +40,5 @@ The table below lists Vulkan versions supported for enabling Vulkan-based UI ren
 
 - **BUILD_TARGET_ENABLE_VULKAN_UI_RENDERING**: Enables Vulkan-based SystemUI rendering if conditions are met and this variable is enabled (set this to `true` to enable).
 - **BUILD_TARGET_GPU_VULKAN_VERSION**: Replace this with your device's Vulkan version to enable Vulkan UI rendering. Remember, this is experimental and may have both positive and negative effects. Ensure `BUILD_TARGET_ENABLE_VULKAN_UI_RENDERING` is set to `true` beforehand.
+- **BUILD_TARGET_DISABLE_DISPLAY_REFRESH_RATE_OVERRIDE**: Disables refresh rate override during media playback.
+- **BUILD_TARGET_DISABLE_DYNAMIC_RANGE_COMPRESSION**: Dynamic range compression (DRC) is a process that reduces the difference between the loudest and quietest parts of an audio signal.

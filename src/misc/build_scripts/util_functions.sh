@@ -16,20 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# fix: ./src/misc/build_scripts/util_functions.sh: line 43: $thisConsoleTempLogFile : No such file or directory
-thisConsoleTempLogFile="./local_build/logs/hux_build.log"
-# fix: touch: cannot touch './local_build/logs/hux_build.log': No such file or directory
-mkdir -p ./local_build/logs/
-touch ./local_build/logs/hux_build.log
-
 function grep_prop() {
-    local variable_name="$1"
-    local prop_file="$2"
-    [[ -z "$variable_name" || -z "$prop_file" || ! -f "$prop_file" ]] && return 1
-    grep -E "^${variable_name}=" "$prop_file" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"' || echo ""
+    [[ -z "$1" || -z "$2" || ! -f "$2" ]] && return 1
+    grep -E "^$1=" "$2" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"' || echo ""
 }
 
-function download_stuffs() {
+function downloadRequestedFile() {
     local link="$1"
     local save_path="$2"
     [[ -z "$link" || -z "$save_path" ]] && return 1
@@ -55,27 +47,27 @@ function setprop() {
     local propFile
     local propVariableName="$2"
     local propValue="$3"
-    if string_format --lower "$1" | grep -q "prism"; then
+    if stringFormat --lower "$1" | grep -q "prism"; then
         propFile=${HORIZON_PRISM_PROPERTY_FILE}
-    elif string_format --lower "$1" | grep -q "product"; then
+    elif stringFormat --lower "$1" | grep -q "product"; then
         propFile=${HORIZON_PRODUCT_PROPERTY_FILE}
-    elif string_format --lower "$1" | grep -q "system"; then
+    elif stringFormat --lower "$1" | grep -q "system"; then
         propFile=${HORIZON_SYSTEM_PROPERTY_FILE}
-    elif string_format --lower "$1" | grep -q "system_ext"; then
+    elif stringFormat --lower "$1" | grep -q "system_ext"; then
         propFile=${HORIZON_SYSTEM_EXT_PROPERTY_FILE}
-    elif string_format --lower "$1" | grep -q "vendor"; then
+    elif stringFormat --lower "$1" | grep -q "vendor"; then
         propFile=${HORIZON_VENDOR_PROPERTY_FILE}
     # setprop --custom "/vendor/odm/etc/build.prop" "ro.is_siam" "true"
-    elif string_format --lower "$1" | grep -q "custom"; then
+    elif stringFormat --lower "$1" | grep -q "custom"; then
         propVariableName="$3"
         propValue="$4"
         propFile=$(if [ -f "$2" ]; then echo "$2"; else echo "$HORIZON_VENDOR_PROPERTY_FILE"; fi)
-    elif string_format --lower "$1" | grep -q "deleteifExpectationsMet"; then
+    elif stringFormat --lower "$1" | grep -q "deleteifExpectationsMet"; then
         propFile="$2"
         propVariableName="$3"
         propValue="$4"
         [ "$(grep_prop "$propVariableName" "${propFile}")" == "${propValue}" ] && sed -i "/^${propVariableName}=/d" "$propFile"
-    elif string_format --lower "$1" | grep -q "force-delete"; then
+    elif stringFormat --lower "$1" | grep -q "force-delete"; then
         propFile="$2"
         propVariableName="$3"
         propValue="$4"
@@ -86,55 +78,55 @@ function setprop() {
 }
 
 function abort() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] [:\e[0;36mABORT\e[0;37m:] -\e[0;31m $1\e[0;37m" >&2
+    echo -e "\e[0;31m$1\e[0;37m" >&2
     debugPrint "$2(): $1"
     sleep 0.5
     tinkerWithCSCFeaturesFile --encode
-    rm -rf $TMPDIR $TMPFILE ./local_build/etc/extract/*.img ./local_build/etc/extract/*.img.lz4
+    rm -rf $TMPDIR $TMPFILE ./local_build/etc/extract/*.img ./local_build/etc/extract/*.img.lz4 ./localFirmwareBuildPending
     sudo umount ./local_build/etc/imageSetup/* &>/dev/null
     exit 1
 }
 
 function warns() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)] / [:\e[0;36mWARN\e[0;37m:] / [:\e[0;32m$2\e[0;37m:] -\e[0;33m $1\e[0;37m" >&2
+    echo -e "\e[0;31m$1\e[0;37m" >&2
     debugPrint "warns(): $1 | $2"
 }
 
 function console_print() {
-    echo -e "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m $1\e[0;37m"
+    echo -e "\e[0;33m$1\e[0;37m"
 }
 
-function default_language_configuration() {
+function changeDefaultLanguageConfiguration() {
     if [ "${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD}" == true ]; then
-        debugPrint "default_language_configuration(): Changing default language...."
+        debugPrint "changeDefaultLanguageConfiguration(): Changing default language...."
 
         # Convert to proper case
         local language=$(echo "$1" | tr '[:upper:]' '[:lower:]')
         local country=$(echo "$2" | tr '[:lower:]' '[:upper:]')
         
         # Validate length (ISO 639-1 for language, ISO 3166-1 alpha-2 for country)
-        [[ ! "$language" =~ ^[a-z]{2,3}$ ]] && abort "Invalid language code: $language" "default_language_configuration"
-        [[ ! "$country" =~ ^[A-Z]{2,3}$ ]] && abort "Invalid country code: $country" "default_language_configuration"
+        [[ ! "$language" =~ ^[a-z]{2,3}$ ]] && abort "Invalid language code: $language" "changeDefaultLanguageConfiguration"
+        [[ ! "$country" =~ ^[A-Z]{2,3}$ ]] && abort "Invalid country code: $country" "changeDefaultLanguageConfiguration"
         
         for EXPECTED_CUSTOMER_XML_PATH in $PRODUCT_DIR/omc/*/conf/customer.xml $OPTICS_DIR/configs/carriers/*/*/conf/customer.xml; do
             [ -f "$EXPECTED_CUSTOMER_XML_PATH" ] || continue
             # Skip modification if the values are already correct
             if grep -q "<DefLanguage>${language}-${country}</DefLanguage>" "$EXPECTED_CUSTOMER_XML_PATH" && grep -q "<DefLanguageNoSIM>${language}-${country}</DefLanguageNoSIM>" "$EXPECTED_CUSTOMER_XML_PATH"; then
-                debugPrint "default_language_configuration(): Skipping $EXPECTED_CUSTOMER_XML_PATH (already set)"
+                debugPrint "changeDefaultLanguageConfiguration(): Skipping $EXPECTED_CUSTOMER_XML_PATH (already set)"
                 continue
             fi
             for languages in DefLanguage DefLanguageNoSIM; do
-                change_xml_values "${languages}" "${language}-${country}" "$EXPECTED_CUSTOMER_XML_PATH"
+                changeXMLValues "${languages}" "${language}-${country}" "$EXPECTED_CUSTOMER_XML_PATH"
             done
-            debugPrint "default_language_configuration(): Updated default language in $EXPECTED_CUSTOMER_XML_PATH"
+            debugPrint "changeDefaultLanguageConfiguration(): Updated default language in $EXPECTED_CUSTOMER_XML_PATH"
         done
     else
-        debugPrint "default_language_configuration(): Skipping changing default language, reason: \"SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD\" set to ${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD} instead of true"
+        debugPrint "changeDefaultLanguageConfiguration(): Skipping changing default language, reason: \"SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD\" set to ${SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD} instead of true"
         return 0;
     fi
 }
 
-function build_and_sign() {
+function buildAndSignThePackage() {
     local extracted_dir_path="$1"
     local app_path="$2"
     local apkFileName
@@ -142,32 +134,32 @@ function build_and_sign() {
     local apk_file
 
     # Common checks
-    [[ ! -d "$extracted_dir_path" || ! -f "$extracted_dir_path/apktool.yml" ]] && abort "Invalid Apkfile path: $extracted_dir_path" "build_and_sign"
+    [[ ! -d "$extracted_dir_path" || ! -f "$extracted_dir_path/apktool.yml" ]] && abort "Invalid Apkfile path: $extracted_dir_path" "buildAndSignThePackage"
 
     # Extract APK file name from apktool.yml dynamically
     apkFileName=$(grep "apkFileName" "$extracted_dir_path/apktool.yml" | cut -d ':' -f 2 | tr -d ' "')
     apk_file="${extracted_dir_path}/dist/${apkFileName}"
 
     # Change compile SDK version and etc before build
-    change_xml_values "compileSdkVersion" "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
-    change_xml_values "platformBuildVersionCode" "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}/AndroidManifest.xml" 
-    change_xml_values "compileSdkVersionCodename" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
-    change_xml_values "platformBuildVersionName" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
-    change_yaml_values "minSdkVersion" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
-    change_yaml_values "targetSdkVersion" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
-    change_yaml_values "version" "${CODENAME_VERSION_REFERENCE_ID}" "${extracted_dir_path}/apktool.yml"
-    change_yaml_values "versionName" "${CODENAME}" "${extracted_dir_path}/apktool.yml"
-    change_yaml_values "versionCode" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
+    changeXMLValues "compileSdkVersion" "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
+    changeXMLValues "platformBuildVersionCode" "${BUILD_TARGET_SDK_VERSION}" "${extracted_dir_path}/AndroidManifest.xml" 
+    changeXMLValues "compileSdkVersionCodename" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
+    changeXMLValues "platformBuildVersionName" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/AndroidManifest.xml"
+    changeYAMLValues "minSdkVersion" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
+    changeYAMLValues "targetSdkVersion" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
+    changeYAMLValues "version" "${CODENAME_VERSION_REFERENCE_ID}" "${extracted_dir_path}/apktool.yml"
+    changeYAMLValues "versionName" "${CODENAME}" "${extracted_dir_path}/apktool.yml"
+    changeYAMLValues "versionCode" "${BUILD_TARGET_ANDROID_VERSION}" "${extracted_dir_path}/apktool.yml"
 
     # Build the package
     if java -jar ./src/dependencies/bin/apktool.jar build "$extracted_dir_path" &>>$thisConsoleTempLogFile; then
         debugPrint "Successfully built: $apkFileName"
     else
-        abort "Apktool build failed for $extracted_dir_path" "build_and_sign"
+        abort "Apktool build failed for $extracted_dir_path" "buildAndSignThePackage"
     fi
 
     # Ensure built APK exists
-    [ ! -f "$apk_file" ] && abort "No APK found in $extracted_dir_path/dist/" "build_and_sign"
+    [ ! -f "$apk_file" ] && abort "No APK found in $extracted_dir_path/dist/" "buildAndSignThePackage"
 
     # Signing the APK
     if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
@@ -177,20 +169,20 @@ function build_and_sign() {
     fi
 
     # Ensure signed APK exists
-    [[ ! -f "$signed_apk" || -z "$signed_apk" ]] && abort "No signed APK found in $extracted_dir_path/dist/" "build_and_sign"
+    [[ ! -f "$signed_apk" || -z "$signed_apk" ]] && abort "No signed APK found in $extracted_dir_path/dist/" "buildAndSignThePackage"
 
     # Move signed APK to target directory and do a cleanup
     mv "$signed_apk" "$app_path/"
     rm -rf "$extracted_dir_path/build" "$extracted_dir_path/dist/"
 }
 
-function catch_duplicates_in_xml() {
+function catchDuplicatesInXML() {
     [ ! -f "$2" ] && return 1
     grep -c "$1" "$2"
 }
 
-function add_float_xml_values() {
-    local feature_code="$(string_format -u "$1")"
+function addFloatXMLValues() {
+    local feature_code="$(stringFormat -u "$1")"
     local feature_code_value="$2"   
 
     # floating feature conf depending on SDK version:
@@ -204,10 +196,10 @@ function add_float_xml_values() {
     esac
 
     #TODO:
-    [ "$loggedFloatingFeaturePATH" == "no" ] && { debugPrint "add_float_xml_values(): Floating feature path: ${BUILD_TARGET_FLOATING_FEATURE_PATH}"; loggedFloatingFeaturePATH="yes"; }
+    [ "$loggedFloatingFeaturePATH" == "no" ] && { debugPrint "addFloatXMLValues(): Floating feature path: ${BUILD_TARGET_FLOATING_FEATURE_PATH}"; loggedFloatingFeaturePATH="yes"; }
 
     # Check if the feature_code already exists in the XML file
-    if [ "$(catch_duplicates_in_xml "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == 0 ]; then
+    if [ "$(catchDuplicatesInXML "${feature_code}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}")" == 0 ]; then
         # Insert the new feature code into the XML under <SecFloatingFeatureSet>
         xmlstarlet ed \
             -L \
@@ -218,16 +210,16 @@ function add_float_xml_values() {
             "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     else
         # If the feature code already exists, call a function to modify the XML
-        change_xml_values "${feature_code}" "${feature_code_value}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
+        changeXMLValues "${feature_code}" "${feature_code_value}" "${BUILD_TARGET_FLOATING_FEATURE_PATH}"
     fi
 }
 
-function add_csc_xml_values() {
+function addCSCxmlValues() {
     local feature_code="$1"
     local feature_code_value="$2"
     for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
         if [ -f "$EXPECTED_CSC_FEATURE_XML_PATH" ]; then
-            if [ "$(catch_duplicates_in_xml "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == 0 ]; then
+            if [ "$(catchDuplicatesInXML "${feature_code}" "${EXPECTED_CSC_FEATURE_XML_PATH}")" == 0 ]; then
                 xmlstarlet ed \
                     -L \
                     -s "/FeatureSet" \
@@ -236,7 +228,7 @@ function add_csc_xml_values() {
                     -v "${feature_code_value}" \
                     "$EXPECTED_CSC_FEATURE_XML_PATH"
             else
-                change_xml_values "${feature_code}" "${feature_code_value}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
+                changeXMLValues "${feature_code}" "${feature_code_value}" "${EXPECTED_CSC_FEATURE_XML_PATH}"
             fi
         fi
     done
@@ -253,10 +245,10 @@ function tinkerWithCSCFeaturesFile() {
     case "${action}" in
         --decode)
             for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
-                debugPrint "tinkerWithCSCFeaturesFile(): File chosen: $EXPECTED_CSC_FEATURE_XML_PATH"
                 [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
                 [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" ] || continue
                 file "${EXPECTED_CSC_FEATURE_XML_PATH}" | grep -q data || continue
+                debugPrint "tinkerWithCSCFeaturesFile(): File chosen: $EXPECTED_CSC_FEATURE_XML_PATH"
                 if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>>$thisConsoleTempLogFile; then
                     debugPrint "tinkerWithCSCFeaturesFile(): CSC feature file successfully decoded: ${EXPECTED_CSC_FEATURE_XML_PATH}"
                 else
@@ -279,50 +271,50 @@ function tinkerWithCSCFeaturesFile() {
             done
         ;;
         *)
-            abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode" "tinkerWithCSCFeaturesFile"
+            abort "Usage: tinkerWithCSCFeaturesFile --decode | --encode <file>" "tinkerWithCSCFeaturesFile"
         ;;
     esac
 }
 
-function change_xml_values() {
+function changeXMLValues() {
     local feature_code="$1"
     local feature_code_value="$2"
     local file="$3"
 
     # do checks and put ts shyt in log
-    debugPrint "change_xml_values(): Arguments: $1 $2 $3"
-    [ -z "$file" ] && abort "Error: No XML file specified!" "change_xml_values"
-    [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!" "change_xml_values"
+    debugPrint "changeXMLValues(): Arguments: $1 $2 $3"
+    [ -z "$file" ] && abort "Error: No XML file specified!" "changeXMLValues"
+    [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!" "changeXMLValues"
 
     # Check if the feature code is already set to the desired value
     if xmlstarlet sel -t -v "count(//${feature_code}[text() = '${feature_code_value}'])" "$file" | grep -q '1'; then
-        debugPrint "change_xml_values(): ${feature_code} is already set to ${feature_code_value}, skipping."
+        debugPrint "changeXMLValues(): ${feature_code} is already set to ${feature_code_value}, skipping."
         return 0
     fi
 
     # If the feature code is an attribute (e.g., feature_code="value"), update it
     if xmlstarlet sel -t -v "count(//@${feature_code})" "$file" | grep -q '[1-9]'; then
         xmlstarlet ed -L -u "//*[@${feature_code}]" -v "${feature_code_value}" "$file"
-        debugPrint "change_xml_values(): Updated ${feature_code} to ${feature_code_value} in $file"
+        debugPrint "changeXMLValues(): Updated ${feature_code} to ${feature_code_value} in $file"
     
     # If the feature code is an element (e.g., <feature_code>value</feature_code>), update it
     elif xmlstarlet sel -t -v "count(//${feature_code})" "$file" | grep -q '[1-9]'; then
         xmlstarlet ed -L -u "//${feature_code}" -v "${feature_code_value}" "$file"
-        debugPrint "change_xml_values(): Updated <${feature_code}> value to ${feature_code_value} in $file"
+        debugPrint "changeXMLValues(): Updated <${feature_code}> value to ${feature_code_value} in $file"
     else
-        debugPrint "change_xml_values(): No matching ${feature_code} found. Skipping modification."
+        debugPrint "changeXMLValues(): No matching ${feature_code} found. Skipping modification."
     fi
 }
 
-function change_yaml_values() {
+function changeYAMLValues() {
     local key="$1"
     local value="$2"
     local file="$3"
 
     # do checks and put ts shyt in log
-    [ -z "$file" ] && abort "Error: No file specified!" "change_yaml_values"
-    [ ! -f "$file" ] && abort "Error: File '$file' not found!" "change_yaml_values"
-    debugPrint "change_yaml_values(): Arguments: $1 $2 $3"
+    [ -z "$file" ] && abort "Error: No file specified!" "changeYAMLValues"
+    [ ! -f "$file" ] && abort "Error: File '$file' not found!" "changeYAMLValues"
+    debugPrint "changeYAMLValues(): Arguments: $1 $2 $3"
 
     # ok lets go
     grep -Eq "^[[:space:]]*${key}:" "$file" && sed -i -E "s|(^[[:space:]]*${key}:)[[:space:]]*.*|\1 ${value}|" "$file"
@@ -337,15 +329,15 @@ function ask() {
     [[ "${answer}" == "y" || "${answer}" == "yes" ]]
 }
 
-function remove_attributes() {
+function removeAttributes() {
     local INPUT_FILE="$1"
     local NAME_TO_SKIP="$2"
 
-    debugPrint "remove_attributes(): Input file: ${INPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
+    debugPrint "removeAttributes(): Input file: ${INPUT_FILE}, Attribute to Skip: ${NAME_TO_SKIP}"
 
     # Validate input
-    [ ! -f "$INPUT_FILE" ] && { debugPrint "remove_attributes(): Error: Input file not found!"; return 1; }
-    [ -z "$NAME_TO_SKIP" ] && { debugPrint "remove_attributes(): Error: Attribute to skip was not provided"; return 1; }
+    [ ! -f "$INPUT_FILE" ] && { debugPrint "removeAttributes(): Error: Input file not found!"; return 1; }
+    [ -z "$NAME_TO_SKIP" ] && { debugPrint "removeAttributes(): Error: Attribute to skip was not provided"; return 1; }
 
     # Backup original
     cp "$INPUT_FILE" "${INPUT_FILE}.bak"
@@ -356,17 +348,15 @@ function remove_attributes() {
         "$INPUT_FILE"
 
     if cmp -s "$INPUT_FILE" "${INPUT_FILE}.bak"; then
-        debugPrint "remove_attributes(): No changes made. <hal> with name=$NAME_TO_SKIP was not found."
-        rm "${INPUT_FILE}.bak"
+        debugPrint "removeAttributes(): No changes made. <hal> with name=$NAME_TO_SKIP was not found."
     else
-        debugPrint "remove_attributes(): Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
-        rm "${INPUT_FILE}.bak"
+        debugPrint "removeAttributes(): Updated XML saved to $INPUT_FILE, removed <hal> with name=$NAME_TO_SKIP."
     fi
+    rm "${INPUT_FILE}.bak"
 }
 
-function ADD_THE_WALLPAPER_METADATA() {
-    local value="$1" type="$2" index="$3"
-    type="$(echo "$type" | tr '[:upper:]' '[:lower:]')"
+function addTheWallpaperMetadata() {
+    local value="$1" type="$(echo "$2" | tr '[:upper:]' '[:lower:]')" index="$3"
     local filename="wallpaper_${value}.png"
     local path
 
@@ -407,12 +397,12 @@ EOF
         debugPrint "[INDEX: $index | TYPE: $type] $path -> ./src/horizon/packages/flosspaper_purezza/res/drawable-nodpi/${filename}"
         cp -af "$path" "./src/horizon/packages/flosspaper_purezza/res/drawable-nodpi/${filename}"
     else
-        abort "Wrong wallpaper image path, aborting this build..." "ADD_THE_WALLPAPER_METADATA"
+        abort "Wrong wallpaper image path, aborting this build..." "addTheWallpaperMetadata"
     fi
     clear
 }
 
-function string_format() {
+function stringFormat() {
     case "$1" in
         -l|--lower)
             echo "$2" | tr '[:upper:]' '[:lower:]'
@@ -426,16 +416,16 @@ function string_format() {
     esac
 }
 
-function generate_random_hash() {
+function generateRandomHash() {
     local how_much="$1"
     local byte_count=$(( (how_much + 1) / 2 ))
     local hex=$(head -c "$byte_count" /dev/urandom | xxd -p | tr -d '\n')
-    [[ $# -eq 1 ]] || abort "generate_random_hash(): Expected 1 argument, got $#" "generate_random_hash"
-    debugPrint "generate_random_hash(): Requested random seed: ${how_much}"
+    [[ $# -eq 1 ]] || abort "generateRandomHash(): Expected 1 argument, got $#" "generateRandomHash"
+    debugPrint "generateRandomHash(): Requested random seed: ${how_much}"
     echo "${hex:0:how_much}"
 }
 
-function fetch_rom_arch() {
+function fetchRomArch() {
     if [[ ! -f "${SYSTEM_DIR}/lib/libbluetooth.so" && -f "${SYSTEM_DIR}/lib64/libbluetooth.so" && ${BUILD_TARGET_SDK_VERSION} -le "30" ]]; then
         [ "$1" == "--libpath" ] && echo "lib64"
     elif [[ ! -f "${SYSTEM_DIR}/lib/libbluetooth.so" && -f "${SYSTEM_DIR}/lib64/libbluetooth.so" && ${BUILD_TARGET_SDK_VERSION} -ge "31" ]]; then
@@ -454,30 +444,30 @@ function debugPrint() {
     fi
 }
 
-function apply_diff_patches() {
+function applyDiffPatches() {
     local DiffPatchFile="$1"
     local TheFileToPatch="$2"
-    [ "$#" -ne 2 ] && abort "Error: Missing arguments. Usage: apply_diff_patches <patch file> <target file>" "apply_diff_patches"
+    [ "$#" -ne 2 ] && abort "Error: Missing arguments. Usage: applyDiffPatches <patch file> <target file>" "applyDiffPatches"
     if [ ! -f "$DiffPatchFile" ]; then
-        debugPrint "apply_diff_patches(): Patch file '$DiffPatchFile' not found."
-        abort "Error: Patch file '${DiffPatchFile}' not found." "apply_diff_patches"
+        debugPrint "applyDiffPatches(): Patch file '$DiffPatchFile' not found."
+        abort "Error: Patch file '${DiffPatchFile}' not found." "applyDiffPatches"
     elif [ ! -f "$TheFileToPatch" ]; then
-        debugPrint "apply_diff_patches(): Target file '$TheFileToPatch' not found."
-        abort "Error: Target file '${TheFileToPatch}' not found." "apply_diff_patches"
+        debugPrint "applyDiffPatches(): Target file '$TheFileToPatch' not found."
+        abort "Error: Target file '${TheFileToPatch}' not found." "applyDiffPatches"
     fi
-    debugPrint "apply_diff_patches(): ${DiffPatchFile} → ${TheFileToPatch}"
+    debugPrint "applyDiffPatches(): ${DiffPatchFile} → ${TheFileToPatch}"
     patch "$TheFileToPatch" < "$DiffPatchFile" &>>$thisConsoleTempLogFile || console_print "Patch failed! Check logs for details."
 }
 
-function check_build_prop() {
-    [ -z "$1" ] && abort "Usage: check_build_prop <partition path>" "check_build_prop"
+function checkBuildProp() {
+    [ -z "$1" ] && abort "Usage: checkBuildProp <partition path>" "checkBuildProp"
     [ -f "$1/build.prop" ] && echo "$1/build.prop"
     [ -f "$1/etc/build.prop" ] && echo "$1/etc/build.prop"
 }
 
-function download_glmodules() {
+function downloadGLmodules() {
     # test internet connection before anything:
-    check_internet_connection "GOODLOCK_MODULES" || return 1
+    checkInternetConnection "GOODLOCK_MODULES" || return 1
     local i
     local SequenceValue
     local MaximumSDKVersion=35
@@ -497,7 +487,7 @@ function download_glmodules() {
                 28)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}?"; then
                         mkdir -p ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/28/${GOODLOOK_MODULES_FOR_28[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
+                        downloadRequestedFile https://github.com/corsicanu/goodlock_dump/releases/download/28/${GOODLOOK_MODULES_FOR_28[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
                     else 
                         rmdir ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_28_APP_NAMES[$i]}/
                     fi
@@ -505,7 +495,7 @@ function download_glmodules() {
                 29)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}?"; then
                         mkdir -p ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/29/${GOODLOOK_MODULES_FOR_29[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
+                        downloadRequestedFile https://github.com/corsicanu/goodlock_dump/releases/download/29/${GOODLOOK_MODULES_FOR_29[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
                     else 
                         rmdir ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_29_APP_NAMES[$i]}/
                     fi
@@ -513,7 +503,7 @@ function download_glmodules() {
                 30)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}?"; then
                         mkdir -p ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/30/${GOODLOOK_MODULES_FOR_30[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
+                        downloadRequestedFile https://github.com/corsicanu/goodlock_dump/releases/download/30/${GOODLOOK_MODULES_FOR_30[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
                     else 
                         rmdir ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_30_APP_NAMES[$i]}/
                     fi
@@ -521,7 +511,7 @@ function download_glmodules() {
                 31)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}?"; then
                         mkdir -p ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/31/${GOODLOOK_MODULES_FOR_31[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
+                        downloadRequestedFile https://github.com/corsicanu/goodlock_dump/releases/download/31/${GOODLOOK_MODULES_FOR_31[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
                     else 
                         rmdir ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_31_APP_NAMES[$i]}/
                     fi
@@ -529,7 +519,7 @@ function download_glmodules() {
                 32)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}?"; then
                         mkdir -p ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/32/${GOODLOOK_MODULES_FOR_32[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
+                        downloadRequestedFile https://github.com/corsicanu/goodlock_dump/releases/download/32/${GOODLOOK_MODULES_FOR_32[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
                     else 
                         rmdir ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_32_APP_NAMES[$i]}/
                     fi
@@ -537,7 +527,7 @@ function download_glmodules() {
                 33)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}?"; then
                         mkdir -p ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/33/${GOODLOOK_MODULES_FOR_33[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
+                        downloadRequestedFile https://github.com/corsicanu/goodlock_dump/releases/download/33/${GOODLOOK_MODULES_FOR_33[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
                     else 
                         rmdir ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_33_APP_NAMES[$i]}/
                     fi
@@ -545,7 +535,7 @@ function download_glmodules() {
                 34)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}?"; then
                         mkdir -p ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/34/${GOODLOOK_MODULES_FOR_34[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/
+                        downloadRequestedFile https://github.com/corsicanu/goodlock_dump/releases/download/34/${GOODLOOK_MODULES_FOR_34[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/
                     else 
                         rmdir ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_34_APP_NAMES[$i]}/ 
                     fi
@@ -553,7 +543,7 @@ function download_glmodules() {
                 35)
                     if ask "Do you want to download ${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}?"; then
                         mkdir -p ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
-                        download_stuffs https://github.com/corsicanu/goodlock_dump/releases/download/35/${GOODLOOK_MODULES_FOR_35[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
+                        downloadRequestedFile https://github.com/corsicanu/goodlock_dump/releases/download/35/${GOODLOOK_MODULES_FOR_35[$i]} ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
                     else 
                         rmdir ./local_build/system/priv-app/${GOODLOOK_MODULES_FOR_35_APP_NAMES[$i]}/
                     fi
@@ -563,13 +553,9 @@ function download_glmodules() {
     done
 }
 
-function check_internet_connection() {
-    ping -w 3 google.com &>/dev/null || warns "Please connect the computer to a wifi or an ethernet connection to access online facilities." "$(string_format -u $1)" && return 1
+function checkInternetConnection() {
+    ping -w 3 google.com &>/dev/null || warns "Please connect the computer to a wifi or an ethernet connection to access online facilities." "$(stringFormat -u $1)" && return 1
     return 0
-}
-
-function verify() {
-    [ "$(sha512sum $1 | awk '{print $1}')" = "$2" ]
 }
 
 # needs fix actually.
@@ -644,16 +630,16 @@ function magiskboot() {
     local localMachineArchitecture=$(uname -m)
     case "${localMachineArchitecture}" in 
         "i686")
-            ./src/dependencies/bin/magiskbootX32 "$@"
+            magiskbootX32 "$@"
         ;;
         "x86_64")
-            ./src/dependencies/bin/magiskbootX64 "$@"
+            magiskbootX64 "$@"
         ;;
         "armv7l")
-            ./src/dependencies/bin/magiskbootA32 "$@"
+            magiskbootA32 "$@"
         ;;
         "aarch64"|"armv8l")
-            ./src/dependencies/bin/magiskbootA64 "$@"
+            magiskbootA64 "$@"
         ;;
         *)
             abort "Undefined architecture ${localMachineArchitecture}" "magiskboot"
@@ -668,19 +654,19 @@ function avbtool() {
 # Thanks to salvo and ravindu for their amazing work!
 function javaKeyStoreToHex() {
     # lky variables
-    local keystoreFileNameString="$(generate_random_hash 30)"
-    local keystorePemFileNameString="$(generate_random_hash 30)"
-    local keystoreKeyFileNameString="$(generate_random_hash 30)"
+    local keystoreFileNameString="$(generateRandomHash 30)"
+    local keystorePemFileNameString="$(generateRandomHash 30)"
+    local keystoreKeyFileNameString="$(generateRandomHash 30)"
     local hexKey
     
     # check up:
     command -v openssl >/dev/null 2>&1 || abort "openssl not found. Please install it." "javaKeyStoreToHex"
-    command -v keytool >/dev/null 2>&1 || abort "keytool not found. Please install JDK." "javaKeyStoreToHex"
+    command -v keytool >/dev/null 2>&1 || abort "keytool not found. Please install it." "javaKeyStoreToHex"
 
     # override if prebuilt key exists:
     if [ -f ${MY_KEYSTORE_PATH} ]; then
         if [ "$MY_KEYSTORE_PATH" == "./test-keys/HorizonUX-testkey.jks" ]; then
-            console_print "PLEASE DONT USE THIS PUBLICALLY AVAILABLE KEY, GENERATE YOUR OWN KEY!!"
+            console_print "PLEASE DONT USE THIS KEY, GENERATE YOUR OWN KEY!!"
             ask "By using this key on your release builds, the release builds will become vulnerable. Do you want to continue?" || return 1
         fi
         keytool -exportcert -alias ${MY_KEYSTORE_ALIAS} -keystore ${MY_KEYSTORE_PATH} -storepass ${MY_KEYSTORE_PASSWORD} -rfc > ${keystoreKeyFileNameString}.x509.pem
@@ -736,7 +722,7 @@ function addHorizonROMInfo() {
     while IFS= read -r i || [[ -n "$i" ]]; do
         # "ahem"
         runs=$((runs + 1))
-        debugPrint "at the $runs line of the xml"
+        debugPrint "addHorizonROMInfo(): at the $runs line of the xml"
         
         # Removes whitespaces:
         i=$(echo "$i" | sed 's/^[ \t]*//;s/[ \t]*$//')
@@ -788,13 +774,11 @@ function setMakeConfigs() {
 }
 
 function getImageFileSystem() {
-    local image="$1"
     for knownFileSystems in F2FS ext2 ext4 EROFS; do
-        file ${image} | grep -q $knownFileSystems && string_format --lower "${knownFileSystems}" && return 0
+        file "$1" | grep -q $knownFileSystems && stringFormat --lower "${knownFileSystems}" && return 0
     done
     # reached this far means: undefined / unsupported filesystem.
     echo "undefined"
-    return 1
 }
 
 function setupLocalImage() {
@@ -938,6 +922,26 @@ function logInterpreter() {
     debugPrint "$(echo $command | awk '{print $1}')(): $debugMessage" 
     eval "$command" &> "$TMPFILE"
     returnStatus=$?
-    [[ ! -z "$(cat "$TMPFILE")" ]] && echo "[$(date +%H:%M%p)] - $(echo $command | awk '{print $1}') output: $(xargs < "$TMPFILE")" >> "$thisConsoleTempLogFile"
-    return $?
+    [[ ! -z "$(cat "$TMPFILE")" ]] && echo "[$(date +%H:%M%p)] - $(echo $command | awk '{print $1}')() output: $(xargs < "$TMPFILE")" >> "$thisConsoleTempLogFile"
+    return ${returnStatus}
+}
+
+function compareDefaultMakeConfigs() {
+    local differences localValue localUntouchedValue
+    for differences in $(cat "./src/makeconfigs.prop" | grep =); do
+        localVariableValue="$(echo "${differences}" | cut -d '=' --fields=-1)"
+        localValue=$(grep_prop ${localVariableValue} ./src/makeconfigs.prop)
+        localUntouchedValue=$(grep_prop ${localVariableValue} ./localUntouched)
+        [ "${localValue}" == "${localUntouchedValue}" ] || echo "+ ${localVariableValue}"
+    done
+}
+
+function makeAFuckingDirectory() {
+    local directoryName="$1"
+    local owner="$2"
+    local group="$3"
+    mkdir -p "${directoryName}"
+    chmod 755 "${directoryName}"
+    chown -R "${owner}:${group}" "${directoryName}"
+    chcon u:object_r:system_file:s0 "${directoryName}"
 }

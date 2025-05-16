@@ -2,19 +2,8 @@
 
 # Build Configuration Variables
 
-## TODO: Should be filled by the builder
-> **Note:** Do not fill these variables if you are providing a URL or a firmware package instead of extracted folders.
-
-- **SYSTEM_DIR**: Put your extracted system folder path there.
-- **SYSTEM_EXT_DIR**: Put your extracted system_ext folder path there.
-- **VENDOR_DIR**: Put your extracted vendor folder path there.
-- **PRODUCT_DIR**: Put your extracted product folder path there.
-- **PRISM_DIR**: Put your extracted prism folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
-- **OPTICS_DIR**: Put your extracted optics folder path there and set **BUILD_TARGET_USES_DYNAMIC_PARTITIONS** to true.
-
-## Debugging & Performance
+## Debugging
 - **TARGET_BUILD_IS_FOR_DEBUGGING**: Enables verbose logging for debugging, which impacts performance.
-- **TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING**: Tries to boost performance at the cost of overheating and battery life.
 
 ## Security
 - **TARGET_REMOVE_NONE_SECURITY_OPTION**: Disables the "None" option for lock screen security. 
@@ -22,13 +11,14 @@
 
 ## Bloatware & Features
 - **TARGET_REMOVE_USELESS_VENDOR_STUFFS**: Removes bloat from the vendor partition.
-- **TARGET_REMOVE_SAMSUNG_APPLICATIONS_STUFFS**: Removes unnecessary Samsung apps (note: Android 9 is not fully supported).
+- **TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS**: Removes unnecessary Samsung apps (note: Android 9 is not fully supported).
 - **TARGET_ADD_EXTRA_ANIMATION_SCALES**: Adds extra animation scales for customization.
 - **TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS**: Enables live blur effects for aesthetic, please note that it impacts battery life and performance.
 - **TARGET_FLOATING_FEATURE_ENABLE_ULTRA_POWER_SAVING**: Ultra power saving, this thing is useless but yeah if you want it then take it.
 - **TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH**: Disables Smart Switch on setup.
 
 ## Special Features
+- **TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING**: Tries to boost performance at the cost of overheating and battery life.
 - **TARGET_INCLUDE_UNLIMITED_BACKUP**: Enables unlimited pictures backup in a specific app.
 - **TARGET_INCLUDE_SAMSUNG_THEMING_MODULES**: Installs patched Samsung Goodlock modules.
 - **TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM**: Includes Spotify into the Alarm tones
@@ -39,9 +29,7 @@
 
 ## Audio & Display
 - **TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER**: Fixes LDAC audio distortion for lower-end Bluetooth audio devices.
-- **DISABLE_DISPLAY_REFRESH_RATE_OVERRIDE**: Disables refresh rate override during media playback.
 - **TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES**: Toggles Dolby audio on games. (only if supported + if the hw is capable of doing this)
-- **DISABLE_DYNAMIC_RANGE_COMPRESSION**: Dynamic range compression (DRC) is a process that reduces the difference between the loudest and quietest parts of an audio signal.
 
 ## Additional Customization
 - **TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE**: Adjusts launcher animation for different performance tiers (LowEnd, LowestEnd, LowEndFast, Mass (mid-rangers, not available after 3.1), HighEnd, CHNHighEND & HighEnd_Tablet).
@@ -66,7 +54,7 @@
 - **SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD**: Sets default language and region for the first boot, fill these variables to switch to your language **NEW_DEFAULT_LANGUAGE_ON_PRODUCT** **NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT**
 
 ## Miscellaneous 
-- **DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION**: Disables Samsung's ASKS signature verifier, it doesn't have to do anything with the built-in signature verification, only used for samsung applications.
+- **TARGET_DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION**: Disables Samsung's ASKS signature verifier, it doesn't have to do anything with the built-in signature verification, only used for samsung applications.
 - **TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS**: <a href="https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/rounded_corners_hux_ex.png">Adds rounded corners to the pip window, tap this text to see a example.</a>
 
 ## Advanced, enable or disable these with your own concern

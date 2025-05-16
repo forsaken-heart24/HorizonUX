@@ -13,6 +13,14 @@ Ensure the following dependencies are installed before proceeding:
 - **Java**
 - **Python**
 - **aria2c**
+- **zip**
+- **lz4**
+- **make**
+- **mkdtimg**
+- **imjtool**
+- **erofs-utils**
+- **openssl**
+- **xmlstarlet**
 - **Android NDK**
 
 **Warning:** Missing any of these dependencies may result in an unbootable ROM.

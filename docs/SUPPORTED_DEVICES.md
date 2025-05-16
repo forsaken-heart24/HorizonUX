@@ -19,9 +19,9 @@
 
 ---
 
-# How to Become a Device Maintainer
+# Q: How to Become a Device Maintainer?
 
-## Requirements
+## A: Requirements
 
 1. **OneUI Porting Skills**  
      Familiarity with porting OneUI to devices is essential.
