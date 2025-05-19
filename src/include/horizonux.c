@@ -143,6 +143,13 @@ bool isBootAnimationExited() {
     return false;
 }
 
+bool bootanimStillRunning() {
+    if(getSystemProperty__("null", "service.bootanim.progress") == 1) {
+        return true;
+    }
+    return false;
+}
+
 bool isTheDeviceisTurnedOn() {
     FILE *fp = popen("dumpsys power | grep 'Display Power'", "r"); 
     if (!fp) {
@@ -290,4 +297,26 @@ void stopDaemon(const char *daemonName) {
     else {
         error_print("startDaemon(): Failed to start daemon.");
     }
+}
+
+char grep_prop(const char *string, const char *propFile) {
+    FILE *fuckyouBitch = fopen(propFile, "r");
+    if(!fuckyouBitch) {
+        fprintf(stderr, "grep_prop(): Failed to open properties file: %s\n", propFile);
+        return 1;
+    }    
+    // mairuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
+    char theFuckingLine[8000];
+    size_t theFuckingLength = strlen(string);
+    // man: char *fgets(char *s, int n, FILE *stream);
+    while(fgets(theFuckingLine, sizeof(theFuckingLine), fuckyouBitch)) {
+        if(strncmp(theFuckingLine, string, theFuckingLength) == 0) {
+            strtok(theFuckingLine, "=");
+            char *value = strtok(NULL, "\n");
+            printf("%s\n", value);
+            fclose(fuckyouBitch);
+            return 0;
+        }
+    }
+    return 1;
 }

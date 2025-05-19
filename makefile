@@ -21,8 +21,8 @@ ifeq ($(MAKECMDGOALS),)
 endif
 
 # Compiler and flags
-ANDROID_NDK_CLANG_PATH := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
-STRIP_PATH := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin/strip
+ANDROID_NDK_ROOT = android-ndk-r27c
+ANDROID_NDK_CLANG_PATH := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android$(ANDROID_SDK_VERSION)-clang
 
 # Output binaries
 LOADER_OUTPUT = ./local_build/binaries/bashScriptLoader
@@ -37,7 +37,7 @@ LOADER_MAIN = ./src/bashScriptLoader/main.c
 SAVIOUR_MAIN = ./src/bootloopSaviour/main.c
 
 # Error logs path
-ERR_LOG = ./local_build/logs/compiler__errors
+ERR_LOG = ./local_build/logs/compilerErrors.log
 
 # Default: Build both
 all: loader bootloop_saviour
@@ -52,9 +52,8 @@ check_compiler:
 # Build bashScriptLoader
 loader: check_compiler
 	@echo "Building bashScriptLoader..."
-	@$(ANDROID_NDK_CLANG_PATH) -static -fPIE -pie -I./src/include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) 2> $(ERR_LOG) && \
-	echo "✅ Build successful: $(LOADER_OUTPUT)" && \
-	$(STRIP_PATH) $(LOADER_OUTPUT) || { \
+	@$(ANDROID_NDK_CLANG_PATH) -static -I./src/include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) &>$(ERR_LOG) && \
+	echo "✅ Build successful: $(LOADER_OUTPUT)" || { \
 		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
 		exit 1; \
 	}
@@ -62,9 +61,8 @@ loader: check_compiler
 # Build bootloopSaviour
 bootloop_saviour: check_compiler
 	@echo "Building bootloopSaviour..."
-	@$(ANDROID_NDK_CLANG_PATH) -static -fPIE -pie -I./src/include $(SAVIOUR_SRCS) $(SAVIOUR_MAIN) -o $(SAVIOUR_OUTPUT) 2> $(ERR_LOG) && \
-	echo "✅ Build successful: $(SAVIOUR_OUTPUT)" && \
-	$(STRIP_PATH) $(SAVIOUR_OUTPUT) || { \
+	@$(ANDROID_NDK_CLANG_PATH) -static -I./src/include $(SAVIOUR_SRCS) $(SAVIOUR_MAIN) -o $(SAVIOUR_OUTPUT) &>$(ERR_LOG) && \
+	echo "✅ Build successful: $(SAVIOUR_OUTPUT)" || { \
 		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
 		exit 1; \
 	}
@@ -103,7 +101,7 @@ test_bootloopsaviour:
 
 # help menu:
 help:
-	@echo "Usage: make [target]"
+	@echo "Usage: make ANDROID_SDK_VERSION=<sdk ver here> [target]"
 	@echo ""
 	@echo "Targets:"
 	@echo "  all                     Builds all components (loader and saviour together)"

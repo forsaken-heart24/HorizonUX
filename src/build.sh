@@ -100,7 +100,7 @@ if [ -n "$argOne" ]; then
 	if stringFormat --lower "$(file $argOne)" | grep -q zip; then
 		if unzip -l "$argOne" | grep -qE "AP_|HOME_CSC"; then
 			# skip extracting if the archives were found.
-			if [[ -f "$(echo -e ./local_build/etc/extract/AP_*.tar.md5)" && -f "$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)" && -f "./local_build/etc/extract/fwExtracted" ]]; then
+			if [[ -f "$(echo -e ./local_build/etc/extract/AP_*.tar.md5)" && -f "$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)" && ! -f "./local_build/etc/extract/fwExtracted" ]]; then
 				console_print "Skipping firmware extraction, target firmware files are already extracted and saved."
 				extractedAPFilePath="$(echo -e ./local_build/etc/extract/AP_*.tar.md5)"
 				extractedHomeCSCFilePath="$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)"
@@ -202,6 +202,9 @@ else
 	# TODO: Check system,vendor before modding stuffs:
 	[[ -f "${SYSTEM_DIR}/build.prop" && -f "${VENDOR_DIR}/build.prop" ]] || abort "System or vendor partition is not a valid partition!" "build.sh"
 fi
+
+# remove touched file to fucking switch to a different state
+rm -rf "./local_build/etc/extract/extractingWhat"
 
 # Locate build.prop files
 HORIZON_PRODUCT_PROPERTY_FILE="$(checkBuildProp "${PRODUCT_DIR}")"
@@ -428,13 +431,9 @@ fi
 
 # L, see the dawn makeconfigs.prop file :\
 if [ $TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER == true ]; then
-	for part in "${SYSTEM_DIR}" "${VENDOR_DIR}"; do
-		for libdir in "$part/lib" "$part/lib64"; do
-			if [ -f "$libdir/liboemcrypto.so" ]; then
-				touch "./local_build/tmp/hux/liboemcrypto.so"
-				cp -a "./local_build/tmp/hux/liboemcrypto.so" "$libdir/liboemcrypto.so"
-			fi
-		done
+	touch "./local_build/tmp/hux/liboemcrypto.so" # let's not make it "touch" everytime when it's in a loop.
+	for libdir in "${SYSTEM_DIR}/lib" "${VENDOR_DIR}/lib64"; do
+		[ -f "$libdir/liboemcrypto.so" ] && cp -a "./local_build/tmp/hux/liboemcrypto.so" "$libdir/liboemcrypto.so"
 	done
 fi
 
@@ -550,7 +549,7 @@ if [ $TARGET_REMOVE_USELESS_VENDOR_STUFFS == true ]; then
             done
         fi
     fi
-	console_print "Finished removing useless vendor file(s)"
+	console_print "Finished removing useless vendor stuff(s)"
 fi
 
 # nukes display refresh rate overrides on some video platforms.
@@ -729,7 +728,7 @@ fi
 
 # init - ellen + bro board | Courtesy: @BrotherBoard
 if [[ ${TARGET_INCLUDE_HORIZONUX_ELLEN} == true || ${TARGET_INCLUDE_HORIZON_TOUCH_FIX} == true ]]; then
-	make loader &>>$thisConsoleTempLogFile
+	make ANDROID_SDK_VERSION=${BUILD_TARGET_SDK_VERSION} loader &>>$thisConsoleTempLogFile
 	mv "./local_build/binaries/bashScriptLoader" "${SYSTEM_DIR}/bin/" || abort "Failed to move bashScriptLoader to ${SYSTEM_DIR}/bin/" "build.sh"
 	chmod 755 "${SYSTEM_DIR}/bin/bashScriptLoader"
 	chcon u:object_r:system_file:s0 "${SYSTEM_DIR}/bin/bashScriptLoader"

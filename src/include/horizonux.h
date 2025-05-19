@@ -30,10 +30,13 @@ int manageBlocks(const char *infile, const char *outfile, size_t block_size, siz
 int getSystemProperty__(const char *filepath, const char *propertyVariableName);
 int maybeSetProp(const char *property, const char *expectedPropertyValue, const char *typeShyt);
 int DoWhenPropisinTheSameForm(const char *property, const char *expectedPropertyValue);
+int setprop(const char *property, const char *propertyValue);
 bool isBootAnimationExited();
 bool isTheDeviceBootCompleted();
 bool isTheDeviceisTurnedOn();
+bool bootanimStillRunning();
 char *getSystemProperty(const char *filepath, const char *propertyVariableName);
+char grep_prop(const char *string, const char *propFile);
 void sendToastMessages(const char *service, const char *message);
 void sendNotification(const char *message);
 void prepareStockRecoveryCommandList(char *action, char *actionArg, char *actionArgExt);
