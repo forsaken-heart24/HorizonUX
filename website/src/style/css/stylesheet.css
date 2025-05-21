@@ -1,0 +1,155 @@
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'GoogleSans';
+        }
+        
+        video.bg-video {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            object-fit: cover;
+            z-index: -1;
+            transform: translateZ(0);
+        }
+        
+        .content {
+            position: relative;
+            z-index: 1;
+            color: white;
+            text-align: center;
+            top: 50vh;
+            transform: translateY(-50%);
+            padding: 0 1em;
+        }
+
+        @font-face {
+            font-family: 'GoogleSans';
+            src: url('fonts/GoogleSansRegular.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'SanFranciscoProBold';
+            src: url('fonts/SF-Pro-Display-Bold.otf') format('opentype');
+        }
+
+        .cute-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 14px 36px;
+            background-color: rgba(255, 121, 198, 0.25);
+            color: #fff;
+            border: none;
+            border-radius: 28px;
+            font-size: 16.5px;
+            font-family: 'GoogleSans';
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            backdrop-filter: blur(12px) brightness(1.1);
+            box-shadow:
+                0 1px 2px rgba(255, 255, 255, 0.05),
+                0 2px 8px rgba(255, 121, 198, 0.2),
+                0 4px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.22s ease;
+            text-decoration: none;
+            outline: none;
+        }
+
+        .cute-button:hover,
+        .cute-button:focus {
+            background-color: rgba(255, 121, 198, 0.4);
+            transform: translateY(-1px) scale(1.015);
+            box-shadow:
+                0 2px 4px rgba(255, 255, 255, 0.05),
+                0 4px 16px rgba(255, 121, 198, 0.25),
+                0 6px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .hamburger-menu {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 36px;
+            height: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 8px;
+            background: rgba(255, 121, 198, 0.12);
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(255, 121, 198, 0.25);
+            cursor: pointer;
+            z-index: 20;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .hamburger-menu:hover {
+            box-shadow: 0 12px 28px rgba(255, 85, 170, 0.35);
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .hamburger-menu div {
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            margin: 0;
+            transition: background 0.3s ease;
+            border: none;
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -220px;
+            width: 220px;
+            height: 100vh;
+            background: rgba(30, 30, 40, 0.92);
+            backdrop-filter: blur(28px) brightness(1.09);
+            box-shadow: 4px 0 32px rgba(255, 121, 198, 0.13), 0 8px 32px rgba(0,0,0,0.18);
+            padding: 90px 24px 32px 24px;
+            transition: left 0.32s cubic-bezier(.77,0,.18,1), opacity 0.22s;
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            border-top-right-radius: 32px;
+            border-bottom-right-radius: 32px;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .side-menu.open {
+            left: 0;
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        .side-menu a {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 13px 16px;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-family: 'GoogleSans';
+            font-size: 17.5px;
+            margin: 0;
+            background: rgba(255,255,255,0.04);
+            box-shadow: 0 2px 8px rgba(255,121,198,0.07);
+            transition: background 0.18s, color 0.18s, transform 0.18s, text-shadow 0.18s, box-shadow 0.18s;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        .side-menu a:hover,
+        .side-menu a:focus {
+            background: linear-gradient(90deg, rgba(255,121,198,0.22) 0%, rgba(121, 121, 255, 0.18) 100%);
+            color: #ff79c6;
+            transform: translateX(6px) scale(1.045);
+            text-shadow: 0 2px 8px rgba(255,121,198,0.13);
+            box-shadow: 0 4px 16px rgba(255,121,198,0.13);
+        }
