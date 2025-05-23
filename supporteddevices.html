@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Contributors</title>
+    <link rel="stylesheet" href="src/style/css/common.stylesheet.css" />
+    <script src="src/scripts/index.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'GoogleSans';
+            color: #fff;
+        }
+        
+        .content {
+            position: relative;
+            padding: 40px 20px;
+        }
+
+        .device-list {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .device {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .device:hover {
+            transform: translateY(-4px);
+        }
+
+        .device img {
+            width: 82px;
+            height: 82px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .device-name {
+            margin-top: 12px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .maintainer {
+            margin-top: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="hamburger-menu" onclick="toggleMenu()">
+    <div></div><div></div><div></div>
+    </div>
+    <nav id="sideMenu" class="side-menu">
+        <a href="index.html">Home</a>
+        <a href="https://github.com/forsaken-heart24/HorizonUX">Source Code</a>
+        <a href="contributors.html">Contributors</a>
+        <a href="faq.html">FAQ</a>
+        <a href="https://t.me/lunaromslore24/54">Telegram Chat</a>
+    </nav>
+    <video class="bg-video" autoplay muted loop playsinline disablePictureInPicture>
+        <source src="src/style/background-video/gradient.mp4" type="video/mp4" />
+    </video>
+    <main class="content">
+        <div style="display: flex; flex-direction: column; align-items: center; margin-top: 16px;">
+            <span style="font-family: 'GoogleSans'; font-size: 32px;">Supported Devices</span>
+            <div class="device-list">
+                <a href="https://t/me/Bomb_read" target="_blank" style="text-decoration: none; color: inherit;">
+                    <div class="device">
+                        <img src="src/style/maintained-device-artwork/S20FE.webp" alt="Samsung Galaxy S20 FE Maintainer Robin" />
+                        <div class="device-name">Samsung Galaxy S20 FE</div>
+                        <div class="maintainer">Maintainer: Robin</div>
+                    </div>
+                </a>
+                <a href="https://t/me/forsaken_heart24" target="_blank" style="text-decoration: none; color: inherit;">
+                    <div class="device">
+                        <img src="src/style/maintained-device-artwork/A30.webp" alt="Samsung Galaxy A30 Maintainer Luna" />
+                        <div class="device-name">Samsung Galaxy A30</div>
+                        <div class="maintainer">Maintainer: Luna</div>
+                    </div>
+                </a>
+            </div>
+            <p style="text-align: center; margin-top: 20px;">
+                <br />
+                Please note that the list of supported devices may change over time as new devices are added or removed.
+            </p>
+        </div>
+    </main>
+</body>
+</html>
