@@ -34,8 +34,8 @@ extern bool WRITE_DEBUG_MESSAGES_TO_CONSOLE;
 extern char *LOG4HORIZONFILE;
  
 // FUCKING function FUCKING declarations.
-int executeCommands(const char *command, bool requiresOutput);
-int executeScripts(const char *__script__file, const char *__args, bool requiresOutput);
+int executeCommands(const char *command, const char *args[], bool requiresOutput);
+int executeScripts(const char *__script__file, const char *args[], bool requiresOutput);
 int searchBlockListedStrings(const char *__filename, const char *__search_str);
 int verifyScriptStatusUsingShell(const char *__filename);
 int checkBlocklistedStringsNChar(const char *__haystack);

@@ -46,8 +46,10 @@ void disableMagiskModules() {
         }
     }
     closedir(dirptr);
-    executeCommands("rm -rf /cache/.system_booting /data/unencrypted/.system_booting /metadata/.system_booting /persist/.system_booting /mnt/vendor/persist/.system_booting", false);
-    executeCommands("reboot", false);
+    char *arguments[] = {"-rf", "/cache/.system_booting", "/data/unencrypted/.system_booting", "/metadata/.system_booting", "/persist/.system_booting", "/mnt/vendor/persist/.system_booting", NULL};
+    char *rebootArgs[] = {NULL};
+    executeCommands("rm", arguments, false);
+    executeCommands("reboot", rebootArgs, false);
 }
 
 // ew i hate this

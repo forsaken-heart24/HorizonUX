@@ -17,69 +17,72 @@
 
 #include <horizonutils.h>
 
-int executeCommands(const char *command, bool requiresOutput) {
-    if(command && (strstr(command, ";") || strstr(command, "&&") || strstr(command, "|") || strstr(command, "`") || strstr(command, "$("))) {
-        error_print("executeScripts(): Nice try diddy!");
-        exit(1);
-    }
-    char *command__ = malloc(strlen(command) + 1);
-    if(!command__) {
-        error_print("executeCommands(): Failed to allocate memory.");
-        exit(1);
-    }
-    strcpy(command__, command);
-    FILE *fp = popen(command__, "r");
-    free(command__);
-    if(!fp) {
-        error_print("executeCommands(): Failed to execute command.");
-        return 1;
-    }
-    if(requiresOutput) {
-        char buffer[1024];
-        while(fgets(buffer, sizeof(buffer), fp) != NULL) {
-            buffer[strcspn(buffer, "\n")] = '\0';  // Remove newline
-            error_print_extended("executeCommands():", buffer);
+int executeCommands(const char *command, const char *args[], bool requiresOutput) {
+    for(int i = 0; args[i] != NULL; i++) {
+        if(strstr(args[i], ";") || strstr(args[i], "&&") || strstr(args[i], "|") || strstr(args[i], "$(")) {
+            fprintf(stderr, "executeCommands(): Malicious command detected: %s\n", args[i]);
+            exit(1);
         }
     }
-    int __exit_status = pclose(fp);
-    if(__exit_status == -1) {
-        error_print("executeCommands(): Failed to close the dawn file for some dawn reason.");
-        return 1;
+    if(command && (strstr(command, ";") || strstr(command, "&&") || strstr(command, "|") || strstr(command, "`") || strstr(command, "$(") || strstr(command, "dd"))) {
+        fprintf(stderr, "executeCommands(): Malicious command detected %s\n", command);
+        exit(1);
     }
-    return (WIFEXITED(__exit_status)) ? WEXITSTATUS(__exit_status) : 1;
+    pid_t ProcessID = fork();
+    switch(ProcessID) {
+        case -1:
+            fprintf(stderr, "executeCommands(): Failed to fork process.");
+            return 1;
+        break;
+        case 0:
+            if(!requiresOutput) {
+                int devNull = open("/dev/null", O_WRONLY);
+                if(devNull == -1) exit(EXIT_FAILURE);
+                dup2(devNull, STDOUT_FILENO);
+                dup2(devNull, STDERR_FILENO);
+                close(devNull);
+            }
+            execvp(command, (char *const *)args);
+            fprintf(stderr, "executeCommands(): Failed to execute command: %s\n", command);
+            exit(EXIT_FAILURE);
+        break;
+        default:
+            int status;
+            wait(&status);
+            return (WIFEXITED(status)) ? WEXITSTATUS(status) : 1;
+    }
 }
 
-int executeScripts(const char *__script__file, const char *__args, bool requiresOutput) {
-    if(__args && (strstr(__args, ";") || strstr(__args, "&&") || strstr(__args, "|") || strstr(__args, "`") || strstr(__args, "$("))) {
-        error_print("executeScripts(): Nice try diddy.");
-        exit(1);
-    }
-    size_t sizeOfTheDawn = strlen(__script__file) + strlen(__args) + 5;
-    char *commandAlloc = malloc(sizeOfTheDawn);
-    if(!commandAlloc) {
-        error_print("executeScripts(): Failed to allocate memory.");
-        exit(1);
-    }
-    snprintf(commandAlloc, sizeOfTheDawn, "'%s' %s", __script__file, __args ? __args : "");
-    FILE *scriptWithArguments  = popen(commandAlloc, "r");
-    free(commandAlloc);
-    if(!scriptWithArguments) {
-        error_print("executeScripts(): Failed to execute script.");
-        return 1;
-    }
-    if(requiresOutput) {
-        char fuckingBufferFuckingShit[2048];
-        while(fgets(fuckingBufferFuckingShit, sizeof(fuckingBufferFuckingShit), scriptWithArguments) != NULL) {
-            fuckingBufferFuckingShit[strcspn(fuckingBufferFuckingShit, "\n")] = '\0';
-            error_print_extended("executeScripts():", fuckingBufferFuckingShit);
+int executeScripts(const char *__script__file, const char *args[], bool requiresOutput) {
+    for(int i = 0; args[i] != NULL; i++) {
+        if(strstr(args[i], ";") || strstr(args[i], "&&") || strstr(args[i], "|") || strstr(args[i], "$(")) {
+            fprintf(stderr, "executeScripts(): Malicious command detected: %s\n", args[i]);
+            exit(1);
         }
     }
-    int __exit_status = pclose(scriptWithArguments);
-    if(__exit_status == -1) {
-        error_print_extended("executeScripts(): Failed to close process. Error:", strerror(errno));
-        return 1;
+    pid_t ProcessID = fork();
+    switch(ProcessID) {
+        case -1:
+            fprintf(stderr, "executeScripts(): Failed to fork process.");
+            return 1;
+        break;
+        case 0:
+            if(!requiresOutput) {
+                int devNull = open("/dev/null", O_WRONLY);
+                if(devNull == -1) exit(EXIT_FAILURE);
+                dup2(devNull, STDOUT_FILENO);
+                dup2(devNull, STDERR_FILENO);
+                close(devNull);
+            }
+            execv(__script__file, (char *const *)args);
+            fprintf(stderr, "executeScripts(): Failed to execute %s", __script__file);
+            exit(EXIT_FAILURE);
+        break;
+        default:
+            int status;
+            wait(&status);
+            return (WIFEXITED(status)) ? WEXITSTATUS(status) : 1;
     }
-    return (WIFEXITED(__exit_status)) ? WEXITSTATUS(__exit_status) : 1;
 }
 
 // prevents bastards from running any malicious commands
@@ -116,16 +119,24 @@ int searchBlockListedStrings(const char *__filename, const char *__search_str) {
 // this ensures that the chosen is a bash script and if it's not one
 // it'll return 1 to make the program to stop from executing that bastard
 int verifyScriptStatusUsingShell(const char *__filename) {
-    size_t commandLength = strlen(__filename) + strlen("file | grep -q 'ASCII text executable'") + 5;
+    // use the size_t to avoid uncertain integer valyues:
+    size_t commandLength = strlen(__filename) + strlen("file \"\" | grep -q 'ASCII text executable'") + 1;
     char *command = malloc(commandLength);
-    int written = snprintf(command, commandLength, "file \"%s\" | grep -q 'ASCII text executable'", __filename);
-    if(written < 0 || written >= sizeof(command)) {
-        error_print("verifyScriptStatusUsingShell(): Command truncation detected.");
+    if(!command) {
+        fprintf(stderr, "verifyScriptStatusUsingShell(): Memory allocation failed.\n");
         return 1;
     }
-    int exit__status = executeCommands(command, false);
+    int written = snprintf(command, commandLength, "file \"%s\" | grep -q 'ASCII text executable'", __filename);
+    if(written < 0 || (size_t)written >= commandLength) {
+        fprintf(stderr, "verifyScriptStatusUsingShell(): Command truncation detected.\n");
+        free(command);
+        return 1;
+    }
+    // Prepare: prepare args for /bin/sh -c "command"
+    const char *args[] = { "sh", "-c", command, NULL };
+    // Update: executeCommands expects path + args[]
     free(command);
-    return exit__status;
+    return executeCommands("/bin/sh", args, false);
 }
 
 // Checks if a given string contains blacklisted substrings

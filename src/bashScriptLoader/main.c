@@ -22,13 +22,14 @@
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
 // char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto.log";
 char *LOG4HORIZONFILE = "/sdcard/HorizonUX/moduleLoader.log";
+char *placeboArg[] = {NULL};
 
 int main(int argc, const char *argv[]) {
     if(argc >= 1) {
         if(strcmp(argv[1], "--ellen") == 0) {
             if(DoWhenPropisinTheSameForm("persist.horizonux.ellen", "available") == 0) {
                 if(verifyScriptStatusUsingShell(ellenExecPath) == 0 && checkBlocklistedStringsNChar(ellenExecPath) == 0) {
-                    return executeScripts(ellenExecPath, "omagod", false);
+                    return executeScripts(ellenExecPath, placeboArg, false);
                 }
             }
             error_print("Ellen is not enabled in this build, certainly you can enable it in /system/build.prop by changing values.");
@@ -38,7 +39,7 @@ int main(int argc, const char *argv[]) {
         else if(strcmp(argv[1], "--brotherboard-touch-fix") == 0) {
             if(DoWhenPropisinTheSameForm("persist.horizonux.brotherboard.touch_fix", "available") == 0) {
                 if(verifyScriptStatusUsingShell(bbTouchFixExecPath) == 0 && checkBlocklistedStringsNChar(bbTouchFixExecPath) == 0) {
-                    return executeScripts(bbTouchFixExecPath, "omagod", false);
+                    return executeScripts(bbTouchFixExecPath, placeboArg, false);
                 }
             }
             error_print("Brotherboard's Touch Fix Solution is not enabled in this build, certainly you can enable it in /system/build.prop by changing values.");
@@ -46,7 +47,8 @@ int main(int argc, const char *argv[]) {
             return 0;
         }
         else if(strcmp(argv[1], "--clear-logs") == 0) {
-            return executeCommands("logcat -c", false);
+            char *args[] = {"logcat", "-c", NULL};
+            executeCommands("/system/bin/logcat", args, false);
         }
         else if(strcmp(argv[1], "--test") == 0) {
             printf("main(): bashScriptLoader works!\n");
