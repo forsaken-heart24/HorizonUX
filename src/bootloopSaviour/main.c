@@ -11,6 +11,7 @@
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
 //char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/horizon_bootloopSaviour.log";
 char *LOG4HORIZONFILE = "/sdcard/Horizon/logs/horizon_bootloopSaviour.log";
+const char *placeboArg[] = {NULL};
 
 void disableMagiskModules() {
     DIR *dirptr = opendir("/data/adb/modules/");
@@ -46,10 +47,9 @@ void disableMagiskModules() {
         }
     }
     closedir(dirptr);
-    char *arguments[] = {"-rf", "/cache/.system_booting", "/data/unencrypted/.system_booting", "/metadata/.system_booting", "/persist/.system_booting", "/mnt/vendor/persist/.system_booting", NULL};
-    char *rebootArgs[] = {NULL};
+    const char *arguments[] = {"rm", "-rf", "/cache/.system_booting", "/data/unencrypted/.system_booting", "/metadata/.system_booting", "/persist/.system_booting", "/mnt/vendor/persist/.system_booting", NULL};
     executeCommands("rm", arguments, false);
-    executeCommands("reboot", rebootArgs, false);
+    executeCommands("reboot", placeboArg, false);
 }
 
 // ew i hate this

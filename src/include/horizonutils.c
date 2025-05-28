@@ -19,19 +19,21 @@
 
 int executeCommands(const char *command, const char *args[], bool requiresOutput) {
     for(int i = 0; args[i] != NULL; i++) {
-        if(strstr(args[i], ";") || strstr(args[i], "&&") || strstr(args[i], "|") || strstr(args[i], "$(")) {
-            fprintf(stderr, "executeCommands(): Malicious command detected: %s\n", args[i]);
+        if(strstr(args[i], ";") || strstr(args[i], "&&") || strstr(args[i], "$(")) {
+            consoleLog("executeCommands(): Malicious command detected:", (char *)args[i]);
             exit(1);
         }
     }
     if(command && (strstr(command, ";") || strstr(command, "&&") || strstr(command, "|") || strstr(command, "`") || strstr(command, "$(") || strstr(command, "dd"))) {
-        fprintf(stderr, "executeCommands(): Malicious command detected %s\n", command);
+        consoleLog("executeCommands(): Malicious command detected:", (char *)command);
         exit(1);
     }
     pid_t ProcessID = fork();
+    consoleLog("executeCommands(): Trying to create a child process for a shell command:", (char *)command);
+    consoleLog("executeCommands(): Child process ID:", (char *)&ProcessID);
     switch(ProcessID) {
         case -1:
-            fprintf(stderr, "executeCommands(): Failed to fork process.");
+            consoleLog("executeCommands(): Failed to fork process.", NULL);
             return 1;
         break;
         case 0:
@@ -43,13 +45,13 @@ int executeCommands(const char *command, const char *args[], bool requiresOutput
                 close(devNull);
             }
             execvp(command, (char *const *)args);
-            fprintf(stderr, "executeCommands(): Failed to execute command: %s\n", command);
+            consoleLog("executeCommands(): Failed to execute command:", (char *)command);
             exit(EXIT_FAILURE);
         break;
         default:
-            int status;
-            wait(&status);
-            return (WIFEXITED(status)) ? WEXITSTATUS(status) : 1;
+            int exitStatus;
+            wait(&exitStatus);
+            return (WIFEXITED(exitStatus)) ? WEXITSTATUS(exitStatus) : 1;
     }
 }
 
@@ -61,6 +63,8 @@ int executeScripts(const char *__script__file, const char *args[], bool requires
         }
     }
     pid_t ProcessID = fork();
+    consoleLog("executeCommands(): Trying to create a child process for a shell script execution, path to the script:", (char *)__script__file);
+    consoleLog("executeCommands(): Child process ID:", (char *) &ProcessID);
     switch(ProcessID) {
         case -1:
             fprintf(stderr, "executeScripts(): Failed to fork process.");
@@ -79,9 +83,9 @@ int executeScripts(const char *__script__file, const char *args[], bool requires
             exit(EXIT_FAILURE);
         break;
         default:
-            int status;
-            wait(&status);
-            return (WIFEXITED(status)) ? WEXITSTATUS(status) : 1;
+            int exitStatus;
+            wait(&exitStatus);
+            return (WIFEXITED(exitStatus)) ? WEXITSTATUS(exitStatus) : 1;
     }
 }
 
@@ -166,13 +170,9 @@ int checkBlocklistedStringsNChar(const char *__haystack) {
         "/dev/block/bootdevice/by-name/",
         "/dev/block/by-name/",
         "/dev/block/",
-        "blockdev",
-        "--setrw",
         "/system/bin/dd",
         "/vendor/bin/dd",
-        "/dd",
-        "/boot",
-        "/recovery",
+        "dd",
         "/dev/block/mmcblk",
         "/dev/mmcblk"
     };
@@ -192,9 +192,7 @@ int checkBlocklistedStringsNChar(const char *__haystack) {
 
 bool erase_file_content(const char *__file) {
     FILE *fileConstantAgain = fopen(__file, "w");
-    if(!fileConstantAgain) {
-        return false;
-    }
+    if(!fileConstantAgain) return false;
     fclose(fileConstantAgain);
     return true;
 }

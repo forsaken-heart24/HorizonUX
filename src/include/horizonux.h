@@ -26,7 +26,6 @@
 
 // FUCKING function FUCKING declarations.
 int isPackageInstalled(const char *packageName);
-int manageBlocks(const char *infile, const char *outfile, size_t block_size, size_t count);
 int getSystemProperty__(const char *filepath, const char *propertyVariableName);
 int maybeSetProp(const char *property, const char *expectedPropertyValue, const char *typeShyt);
 int DoWhenPropisinTheSameForm(const char *property, const char *expectedPropertyValue);

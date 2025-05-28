@@ -22,15 +22,13 @@
 bool WRITE_DEBUG_MESSAGES_TO_CONSOLE = false;
 // char *LOG4HORIZONFILE = "/mnt/c/Users/Luna/Desktop/teto.log";
 char *LOG4HORIZONFILE = "/sdcard/HorizonUX/moduleLoader.log";
-char *placeboArg[] = {NULL};
+const char *placeboArg[] = {NULL};
 
 int main(int argc, const char *argv[]) {
-    if(argc >= 1) {
+    if(argc >= 2) {
         if(strcmp(argv[1], "--ellen") == 0) {
             if(DoWhenPropisinTheSameForm("persist.horizonux.ellen", "available") == 0) {
-                if(verifyScriptStatusUsingShell(ellenExecPath) == 0 && checkBlocklistedStringsNChar(ellenExecPath) == 0) {
-                    return executeScripts(ellenExecPath, placeboArg, false);
-                }
+                if(verifyScriptStatusUsingShell(ellenExecPath) == 0 && checkBlocklistedStringsNChar(ellenExecPath) == 0) return executeScripts(ellenExecPath, (const char *[]) { ellenExecPath, NULL }, false);
             }
             error_print("Ellen is not enabled in this build, certainly you can enable it in /system/build.prop by changing values.");
             error_print("Thank you!");
@@ -38,9 +36,7 @@ int main(int argc, const char *argv[]) {
         }
         else if(strcmp(argv[1], "--brotherboard-touch-fix") == 0) {
             if(DoWhenPropisinTheSameForm("persist.horizonux.brotherboard.touch_fix", "available") == 0) {
-                if(verifyScriptStatusUsingShell(bbTouchFixExecPath) == 0 && checkBlocklistedStringsNChar(bbTouchFixExecPath) == 0) {
-                    return executeScripts(bbTouchFixExecPath, placeboArg, false);
-                }
+                if(verifyScriptStatusUsingShell(bbTouchFixExecPath) == 0 && checkBlocklistedStringsNChar(bbTouchFixExecPath) == 0) return executeScripts(bbTouchFixExecPath, (const char *[]) { bbTouchFixExecPath, NULL }, false);
             }
             error_print("Brotherboard's Touch Fix Solution is not enabled in this build, certainly you can enable it in /system/build.prop by changing values.");
             error_print("Thank you!");
@@ -48,7 +44,7 @@ int main(int argc, const char *argv[]) {
         }
         else if(strcmp(argv[1], "--clear-logs") == 0) {
             char *args[] = {"logcat", "-c", NULL};
-            executeCommands("/system/bin/logcat", args, false);
+            return executeCommands("/system/bin/logcat", args, false);
         }
         else if(strcmp(argv[1], "--test") == 0) {
             printf("main(): bashScriptLoader works!\n");

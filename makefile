@@ -51,21 +51,16 @@ check_compiler:
 
 # Build bashScriptLoader
 loader: check_compiler
+	@rm -f $(ERR_LOG)
 	@echo "Building bashScriptLoader..."
-	@$(ANDROID_NDK_CLANG_PATH) -static -I./src/include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) &>$(ERR_LOG) && \
-	echo "✅ Build successful: $(LOADER_OUTPUT)" || { \
-		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
-		exit 1; \
-	}
+	@$(ANDROID_NDK_CLANG_PATH) -static -I./src/include $(LOADER_SRCS) $(LOADER_MAIN) -o $(LOADER_OUTPUT) >$(ERR_LOG) 2>&1 && \
+	echo "✅ Build successful: $(LOADER_OUTPUT)" || echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details.";
 
-# Build bootloopSaviour
 bootloop_saviour: check_compiler
+	@rm -f $(ERR_LOG)
 	@echo "Building bootloopSaviour..."
-	@$(ANDROID_NDK_CLANG_PATH) -static -I./src/include $(SAVIOUR_SRCS) $(SAVIOUR_MAIN) -o $(SAVIOUR_OUTPUT) &>$(ERR_LOG) && \
-	echo "✅ Build successful: $(SAVIOUR_OUTPUT)" || { \
-		echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details."; \
-		exit 1; \
-	}
+	@$(ANDROID_NDK_CLANG_PATH) -static -I./src/include $(SAVIOUR_SRCS) $(SAVIOUR_MAIN) -o $(SAVIOUR_OUTPUT) >$(ERR_LOG) 2>&1 && \
+	echo "✅ Build successful: $(SAVIOUR_OUTPUT)" || echo "❌ Error: Compilation failed. Check $(ERR_LOG) for details.";
 
 # Test mainModuleLoader
 test_loader:

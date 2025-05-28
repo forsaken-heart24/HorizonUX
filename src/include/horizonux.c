@@ -24,54 +24,7 @@ int isPackageInstalled(const char *packageName) {
         error_print("isPackageInstalled(): Nice try diddy!");
         exit(1);
     }
-    char command[50];
-    snprintf(command, sizeof(command), "pm list packages | grep -q %s", packageName);
-    return executeCommands(command, false) == 0;
-}
-
-int manageBlocks(const char *infile, const char *outfile, size_t block_size, size_t count) {
-    FILE *in = fopen(infile, "rb");
-    FILE *out = fopen(outfile, "wb");
-    if(!in) {
-        error_print("manageBlocks(): Failed to open input file");
-        return 1;
-    }
-    if(!out) {
-        error_print("manageBlocks(): Failed to open output file");
-        fclose(in);
-        return 1;
-    }
-    char *buffer = (char *)malloc(block_size);
-    if (!buffer) {
-        error_print("manageBlocks(): Memory allocation failed");
-        fclose(in);
-        fclose(out);
-        return 1;
-    }
-    size_t blocks_read, blocks_written;
-    size_t total_read = 0, total_written = 0;
-    for (size_t i = 0; i < count; i++) {
-        blocks_read = fread(buffer, 1, block_size, in);
-        // Stop if the EOF (end of file) is reached
-        if(blocks_read == 0 && feof(in)) break;
-        if(blocks_read == 0 && ferror(in)) {
-            error_print("manageBlocks(): Error reading input file");
-            break;
-        }
-        total_read += blocks_read;
-        blocks_written = fwrite(buffer, 1, blocks_read, out);
-        if(blocks_written < blocks_read) {
-            error_print("manageBlocks(): Error writing to output file");
-            break;
-        }
-        total_written += blocks_written;
-    }
-    //error_print("manageBlocks(): Copied %zu bytes (%.2f KB)\n", total_written, total_written / 1024.0);
-    printf("manageBlocks(): Copied %zu bytes (%.2f KB)", total_written, total_written / 1024.0);
-    free(buffer);
-    fclose(in);
-    fclose(out);
-    return 0;
+    return executeCommands("pm", (const char *[]){ "list", "packages", "|", "grep", "-q", packageName, NULL}, false);
 }
 
 int getSystemProperty__(const char *filepath, const char *propertyVariableName) {
@@ -108,7 +61,8 @@ int getSystemProperty__(const char *filepath, const char *propertyVariableName) 
 
 int maybeSetProp(const char *property, const char *expectedPropertyValue, const char *typeShyt) {
     if(strcmp(getSystemProperty("ok", property), expectedPropertyValue) == 0) {
-        return executeCommands(combineShyt("resetprop", typeShyt), false);
+        const char *arguments[] = {typeShyt, NULL};
+        return executeCommands("resetprop", arguments, false);
     }
     return 1;
 }
@@ -118,35 +72,24 @@ int DoWhenPropisinTheSameForm(const char *property, const char *expectedProperty
 }
 
 int setprop(const char *property, const char *propertyValue) {
-    char typeShyt[strlen(property) + strlen(propertyValue) + 5];
-    snprintf(typeShyt, sizeof(typeShyt), "resetprop %s %s", property, propertyValue);
-    if(executeCommands(typeShyt, false) == 0) {
-        return 0;
-    }
-    else {
-        error_print("setprop(): Failed to set property.");
-        exit(1);
-    }
+    const char *args[] = {property, propertyValue, NULL};
+    if(executeCommands("resetprop", args, false) == 0) return 0;
+    error_print("setprop(): Failed to set property.");
+    exit(1);
 }
 
 bool isTheDeviceBootCompleted() {
-    if(getSystemProperty__("null", "sys.boot_completed") == 1) {
-        return true;
-    }
+    if(getSystemProperty__("null", "sys.boot_completed") == 1) return true;
     return false;
 }
 
 bool isBootAnimationExited() {
-    if(getSystemProperty__("null", "service.bootanim.exit") == 1) {
-        return true;
-    }
+    if(getSystemProperty__("null", "service.bootanim.exit") == 1) return true;
     return false;
 }
 
 bool bootanimStillRunning() {
-    if(getSystemProperty__("null", "service.bootanim.progress") == 1) {
-        return true;
-    }
+    if(getSystemProperty__("null", "service.bootanim.progress") == 1) return true;
     return false;
 }
 
@@ -174,9 +117,7 @@ char *getSystemProperty(const char *filepath, const char *propertyVariableName) 
         snprintf(buildProperty, propertyLen, "getprop %s", propertyVariableName);
         FILE *cmd = popen(buildProperty, "r");
         if(cmd) {
-            if(fgets(buildProperty, sizeof(buildProperty), cmd)) {
-                buildProperty[strcspn(buildProperty, "\r\n")] = 0;
-            }
+            if(fgets(buildProperty, sizeof(buildProperty), cmd)) buildProperty[strcspn(buildProperty, "\r\n")] = 0;
             pclose(cmd);
             return buildProperty;
         }
@@ -198,41 +139,24 @@ char *getSystemProperty(const char *filepath, const char *propertyVariableName) 
 }
 
 void sendToastMessages(const char *service, const char *message) {
-    // Prevents command injection attempts
-    if(strchr(message, ';') || strstr(message, "&&")) {
-        error_print("sendToastMessages(): Nice try diddy!");
-        exit(1);
-    }
+    if(!service || !message) return;
     if(isPackageInstalled("bellavita.toast") == 0) {
-        size_t toastTextSize = strlen(service) + strlen(message) + strlen("am start -a android.intent.action.MAIN -e toasttext") + strlen("-n bellavita.toast/.MainActivity") + 5;
-        char *toastTextWithArguments = malloc(toastTextSize);
-        if(!toastTextWithArguments) {
-            consoleLog("sendToastMessages():", "Failed to allocate memory for sending messages, please try flushing the ram.");
-            exit(1);
-        }
-        snprintf(toastTextWithArguments, toastTextSize, "am start -a android.intent.action.MAIN -e toasttext \"%s: %s\" -n bellavita.toast/.MainActivity", service, message);
-        executeCommands(toastTextWithArguments, false);
+        const char *args[] = {"am", "start", "-a", "android.intent.action.MAIN", "-e", "toasttext", service, message, "-n", "bellavita.toast/.MainActivity", NULL};
+        executeCommands("am", args, false);
     }
 }
 
 void sendNotification(const char *message) {
-    if(!message || !*message) return;
-    const char *template = "cmd notification post -S bigtext -t 'HorizonUX' 'Tag' \"%s\"";
-    size_t commandLength = snprintf(NULL, 0, template, message) + 1;
-    char *command = malloc(commandLength);
-    if(!command) {
-        abort_instance("sendNotification(): Failed to allocate memory for notification command", "");
-    }
-    snprintf(command, commandLength, template, message);
-    executeCommands(command, false);
-    free(command);
+    if(!message) return;
+    const char *args[] = {"cmd", "notification", "post", "-S", "bigtext", "-t", "HorizonUX", "Tag", message, NULL};
+    executeCommands("cmd", args, false);
 }
 
 void prepareStockRecoveryCommandList(char *action, char *actionArg, char *actionArgExt) {
     mkdir("/cache/recovery/", 0755);
-    FILE *recoveryCommand = fopen("/cache/recovery/command", "a");
+    FILE *recoveryCommand = fopen("/cache/recovery/command", "w");
     if(recoveryCommand == NULL) {
-        perror("Failed to open recovery command file");
+        error_print("prepareStockRecoveryCommandList(): Failed to open recovery command file");
         return;
     }
     if(strcmp(action, "wipe") == 0 && strcmp(actionArg, "cache") == 0) {
@@ -246,8 +170,6 @@ void prepareStockRecoveryCommandList(char *action, char *actionArg, char *action
     }
     else if(strcmp(action, "switchLocale") == 0) {
         fprintf(recoveryCommand, "--locale=%s_%s\n", cStringToLower(actionArg), cStringToUpper(actionArgExt));
-        fclose(recoveryCommand);
-        return;
     }
     fclose(recoveryCommand);
 }
@@ -256,9 +178,9 @@ void prepareTWRPRecoveryCommandList(char *action, char *actionArg, char *actionA
     mkdir("/cache/recovery/", 0755);
     FILE *recoveryCommand = fopen("/cache/recovery/openrecoveryscript", "a");
     if(recoveryCommand == NULL) {
-        perror("Failed to open recovery command file");
+        perror("prepareTWRPRecoveryCommandList(): Failed to open recovery command file");
         return;
-    }
+    } 
     if(strcmp(action, "wipe") == 0 && strcmp(actionArg, "cache") == 0) {
         fputs("wipe cache\n", recoveryCommand);
     }

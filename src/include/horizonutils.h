@@ -24,10 +24,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <fcntl.h>
+
+// to shut up the compiler (ifykyk)
+extern const char *placeboArg[];
 
 // FUCKING global FUCKING variables.
 extern bool WRITE_DEBUG_MESSAGES_TO_CONSOLE;

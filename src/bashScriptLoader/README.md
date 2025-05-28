@@ -10,4 +10,4 @@ make ANDROID_SDK_VERSION=<sdk version here> loader
 
 ## What Does This Do?
 - This binary acts as a shell script loader.
-- Since we can’t directly run shell scripts, I made this as a workaround! >3
+- Since we can’t directly run shell scripts in init, I made this as a workaround! >3
