@@ -78,17 +78,11 @@ video.bg-video {
     flex-direction: column;
     justify-content: space-between;
     padding: 8px;
-    background: rgba(255, 121, 198, 0.12);
+    background: transparent;
     border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(255, 121, 198, 0.25);
     cursor: pointer;
     z-index: 20;
     transition: box-shadow 0.3s ease, transform 0.3s ease;
-}
-
-.hamburger-menu:hover {
-    box-shadow: 0 12px 28px rgba(255, 85, 170, 0.35);
-    transform: translateY(-2px) scale(1.05);
 }
 
 .hamburger-menu div {
@@ -190,4 +184,10 @@ video.bg-video {
     justify-content: center;
     gap: 20px;
     padding: 20px;
+}
+
+.nav-spacer {
+    height: 24px; /* Adjust as needed */
+    pointer-events: none;
+    opacity: 0;
 }

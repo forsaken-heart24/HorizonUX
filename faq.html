@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Horizon | FAQ</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="src/scripts/index.js"></script>
     <link rel="stylesheet" href="src/style/css/faq-stylesheet.css" />
 </head>
 <body>
@@ -19,11 +18,12 @@
         </div>
         <nav id="main-nav" aria-label="fuckass main navigation motherfucker">
             <ul>
-                <li><a href="/">Home</a></li>
+                <li><a href="index.html">Home</a></li>
                 <li><a href="https://github.com/forsaken-heart24/HorizonUX">Source Code</a></li>
                 <li><a href="contributors.html">Contributors</a></li>
                 <li><a href="supporteddevices.html">Supported Devices</a></li>
                 <li><a href="https://t.me/lunaromslore24/54">Telegram Chat</a></li>
+                <li><a href="build.html">How to Build</a></li>
             </ul>
         </nav>
     </header>
@@ -54,4 +54,32 @@
         </div>
     </div>
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const hamburger = document.querySelector('.hamburger');
+        const nav = document.getElementById('main-nav');
+        function toggleMenu(open) {
+            nav.classList.toggle('open', open);
+            hamburger.classList.toggle('open', open);
+        }
+        hamburger.addEventListener('click', () => {
+            const isOpen = nav.classList.contains('open');
+            toggleMenu(!isOpen);
+        });
+        hamburger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const isOpen = nav.classList.contains('open');
+                toggleMenu(!isOpen);
+            }
+        });
+        function handleOutsideInteraction(e) {
+            if (nav.classList.contains('open') && !nav.contains(e.target) && !hamburger.contains(e.target)) {
+                toggleMenu(false);
+            }
+        }
+        document.addEventListener('mousedown', handleOutsideInteraction);
+        document.addEventListener('touchstart', handleOutsideInteraction);
+    });
+</script>
 </html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Horizon | Build Configuration Variables</title>
+    <script src="src/scripts/index.js"></script>
+    <link rel="stylesheet" href="src/style/css/build-stylesheet.css" />
+</head>
+<body>
+    <div class="hamburger-menu" onclick="toggleMenu()">
+        <div></div><div></div><div></div>
+    </div>
+    <nav id="sideMenu" class="side-menu">
+        <div class="nav-spacer"></div>
+        <a href="index.html">Home</a>
+        <a href="https://github.com/forsaken-heart24/HorizonUX">Source Code</a>
+        <a href="contributors.html">Contributors</a>
+        <a href="supporteddevices.html">Supported Devices</a>
+        <a href="faq.html">FAQ</a>
+        <a href="https://t.me/lunaromslore24/54">Telegram Chat</a>
+    </nav>
+    <main>
+        <section style="margin-top: -1rem;">
+            <h1>Build Configuration Variables | makeconfigs</h1>
+            <div class="important" style="font-family: 'SanFranciscoPro'; text-align: center;"><strong>Please note that while everything works, some configurations might cause issues. Some of these configs can lead to a bootloop.</strong></div>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem; margin-top: 2rem;">
+            <h2 style="margin-top: 0;">Debugging</h2>
+            <ul style="padding-left: 1.25rem; margin: 1rem 0 0 0;">
+                <li><b>TARGET_BUILD_IS_FOR_DEBUGGING</b>: Enables verbose logging for debugging, which impacts performance.</li>
+            </ul>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem;">
+            <h2 style="margin-top: 0;">Security</h2>
+            <ul style="padding-left: 1.25rem; margin: 1rem 0 0 0;">
+                <li><b>TARGET_REMOVE_NONE_SECURITY_OPTION</b>: Disables the "None" option for lock screen security.</li>
+                <li><b>TARGET_REMOVE_SWIPE_SECURITY_OPTION</b>: Disables the swipe-to-unlock option.</li>
+            </ul>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem;">
+            <h2 style="margin-top: 0;">Bloatware &amp; Features</h2>
+            <ul style="padding-left: 1.25rem; margin: 1rem 0 0 0;">
+                <li><b>TARGET_REMOVE_USELESS_VENDOR_STUFFS</b>: Removes bloat from the vendor partition.</li>
+                <li><b>TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS</b>: Removes unnecessary Samsung apps (note: Android 9 is not fully supported).</li>
+                <li><b>TARGET_ADD_EXTRA_ANIMATION_SCALES</b>: Adds extra animation scales for customization.</li>
+                <li><b>TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS</b>: Enables live blur effects for aesthetics. Please note that this impacts battery life and performance.</li>
+                <li><b>TARGET_FLOATING_FEATURE_ENABLE_ULTRA_POWER_SAVING</b>: Enables ultra power saving. This feature is generally unnecessary, but you can enable it if you want.</li>
+                <li><b>TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH</b>: Disables Smart Switch during setup.</li>
+            </ul>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem;">
+            <h2 style="margin-top: 0;">Special Features</h2>
+            <ul style="padding-left: 1.25rem; margin: 1rem 0 0 0;">
+                <li><b>TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING</b>: Attempts to boost performance at the cost of increased heat and reduced battery life.</li>
+                <li><b>TARGET_INCLUDE_UNLIMITED_BACKUP</b>: Enables unlimited photo backup in a specific app.</li>
+                <li><b>TARGET_INCLUDE_SAMSUNG_THEMING_MODULES</b>: Installs patched Samsung Good Lock modules.</li>
+                <li><b>TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM</b>: Includes Spotify as an option for alarm tones.</li>
+                <li><b>TARGET_FLOATING_FEATURE_INCLUDE_EASY_MODE</b>: Enables Easy Mode, which provides larger icons and is designed for users with visual difficulties.</li>
+                <li><b>TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON</b>: Enables a live clock icon in the launcher. Disable this if you prefer.</li>
+                <li><b>TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES</b>: Requires proper or minimum mdNIE support in the ROM and possibly the device for proper functionality.</li>
+                <li><b>TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES</b>: Enables the voice memo feature in the Notes app. Only supported on UI7.</li>
+            </ul>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem;">
+            <h2 style="margin-top: 0;">Audio &amp; Display</h2>
+            <ul style="padding-left: 1.25rem; margin: 1rem 0 0 0;">
+                <li><b>TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER</b>: Fixes LDAC audio distortion for lower-end Bluetooth audio devices.</li>
+                <li><b>TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES</b>: Enables Dolby audio in games (only if supported and if the hardware is capable).</li>
+            </ul>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem;">
+            <h2 style="margin-top: 0;">Additional Customization</h2>
+            <ul style="padding-left: 1.25rem; margin: 1rem 0 0 0;">
+                <li><b>TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER</b>: Fixes LDAC audio distortion for lower-end Bluetooth audio devices.</li>
+                <li><b>TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES</b>: Enables Dolby audio in games (only if supported and if the hardware is capable).</li>
+                <li><b>TARGET_FLOATING_FEATURE_LAUNCHER_CONFIG_ANIMATION_TYPE</b>: Adjusts launcher animation for different performance tiers (LowEnd, LowestEnd, LowEndFast, Mass (mid-rangers, not available after 3.1), HighEnd, CHNHighEND, and HighEnd_Tablet).</li>
+                <li><b>CUSTOM_WALLPAPER_RES_JSON_GENERATOR</b>: Adds multiple wallpapers easily.</li>
+                <li><b>TARGET_BUILD_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU</b>: Adds a mobile data toggle to the power menu.</li>
+                <li><b>TARGET_BUILD_FORCE_FIVE_BAR_NETICON</b>: Forces the network icon to display 5 bars.</li>
+                <li><b>TARGET_BUILD_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER</b>: Enables call recording in the Samsung Dialer app. Note: You are responsible for complying with local laws.</li>
+                <li><b>TARGET_BUILD_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING</b>: Prevents the system from closing the camera app during calls.</li>
+                <li><b>TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING</b>: Allows music playback while recording video.</li>
+                <li><b>TARGET_BUILD_DISABLE_WIFI_CALLING</b>: Disables Wi-Fi calling if set to true; otherwise, enables it if disabled.</li>
+                <li><b>TARGET_BUILD_SKIP_SETUP_JUNKS</b>: Skips unnecessary setup steps.</li>
+                <li><b>BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK</b>: Disables notification sounds while playing videos or audio files.</li>
+                <li><b>TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL</b>: Allows the media player to play videos or songs during calls.</li>
+                <li><b>FORCE_ENABLE_POP_UP_PLAYER_ON_SVP</b>: Enables the popup player in Samsung Video Player.</li>
+                <li><b>TARGET_BUILD_FORCE_DISABLE_SETUP_WIZARD</b>: Disables the Setup Wizard. For enterprise or trusted use cases only. You are responsible for any legal consequences.</li>
+                <li><b>TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN</b>: Adds Game Launcher to the home screen.</li>
+                <li><b>TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS</b>: Adds battery health level settings similar to iPhone. Thanks to <a href="https://github.com/salvogiangri/UN1CA" target="_blank">UN1CA</a>.</li>
+                <li><b>BRINGUP_CN_SMARTMANAGER_DEVICE</b>: Adds the Chinese version of Smart Manager and Device Care. Thanks to <a href="https://github.com/saadelasfur" target="_blank">@saadelasfur</a>. (Load Chinese applications at your own risk!) [Only works on UI6 and UI7]</li>
+                <li><b>TARGET_BUILD_ADD_SCREENRESOLUTION_CHANGER</b>: Adds a screen resolution switcher for devices with 2340x1080 resolution. Thanks to <a href="https://github.com/Yanndroid" target="_blank">@Yanndroid</a> for their project.</li>
+            </ul>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem;">
+            <h2 style="margin-top: 0;">Language &amp; Locale</h2>
+            <ul style="padding-left: 1.25rem; margin: 1rem 0 0 0;">
+                <li><b>SWITCH_DEFAULT_LANGUAGE_ON_PRODUCT_BUILD</b>: Sets the default language and region for the first boot. Set <b>NEW_DEFAULT_LANGUAGE_ON_PRODUCT</b> and <b>NEW_DEFAULT_LANGUAGE_COUNTRY_ON_PRODUCT</b> to your preferred values.</li>
+            </ul>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem;">
+            <h2 style="margin-top: 0;">Miscellaneous</h2>
+            <ul style="padding-left: 1.25rem;">
+                <li><b>TARGET_DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION</b>: Disables Samsung's ASKS signature verification. This does not affect the built-in signature verification and is only used for Samsung applications.</li>
+                <li><b>TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS</b>: <a href="https://github.com/forsaken-heart24/i_dont_want_to_be_an_weirdo/blob/main/banner_images/rounded_corners_hux_ex.png" target="_blank">Adds rounded corners to the PiP window. Tap to see an example.</a></li>
+            </ul>
+        </section>
+        <section class="card" style="font-family: 'SanFranciscoPro'; padding: 1.5rem 2rem;">
+            <h2 style="margin-top: 0;">Advanced</h2>
+            <ul style="padding-left: 1.25rem;">
+                <li><b>TARGET_INCLUDE_HORIZON_OEMCRYPTO_DISABLER</b>: Removes DRM-related files. This will downgrade Widevine to L3 and disable HD playback. DRM apps might still work, but this is not guaranteed.</li>
+                <li><b>TINKER_MAX_REFRESH_RATE</b>: Set to true and configure the variables to change your device’s maximum refresh rate. Thanks to <a href="https://github.com/BrotherBoard">@BrotherBoard</a>.</li>
+                <li><b>DTBO_IMAGE_PATH</b>: Path to your DTBO image.</li>
+                <li><b>THIS_IS_MY_DEVICE_MAX_REFRESH_RATE</b>: Desired maximum refresh rate for your device.</li>
+                <li><b>MY_KEYSTORE_ALIAS</b>: Enter your Keystore Alias.</li>
+                <li><b>MY_KEYSTORE_PASSWORD</b>: Enter your Keystore Alias Password.</li>
+                <li><b>MY_KEYSTORE_PATH</b>: Enter the path to your Keystore.</li>
+                <li><b>TARGET_REMOVE_SMARTSWITCH_DAEMON</b>: Removes the Smart Switch listener port. It’s unnecessary, so removal is recommended.</li>
+                <li><b>TARGET_BUILD_REMOVE_SYSTEM_LOGGING</b>: Removes unnecessary logging processes.</li>
+                <li><b>TARGET_BUILD_ADD_NETWORK_SPEED_WIDGET</b>: Adds a network speed meter to the SystemUI quick settings.</li>
+                <li><b>TARGET_BUILD_BRING_NEWGEN_ASSISTANT</b>: Brings Assistant 2.0 to Android ≤ 11.</li>
+                <li><b>RECOVERY_IMAGE_PATH</b>: Set this if you want to patch your recovery image.</li>
+                <li><b>TARGET_INCLUDE_HORIZONUX_ELLEN</b>: Ellen is a script that runs during boot to spoof or apply miscellaneous tweaks (does not alter performance).</li>
+                <li><b>TARGET_BUILD_MAKE_DEODEXED_ROM</b>: Deodexes the ROM. <a href="https://xdaforums.com/t/complete-guide-what-is-odex-and-deodex-rom.2200349" target="_blank">Learn about ODEX and DEODEX</a>.</li>
+                <li><b>TARGET_BUILD_FIX_ANDROID_SYSTEM_DEVICE_WARNING</b>: Removes the post-boot Android System warning.</li>
+                <li><b>TARGET_DISABLE_FILE_BASED_ENCRYPTION</b>: Disables FBE (file-based encryption) on internal storage. This was present in the script but undocumented until now.</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

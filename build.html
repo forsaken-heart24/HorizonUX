@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Horizon | Build Guide</title>
+    <script src="src/scripts/index.js"></script>
+    <link rel="stylesheet" href="src/style/css/build-stylesheet.css" />
+</head>
+<body>
+    <div class="hamburger-menu" onclick="toggleMenu()">
+        <div></div><div></div><div></div>
+    </div>
+    <nav id="sideMenu" class="side-menu">
+        <div class="nav-spacer"></div>
+        <a href="index.html">Home</a>
+        <a href="https://github.com/forsaken-heart24/HorizonUX">Source Code</a>
+        <a href="contributors.html">Contributors</a>
+        <a href="supporteddevices.html">Supported Devices</a>
+        <a href="faq.html">FAQ</a>
+        <a href="https://t.me/lunaromslore24/54">Telegram Chat</a>
+    </nav>
+    <main>
+        <section style="margin-top: -1rem;">
+            <h1>Build Guide</h1>
+        </section>
+        <section class="card" style="margin-top: 1rem;">
+            <h2>🔧 Prerequisites</h2>
+            <ul>
+                <li>OpenJDK</li>
+                <li>Python 3</li>
+                <li>aria2c</li>
+                <li>zip</li>
+                <li>lz4</li>
+                <li>make</li>
+                <li>mkdtimg</li>
+                <li>imjtool</li>
+                <li>erofs-utils</li>
+                <li>OpenSSL</li>
+                <li>xmlstarlet</li>
+                <li>Android NDK</li>
+            </ul>
+            <div class="warning" style="font-family: 'SanFranciscoPro';"><strong>Note:</strong> Missing any of these dependencies may result in build failures.</div>
+        </section>
+        <section class="card">
+            <h2>🛠️ Build or Modify the ROM</h2>
+            <h3>1️⃣ Configure <code>src/makeconfigs.prop</code></h3>
+            <ul>
+                <li>Edit the file to match your needs.</li>
+                <li><a href="makeconfigs.html">→ Configuration guide</a></li>
+            </ul>
+            <h3>2️⃣ Configure <code>src/genericTargetPropeties.conf</code></h3>
+            <ul>
+                <li>Update this if your device isn't officially supported.</li>
+                <li><a href="supporteddevices.html">→ View supported devices</a></li>
+                <li><a href="deviceconfigs.html">→ Configuration guide (only if not supported)</a></li>
+            </ul>
+            <h3>3️⃣ Build the ROM</h3>
+            <ul><li>Run the following command:</li></ul>
+            <pre><code>./src/build.sh &lt;firmware_url&gt; | &lt;local_firmware_path&gt;</code></pre>
+            <p>If already configured, simply run:</p>
+            <pre><code>./src/build.sh</code></pre>
+            <h3>4️⃣ Test the ROM</h3>
+            <ul><li>Flash and thoroughly test the ROM on your device.</li></ul>
+            <div class="important" style="font-family: 'SanFranciscoPro';"><strong>Important:</strong> Ensure the firmware matches your device model.</div>
+        </section>
+    </main>
+</body>
+</html>
