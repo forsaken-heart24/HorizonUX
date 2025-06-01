@@ -44,15 +44,16 @@ main {
     background: var(--card-light);
     backdrop-filter: blur(12px);
     border-radius: 12px;
-    padding: 2rem;
+    padding: 2rem 2rem 1rem;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     box-sizing: border-box;
     font-family: 'SanFranciscoPro';
 }
 
 .card h2 {
     margin-top: 0;
+    margin-bottom: 1rem;
 }
 
 h1 {
