@@ -1,50 +1,76 @@
 ini_set("force_colorspace", "rgba");
-ini_set("rom_name",             "HorizonUX");
-ini_set("rom_version",          "Birds");
-ini_set("rom_author",           "Luna");
-ini_set("rom_device",           "Galaxy XXX");
-ini_set("rom_date",             "dd-mm-yyyy");
+ini_set("rom_name", "HorizonUX");
+ini_set("rom_version", "Birds");
+ini_set("rom_author", "Luna");
+ini_set("rom_device", "Galaxy A30");
+ini_set("rom_date", "24-May-2008");
 splash(2000, "a1");
-fontresload( "0", "ttf/GoogleSansRegular.ttf", "11" );
-fontresload( "1", "ttf/GoogleSansRegular.ttf", "14" );
-theme("horizon");
+fontresload("0", "ttf/GoogleSansRegular.ttf", "11");
+fontresload("1", "ttf/GoogleSansRegular.ttf", "14");
+theme("ics");
 viewbox(
-    "Example Startup header",
+    "",
     "This is Aroma Installer: "+
     "<b><#selectbg_g>For HorizonUX</#></b>."+
     "It will help you to configure your Rom installation.\n\n"+
     "Press <b>Next</b> to continue...",
-	"@install"
+    "@install"
 );
 agreebox(
-    "Example Terms &amp; Conditions Header",
+    "",
     "Please Read The Terms Of Use Carefully Below.",
-    "@example_terms_box_icon_filename",
+    "@license",
     resread("tc.txt"),
-    "I Agree with this Terms and Conditions",
+    "I Agree with the Terms and Conditions",
     "<@center>You must accept the terms and conditions</@>"
 );
 textbox(
-    "Example Changelogs Header",
+    "",
     "ROM Changelog",
-    "@example_changelog_icon_filename",
+    "@info",
     resread("changelogs.txt")
 );
 checkbox(
-    "Example Checkbox Header",
-    "Selected Apps and Services will be installed this is 1st list",
-    "@example_checkbox_icon_filename",
-    "example.prop",
-    "Example Selection Box Title:",                "",                                             2,
-    "Option 1",                                    "Explanatory for option 1",                     0,
-    "Option 2",                                    "Explanatory for option 2",                     0,
-	"Option 3",                                    "Explanatory for option 3",                     0
+    "",
+    "Choose the Samsung services you want to install - first",
+    "@apps",
+    "checkbox0.prop",
+    "", "", 2,
+    "IndexOneNameOne:", "IndexOneDeskOne:", 0,
+    "IndexOneNameTwo", "IndexOneDeskTwo:", 0
+);
+checkbox(
+    "",
+    "Choose the Samsung services you want to install - second",
+    "@apps",
+    "checkbox1.prop",
+    "", "", 2,
+    "IndexTwoNameOne:", "IndexTwoDeskOne:", 0,
+    "IndexTwoNameTwo:", "IndexTwoDeskTwo:", 0
+);
+selectbox(
+    "",
+    "Choose the Samsung services you want to install - third",
+    "@apps",
+    "checkbox2.prop",
+    "", "", 2,
+    "IndexThreeNameOne:", "IndexThreeDeskOne:", 0,
+    "IndexThreeNameTwo:", "IndexThreeDeskTwo:", 0
+);
+selectbox(
+    "",
+    "Choose the Samsung services you want to install - fourth",
+    "@apps",
+    "checkbox3.prop",
+    "", "", 2,
+    "IndexFourNameOne:", "IndexFourDeskOne:", 0,
+    "IndexFourNameTwo:", "IndexFourDeskTwo:", 0
 );
 setvar("retstatus",
   	install(
-      	"Example Installer Header",
-      	"Aroma is flashing the rom.\n"+
-      	"@example_installer_icon_filename",
+      	"",
+      	"Aroma is flashing the rom right now...\n"+
+      	"@install",
       	"Installation finished!"
   	)
 );

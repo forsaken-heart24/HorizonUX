@@ -10,11 +10,11 @@ HorizonUX is a collection of scripts designed to help you modify OneUI and tailo
 
 ## 🛠️ How to Build  
 Follow our detailed step-by-step guide to get started:  
-🔗 [**How to Modify Your Stock ROM**](https://github.com/forsaken-heart24/HorizonUX/docs/HOWTOGUIDE.md)
+🔗 [**How to Modify Your Stock ROM**](https://forsaken-heart24.github.io/HorizonUX/build.html)
 
 ## 💖 Meet the Team  
 This project wouldn't be possible without our amazing contributors. Show them some love:  
-🔗 [**Contributors**](https://github.com/forsaken-heart24/HorizonUX/docs/CONTRIBUTORS.md)
+🔗 [**Contributors**](https://forsaken-heart24.github.io/HorizonUX/contributors.html)
 
 ## 🐞 Found a Bug or Have a Feature Request?  
 Report issues or suggest features through our bot:  
@@ -22,7 +22,7 @@ Report issues or suggest features through our bot:
 
 ## 📱 Supported Devices  
 Wondering if your device is supported? Check the list here:  
-🔗 [**Supported Devices**](https://github.com/forsaken-heart24/HorizonUX/docs/SUPPORTED_DEVICES.md)
+🔗 [**Supported Devices**](https://forsaken-heart24.github.io/HorizonUX/supporteddevices.html)
 
 ## ✅ Usage Guidelines  
 You are free to use this project for personal or commercial purposes, but please provide proper credit.  

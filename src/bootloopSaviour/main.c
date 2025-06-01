@@ -65,15 +65,11 @@ int main(int argc, char *argv[]) {
     consoleLog("main(): Sleeping for 5s to get the new or old zygote pid....", " ");
     sleep(5);
     int zygote_pid3 = getSystemProperty__("hi", "init.svc_debug_pid.zygote");
-    if(zygote_pid <= 1) {
-        disableMagiskModules();
-    }
+    if(zygote_pid <= 1) disableMagiskModules();
     if(zygote_pid != zygote_pid2 || zygote_pid2 != zygote_pid3) {
         sleep(15);
         int zygote_pid4 = getSystemProperty__("hi", "init.svc_debug_pid.zygote");
-        if(zygote_pid3 != zygote_pid4) {
-            disableMagiskModules();
-        }
+        if(zygote_pid3 != zygote_pid4) disableMagiskModules();
     }
     consoleLog("main(): No need to disable modules i think, wrapping up!", " ");
     return 0;

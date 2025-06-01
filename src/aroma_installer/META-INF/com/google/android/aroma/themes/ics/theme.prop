@@ -17,8 +17,10 @@ img.checkbox.on=cb_on
 img.checkbox.on.focus=cb_on_focus
 img.checkbox.on.push=cb_on_press
 img.radio=radio
+img.radio.focus=radio_focus
 img.radio.push=radio_press
 img.radio.on=radio_on
+img.radio.on.focus=radio_on_focus
 img.radio.on.push=radio_on_press
 
 
@@ -35,8 +37,8 @@ color.textfg_gray     = #aaa
 color.controlbg       = #999
 color.controlbg_g     = #999
 color.controlfg       = #fff
-color.selectbg        = #F33A6A
-color.selectbg_g      = #F33A6A
+color.selectbg        = #c4b52d
+color.selectbg_g      = #00ffbf
 color.selectfg        = #fff
 color.titlebg         = #000
 color.titlebg_g       = #000
@@ -49,7 +51,7 @@ color.navbg           = #000
 color.navbg_g         = #000
 color.border          = #666
 color.border_g        = #666
-color.progressglow    = #F33A6A
+color.progressglow    = #E100FF
 
 config.roundsize             = 1
 config.button_roundsize      = 1

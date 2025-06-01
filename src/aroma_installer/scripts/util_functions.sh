@@ -55,22 +55,20 @@ function findActualBlock() {
 function installImages() {
     local imageName="$1"
     local blockname="$2"
-    if [[ -z "${imageName}" || -z "${blockname}" ]]; then
-        echo "Usage: installImages <image file name in the zip, ex: system.img> <block name, ex: system>"
-        exit 1
-    fi
+    local imageType="$3"
+    [[ -z "${imageName}" || -z "${blockname}" ]] && abort "Usage: installImages <image file name in the zip, ex: system.img> <block name, ex: system>"
     case "${imageType}" in
         "sparse")
             unzip -o "${ZIPFILE}" "${imageName}" -d $IMAGES
             consolePrint "Trying to install ${imageName} to ${blockname}..."
-            simg2img "${IMAGES}/${blockname}" $(findActualBlock "${blockname}") || abort "Failed to install ${imageName} to ${blockname}!"
-            consolePrint "Successfully installed ${imageName} to ${blockname}!"
+            simg2img "${IMAGES}/${blockname}.img" $(findActualBlock "${blockname}") || abort "Failed to install ${imageName} to ${blockname}!"
+            consolePrint "Successfully installed ${blockname}!"
             rm -rf ${IMAGES}/
         ;;
         "raw")
             consolePrint "Trying to install ${imageName} to ${blockname}..."
             unzip -o "${ZIPFILE}" "${imageName}" -d ${blockname} || abort "Failed to install ${imageName}!"
-            consolePrint "Successfully installed ${imageName} to ${blockname}!"
+            consolePrint "Successfully installed ${blockname}!"
         ;;
     esac
 }
