@@ -26,6 +26,16 @@ TMPFILE="$(mktemp)"
 argOne="$1"
 [[ -f "./local_build/etc/FirmwareZipDownloadedWithoutErrors" && "./local_build/etc/downloadedContents/firmware.zip" ]] && argOne="./local_build/etc/downloadedContents/firmware.zip"
 loggedFloatingFeaturePATH="no"
+quotes=(
+	"We are not what we know but what we are willing to learn."
+	"Good people are good because they've come to wisdom through failure."
+	"Your word is a lamp for my feet, a light for my path."
+	"The first problem for all of us, men and women, is not to learn, but to unlearn."
+)
+randomQuote="${quotes[$RANDOM % ${#quotes[@]}]}"
+BUILD_START_TIME=$(date +%s)
+BUILD_END_TIME=$(date +%s)
+BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
 
 # Trap the SIGINT signal (Ctrl+C) and call handle_sigint when it's caught
 trap 'abort "Aborting the build....."' SIGINT
@@ -51,7 +61,7 @@ done
 for i in system/product/priv-app system/product/etc system/product/overlay \
 		system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
 		system/etc/init/ tmp/hux/ etc/extract/super_extract etc/imageSetup/product etc/imageSetup/system etc/imageSetup/vendor etc/imageSetup/optics etc/downloadedContents \
-		etc/buildedContents; do
+		etc/buildedContents etc/buildNInfo; do
 			[ -f "./local_build/${i}" ] || continue
 			mkdir -p "./local_build/$i"
 			debugPrint "build.sh: Making ./local_build/${i} directory.."
@@ -78,50 +88,54 @@ esac
 export PATH="$PATH:$(dirname "$(realpath "$0")")/src/dependencies/bin"
 
 # bruh
-compareDefaultMakeConfigs
 sleep 5
 clear
-echo -e "\033[0;31m########################################################################"
-echo -e "   _  _     _   _            _                _   ___  __"
-echo -e " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \/ /"
-echo -e "|_  ..  _| | |_| |/ _ \\| '__| |_  / _ \\| '_ \\| | | |\\  / "
-echo -e "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \\ "
-echo -e "  |_||_|   |_| |_|\___/|_|  |_/___\\___/|_| |_|\___//_/\\_\\"
-echo -e "                                                         "
-echo -e "########################################################################\033[0m"
+echo -e "\033[0;31m╔───────────────────────────────────────────────────────╗
+│██╗  ██╗ ██████╗ ██████╗ ██╗███████╗ ██████╗ ███╗   ██╗│
+│██║  ██║██╔═══██╗██╔══██╗██║╚══███╔╝██╔═══██╗████╗  ██║│
+│███████║██║   ██║██████╔╝██║  ███╔╝ ██║   ██║██╔██╗ ██║│
+│██╔══██║██║   ██║██╔══██╗██║ ███╔╝  ██║   ██║██║╚██╗██║│
+│██║  ██║╚██████╔╝██║  ██║██║███████╗╚██████╔╝██║ ╚████║│
+│╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝│
+╚───────────────────────────────────────────────────────╝\033[0m"
+for ((i = 0; i <= $(echo "$randomQuote" | wc -c); i++)); do printf "#"; done
+echo -e "\n$randomQuote"
+for ((i = 0; i <= $(echo "$randomQuote" | wc -c); i++)); do printf "#"; done
+echo ""
+compareDefaultMakeConfigs
 console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
-console_print "Build started by $BUILD_USERNAME at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
-console_print "CPU Architecture : $(lscpu | grep Architecture | awk '{print $2}')"
-console_print "Available RAM Memory : $(free -h --giga | grep Mem | awk '{print $7}')B"
-console_print "The Computer is turned on since : $(uptime --pretty | awk '{print substr($0, 4)}')"
+console_print "Build started at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 
 # check:
 if [ -n "$argOne" ]; then
 	if stringFormat --lower "$(file $argOne)" | grep -q zip; then
 		if unzip -l "$argOne" | grep -qE "AP_|HOME_CSC"; then
 			# skip extracting if the archives were found.
-			if [[ -f "$(echo -e ./local_build/etc/extract/AP_*.tar.md5)" && -f "$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)" && ! -f "./local_build/etc/extract/fwExtracted" ]]; then
+			if [[ -f "$(echo -e ./local_build/etc/extract/AP_*.tar.md5)" && -f "$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)" && "$(unzip -p "$argOne" ".uuid")" == "$(grep_prop "previousBuildZipUUID" "./local_build/etc/buildNInfo/build.prop")" ]]; then
 				console_print "Skipping firmware extraction, target firmware files are already extracted and saved."
 				extractedAPFilePath="$(echo -e ./local_build/etc/extract/AP_*.tar.md5)"
 				extractedHomeCSCFilePath="$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)"
-			elif [ "$(cat "./local_build/etc/extract/extractingWhat")" == "HOME_CSC" ]; then
+			elif [ "$(grep_prop "buildExtractedStuff_archive" "./local_build/etc/buildNInfo/build.prop")" == "HOME_CSC" && "$(unzip -p "$argOne" ".uuid")" == "$(grep_prop "previousBuildZipUUID" "./local_build/etc/buildNInfo/build.prop")" ]; then
 				console_print "Previous build was forcefully closed for some reason, extracting HOME_CSC again..."
 				extractedAPFilePath="$(echo -e ./local_build/etc/extract/AP_*.tar.md5)"
 				extractedHomeCSCFilePath="$(unzip -o $argOne $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')"
 				[ -z "${extractedHomeCSCFilePath}" ] && abort "Failed to extract HOME_CSC from $argOne" "build.sh"
-				touch ./local_build/etc/extract/fwExtracted
 			else
+				# generate a uuid value to identify a file:
+				logInterpreter "Trying to generate a uuid hash for $argOne" "uuidgen > .uuid" || abort "Failed to generate uuid hash for the zip file? check if uuidgen exists or not."
+				zip -q "$argOne" -j ".uuid" || abort "Failed to add uuid hash into the $argOne file."
+				setprop --custom "./local_build/etc/buildNInfo/build.prop" "previousBuildZipUUID" "$(cat .uuid)"
+				rm .uuid
 				# unzip -o test.zip nos/README_Kernel.txt -d nos | grep inflating | awk '{print $2}'
-				[ "$(cat "./local_build/etc/extract/extractingWhat")" == "AP" ] && console_print "Previous build was forcefully closed for some reason, extracting everything again..."
+				[[ "$(grep_prop "buildExtractedStuff_archive" "./local_build/etc/buildNInfo/build.prop")" == "AP" && "$(unzip -p "$argOne" ".uuid")" == "$(grep_prop "previousBuildZipUUID" "./local_build/etc/buildNInfo/build.prop")" ]] && console_print "Previous build was forcefully closed for some reason, extracting everything again..."
 				console_print "Trying to extract $(unzip -l $argOne | grep AP_ | awk '{print $4}') from the archive...."
-				extractedAPFilePath=$(echo "AP" > ./local_build/etc/extract/extractingWhat; unzip -o $argOne $(unzip -l $argOne | grep AP_ | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
+				extractedAPFilePath=$(setprop --custom "./local_build/etc/buildNInfo/build.prop" "buildExtractedStuff_archive" "AP"; unzip -o $argOne $(unzip -l $argOne | grep AP_ | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
 				[ -z "${extractedAPFilePath}" ] && abort "Failed to extract AP from $argOne" "build.sh"
 				debugPrint "Processing AP tar file from the given firmware package...."
 				tar -tf "$extractedAPFilePath" | grep -qE "system|super|vendor|optics" || abort "The $extractedAPFilePath doesn't have system, vendor, optics or even super. Try again with a samfw.com dump!" "build.sh"
 				console_print "Trying to extract $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') from the archive...."
-				extractedHomeCSCFilePath=$(echo "HOME_CSC" > ./local_build/etc/extract/extractingWhat; unzip -o $argOne $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
+				extractedHomeCSCFilePath=$(setprop --custom "./local_build/etc/buildNInfo/build.prop" "buildExtractedStuff_archive" "HOME_CSC"; unzip -o $argOne $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
 				[ -z "${extractedHomeCSCFilePath}" ] && abort "Failed to extract HOME_CSC from $argOne" "build.sh"
-				touch ./local_build/etc/extract/fwExtracted
 			fi
 			# ight, so, basically even if we have both of these on our firmware, wwe dont need to worry cuz ive made sure that CSC features sets to omc/*/conf/cscfeature.xml
 			# like product/omc/*/conf/cscfeature.xml and optics/omc/*/conf/cscfeature.xml *ONLY* if that XML file was found!
@@ -203,9 +217,6 @@ else
 	[[ -f "${SYSTEM_DIR}/build.prop" && -f "${VENDOR_DIR}/build.prop" ]] || abort "System or vendor partition is not a valid partition!" "build.sh"
 fi
 
-# remove touched file to fucking switch to a different state
-rm -rf "./local_build/etc/extract/extractingWhat"
-
 # Locate build.prop files
 HORIZON_PRODUCT_PROPERTY_FILE="$(checkBuildProp "${PRODUCT_DIR}")"
 HORIZON_SYSTEM_PROPERTY_FILE="$(checkBuildProp "${SYSTEM_DIR}")"
@@ -259,7 +270,6 @@ fi
 [ "$MY_KEYSTORE_PATH" == "./test-keys/HorizonUX-testkey.jks" ] && warns "NOTE: You are using HorizonUX test-key! This is not safe for public builds. Use your own key!" "TEST_KEY_WARNS"
 
 if [[ $BUILD_TARGET_ANDROID_VERSION -eq 14 ]]; then
-	console_print "Removing some bloats, thnx Salvo!"
 	rm -rf ${SYSTEM_DIR}/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml ${SYSTEM_DIR}/etc/public.libraries-wsm.samsung.txt \
 	${SYSTEM_DIR}/lib/libhal.wsm.samsung.so ${SYSTEM_DIR}/lib/vendor.samsung.hardware.security.wsm.service-V1-ndk.so \
 	${SYSTEM_DIR}/lib64/libhal.wsm.samsung.so ${SYSTEM_DIR}/lib64/vendor.samsung.hardware.security.wsm.service-V1-ndk.so ${SYSTEM_DIR}/priv-app/KnoxGuard
@@ -271,64 +281,48 @@ elif [[ $TARGET_REMOVE_USELESS_SAMSUNG_APPLICATIONS_STUFFS == true ]]; then
 	. "${SCRIPTS[5]}"
 fi
 
-if [ $TARGET_INCLUDE_UNLIMITED_BACKUP == true ]; then
-	console_print "Adding unlimited backup feature...."
-	. "${SCRIPTS[0]}"
-fi
+# misc - unlimited photos backups
+[ $TARGET_INCLUDE_UNLIMITED_BACKUP == true ] && . "${SCRIPTS[0]}"
 
 if [ $BUILD_TARGET_REQUIRES_BLUETOOTH_LIBRARY_PATCHES == true ]; then
-	console_print "Patching bluetooth...."
 	[ -f "${SYSTEM_DIR}/lib64/libbluetooth_jni.so" ] || abort "The \"libbluetooth_jni.so\" file from the system/lib64 wasn't found" "build.sh"
 	magiskboot hexpatch "${SYSTEM_DIR}/lib64/libbluetooth_jni.so" "6804003528008052" "2b00001428008052" || warns "Failed to patch the bluetooth library, please try again!" "BLUETOOTH_PATCH_FAIL"
 fi
 
+# patches - fastbootd in stock recovery
 [ $BUILD_TARGET_INCLUDE_FASTBOOTD_PATCH == true ] && . "${SCRIPTS[2]}"
 
-if [ $TARGET_REMOVE_NONE_SECURITY_OPTION == true ]; then
-	console_print "Removing none security option from lockscreen settings..."
-	changeXMLValues "config_hide_none_security_option" "true" "./src/horizon/overlay_packages/settings/horizonux.autogenerated_rro/res/values/bools.xml"
-fi
+# lockscreen - disables none option
+[ $TARGET_REMOVE_NONE_SECURITY_OPTION == true ] && changeXMLValues "config_hide_none_security_option" "true" "./src/horizon/overlay_packages/settings/horizonux.autogenerated_rro/res/values/bools.xml"
 
-if [ $TARGET_REMOVE_SWIPE_SECURITY_OPTION == true ]; then
-	console_print "Removing swipe security option from lockscreen settings..."
-	changeXMLValues "config_hide_swipe_security_option" "true" "./src/horizon/overlay_packages/settings/horizonux.autogenerated_rro/res/values/bools.xml"
-fi
+# lockscreen - disables swipe option
+[ $TARGET_REMOVE_SWIPE_SECURITY_OPTION == true ] && changeXMLValues "config_hide_swipe_security_option" "true" "./src/horizon/overlay_packages/settings/horizonux.autogenerated_rro/res/values/bools.xml"
 
-if [[ $TARGET_REMOVE_NONE_SECURITY_OPTION == true || $TARGET_REMOVE_SWIPE_SECURITY_OPTION == true ]]; then
-	console_print "Building the overlay for disabling unsecure security options..."
-	buildAndSignThePackage "${DECODEDAPKTOOLPATHS[0]}" "$HORIZON_FALLBACK_OVERLAY_PATH"
-fi
+# builds and deploys the overlay
+[[ $TARGET_REMOVE_NONE_SECURITY_OPTION == true || $TARGET_REMOVE_SWIPE_SECURITY_OPTION == true ]] && buildAndSignThePackage "${DECODEDAPKTOOLPATHS[0]}" "$HORIZON_FALLBACK_OVERLAY_PATH"
 
-if [ $TARGET_ADD_EXTRA_ANIMATION_SCALES == true ]; then
-	console_print "Adding Extra animation scales.."
-	buildAndSignThePackage "${DECODEDAPKTOOLPATHS[1]}" "$HORIZON_FALLBACK_OVERLAY_PATH"
-fi
+# misc - additional animation scales
+[ $TARGET_ADD_EXTRA_ANIMATION_SCALES == true ] && buildAndSignThePackage "${DECODEDAPKTOOLPATHS[1]}" "$HORIZON_FALLBACK_OVERLAY_PATH"
 
-if [[ $TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS == true && $BUILD_TARGET_ANDROID_VERSION -eq 11 ]]; then
-	console_print "Adding rounded corners on pip window...."
-	buildAndSignThePackage "${DECODEDAPKTOOLPATHS[2]}" "$HORIZON_FALLBACK_OVERLAY_PATH"
-fi
+# misc - rounded corners on pip window
+[[ $TARGET_ADD_ROUNDED_CORNERS_TO_THE_PIP_WINDOWS == true && $BUILD_TARGET_ANDROID_VERSION -eq 11 ]] && buildAndSignThePackage "${DECODEDAPKTOOLPATHS[2]}" "$HORIZON_FALLBACK_OVERLAY_PATH"
 
+# enables game launcher.
 if [ $TARGET_FLOATING_FEATURE_INCLUDE_GAMELAUNCHER_IN_THE_HOMESCREEN == true ]; then
-	console_print "Enabling Game Launcher..."
 	addFloatXMLValues "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "TRUE"
 else
-	console_print "Disabling Game Launcher..."
+# does the opposite.
 	addFloatXMLValues "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_DEFAULT_GAMELAUNCHER_ENABLE" "FALSE"
 fi
 
 if [ $BUILD_TARGET_HAS_HIGH_REFRESH_RATE_MODES == true ]; then
-	console_print "Switching the default refresh rate to ${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}Hz..."
 	addFloatXMLValues "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "${BUILD_TARGET_DEFAULT_SCREEN_REFRESH_RATE}"
 else
-	console_print "Switching the default refresh rate to 60Hz"
 	addFloatXMLValues "SEC_FLOATING_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE" "60"
 fi
 
-if [ $TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM == true ]; then
-	console_print "Adding spotify as an option in the clock app.."
-	addFloatXMLValues "SEC_FLOATING_FEATURE_CLOCK_CONFIG_ALARM_SOUND" "spotify"
-fi
+# Adds spotify as an option in the clock app
+[ $TARGET_FLOATING_FEATURE_INCLUDE_SPOTIFY_AS_ALARM == true ] && addFloatXMLValues "SEC_FLOATING_FEATURE_CLOCK_CONFIG_ALARM_SOUND" "spotify"
 
 if [ $TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS == true ]; then
 	console_print "This feature needs some patches to work on some roms, if you dont"
@@ -337,23 +331,18 @@ if [ $TARGET_FLOATING_FEATURE_BATTERY_SUPPORT_BSOH_SETTINGS == true ]; then
 fi
 
 if [ $TARGET_FLOATING_FEATURE_INCLUDE_CLOCK_LIVE_ICON == true ]; then
-	console_print "Disabling the live clock icon from the launcher"
 	addFloatXMLValues "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "TRUE"
 else
-	console_print "Enabling the live clock icon from the launcher"
 	addFloatXMLValues "SEC_FLOATING_FEATURE_LAUNCHER_SUPPORT_CLOCK_LIVE_ICON" "FALSE"
 fi
 
 if [ $TARGET_FLOATING_FEATURE_INCLUDE_EASY_MODE == true ]; then
-	console_print "Enabling Easy Mode..."
 	addFloatXMLValues "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "TRUE"
 else
-	console_print "Disabling Easy Mode..."
 	addFloatXMLValues "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_EASY_MODE" "FALSE"
 fi
 
 if [ $TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS == true ]; then
-	console_print "Enabling live blur effects..."
 	for blur_effects in SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_PARTIAL_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_CAPTURED_BLUR SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG; do
 		addFloatXMLValues "$blur_effects" "TRUE"
 	done
@@ -363,7 +352,7 @@ if [ $TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS == true ]; then
 			cp -a "./src/target/soc/snapdragon/${BUILD_TARGET_SDK_VERSION}/system/lib/libgui.so" "${SYSTEM_DIR}/lib/libgui.so"
 			cp -a "./src/target/soc/snapdragon/${BUILD_TARGET_SDK_VERSION}/system/lib64/libgui.so" "${SYSTEM_DIR}/lib64/libgui.so"
 		else
-			console_print "SDK ${BUILD_TARGET_SDK_VERSION} is not supported."
+			console_print "SDK ${BUILD_TARGET_SDK_VERSION} is not supported for enabling Live blur for now."
 		fi
 	elif [[ -f ${VENDOR_DIR}/etc/fstab.exynos* || -f "${VENDOR_DIR}/bin/vaultkeeperd" ]]; then
 		if echo "${BUILD_TARGET_SDK_VERSION}" | grep -qE "28|29|30|31|33|34"; then
@@ -371,46 +360,38 @@ if [ $TARGET_FLOATING_FEATURE_ENABLE_BLUR_EFFECTS == true ]; then
 			cp -a "./src/target/soc/exynos/${BUILD_TARGET_SDK_VERSION}/system/lib/libgui.so" "${SYSTEM_DIR}/lib/libgui.so"
 			cp -a "./src/target/soc/exynos/${BUILD_TARGET_SDK_VERSION}/system/lib64/libgui.so" "${SYSTEM_DIR}/lib64/libgui.so"
 		else
-			console_print "SDK ${BUILD_TARGET_SDK_VERSION} is not supported."
+			console_print "SDK ${BUILD_TARGET_SDK_VERSION} is not supported for enabling Live blur for now."
 		fi
 	fi
 fi
 
 if [ $TARGET_FLOATING_FEATURE_ENABLE_ENHANCED_PROCESSING == true ]; then
-	console_print "Enabling Enhanced Processing.."
 	for enhanced_gaming in SEC_FLOATING_FEATURE_SYSTEM_SUPPORT_LOW_HEAT_MODE SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE SEC_FLOATING_FEATURE_SYSTEM_SUPPORT_ENHANCED_CPU_RESPONSIVENESS; do
 		addFloatXMLValues "${enhanced_gaming}" "TRUE"
 	done
 fi
 
 if [ $TARGET_FLOATING_FEATURE_ENABLE_EXTRA_SCREEN_MODES == true ]; then
-	console_print "Adding support for extra screen modes...."
 	for led_modes in SEC_FLOATING_FEATURE_LCD_SUPPORT_MDNIE_HW SEC_FLOATING_FEATURE_LCD_SUPPORT_WIDE_COLOR_GAMUT; do
 		addFloatXMLValues "${led_modes}" "FALSE"
 	done
 fi
 
 if [ $BUILD_TARGET_SUPPORTS_WIRELESS_POWER_SHARING == true ]; then
-	console_print "Enabling Wireless powershare...."
 	for wireless_power_sharing_core in SEC_FLOATING_FEATURE_BATTERY_SUPPORT_HV SEC_FLOATING_FEATURE_BATTERY_SUPPORT_WIRELESS_HV SEC_FLOATING_FEATURE_BATTERY_SUPPORT_WIRELESS_NIGHT_MODE \
 		SEC_FLOATING_FEATURE_BATTERY_SUPPORT_WIRELESS_TX; do
 		addFloatXMLValues "${wireless_power_sharing_core}" "TRUE"
 	done
 fi
 
-if [ $TARGET_FLOATING_FEATURE_ENABLE_ULTRA_POWER_SAVING == true ]; then
-	console_print "Enabling Ultra Power Saver mode...."
-	addFloatXMLValues "SEC_FLOATING_FEATURE_COMMON_SUPPORT_ULTRA_POWER_SAVING" "TRUE"
-fi
+[ $TARGET_FLOATING_FEATURE_ENABLE_ULTRA_POWER_SAVING == true ] && addFloatXMLValues "SEC_FLOATING_FEATURE_COMMON_SUPPORT_ULTRA_POWER_SAVING" "TRUE"
 
 if [ $TARGET_FLOATING_FEATURE_DISABLE_SMART_SWITCH == true ]; then
-	console_print "Disabling Smart Switch feature in setup...."
 	addFloatXMLValues "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SMART_SWITCH" "FALSE"
 	applyDiffPatches "${SYSTEM_DIR}/etc/init/init.rilcommon.rc" "${DIFF_UNIFIED_PATCHES[20]}"
 fi
 
 if [ $TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES == true ]; then
-	console_print "Enabling dolby encoding in games...."
 	for dolby_in_games in SEC_FLOATING_FEATURE_AUDIO_SUPPORT_DEFAULT_ON_DOLBY_IN_GAME SEC_FLOATING_FEATURE_AUDIO_SUPPORT_DOLBY_GAME_PROFILE; do
 		addFloatXMLValues "${dolby_in_games}" "TRUE"
 	done
@@ -422,10 +403,8 @@ debugPrint "build.sh: Starting to check and try to download goodlook modules, lo
 
 # installs audio resampler.
 if [ $TARGET_INCLUDE_HORIZON_AUDIO_RESAMPLER == true ]; then
-	console_print "Enabling HorizonUX audio resampler..."
 	setprop --system "persist.horizonux.audio.resampler" "available"
 else
-	console_print "Disabling HorizonUX audio resampler..."
 	setprop --system "persist.horizonux.audio.resampler" "unavailable"
 fi
 
@@ -517,9 +496,7 @@ fi
 
 # removes useless samsung stuffs from the vendor partition.
 if [ $TARGET_REMOVE_USELESS_VENDOR_STUFFS == true ]; then
-	console_print "Nuking useless vendor stuffs..."
     if [[ ${BUILD_TARGET_SDK_VERSION} -ge 29 && ${BUILD_TARGET_SDK_VERSION} -le 35 ]]; then
-        console_print "Removing services from the system config files..."
         if grep_prop "ro.product.vendor.model" "${HORIZON_VENDOR_PROPERTY_FILE}" | grep -E 'G97([035][FNUW0]|7[BNUW])|N97([05][FNUW0]|6[BNQ0]|1N)|T860|F90(0[FN]|7[BN])|M[23]15F'; then
             for cass in ${SYSTEM_DIR}/../init.rc ${VENDOR_DIR}/etc/init/cass.rc; do
                 sed -i -e 's/^[^#].*cass.*$/# &/' -re '/\/(system|vendor)\/bin\/cass/,/^#?$/s/^[^#]*$/#&/' "${cass}"
@@ -553,14 +530,10 @@ if [ $TARGET_REMOVE_USELESS_VENDOR_STUFFS == true ]; then
 fi
 
 # nukes display refresh rate overrides on some video platforms.
-if [[ $BUILD_TARGET_DISABLE_DISPLAY_REFRESH_RATE_OVERRIDE == true && $BUILD_TARGET_SDK_VERSION -ge 33 ]]; then
-	console_print "Disabling Refresh rate override from surfaceflinger..."
-	setprop --custom "${VENDOR_DIR}/default.prop" "ro.surface_flinger.enable_frame_rate_override" "false"	
-fi
+[[ $BUILD_TARGET_DISABLE_DISPLAY_REFRESH_RATE_OVERRIDE == true && $BUILD_TARGET_SDK_VERSION -ge 33 ]] && setprop --custom "${VENDOR_DIR}/default.prop" "ro.surface_flinger.enable_frame_rate_override" "false"	
 
 # disables DRC shit
 if [ $BUILD_TARGET_DISABLE_DYNAMIC_RANGE_COMPRESSION == true ]; then
-	console_print "Disabling Dynamic Range Compression..."
 	if [ -f "${VENDOR_DIR}/etc/audio_policy_configuration.xml" ]; then
 		sed -i 's/speaker_drc_enabled="true"/speaker_drc_enabled="false"/g' "${VENDOR_DIR}/etc/audio_policy_configuration.xml"
 		debugPrint "build.sh: Disabled speaker DRC in audio_policy_configuration.xml"
@@ -569,10 +542,8 @@ if [ $BUILD_TARGET_DISABLE_DYNAMIC_RANGE_COMPRESSION == true ]; then
 	fi
 fi
 
-if [ $TARGET_DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION == true ]; then
-	console_print "Disabling Samsung's ASKS..."
-	setprop --system ro.build.official.release false
-fi
+# disables samsung asks
+[ $TARGET_DISABLE_SAMSUNG_ASKS_SIGNATURE_VERFICATION == true ] && setprop --system ro.build.official.release false
 
 if [ $FORCE_HARDWARE_ACCELERATION == true ]; then
 	warns "Enabling hardware acceleration..." "MISC"
@@ -584,7 +555,6 @@ fi
 [[ ${BUILD_TARGET_SDK_VERSION} == 35 && -n "${roynaWhat}" ]] && buildAndSignThePackage "${DECODEDAPKTOOLPATHS[4]}" "$HORIZON_FALLBACK_OVERLAY_PATH"
 
 if [ $TARGET_BUILD_REMOVE_SYSTEM_LOGGING == true ]; then
-	console_print "Disabling unnecessary logging stuffs in android..."
 	addFloatXMLValues "SEC_FLOATING_FEATURE_SYSTEM_CONFIG_SYSINT_DQA_LOGLEVEL" '3'
 	setprop --system "logcat.live" "disable"
 	setprop --system "sys.dropdump.on" "Off"
@@ -639,44 +609,31 @@ if [ $TARGET_BUILD_REMOVE_SYSTEM_LOGGING == true ]; then
 	esac
 fi
 
-if [ $TARGET_BUILD_BRING_NEWGEN_ASSISTANT == true ]; then
-	console_print "Enabling New Gen Google Assistant..."
-	setprop --system "ro.opa.eligible_device" "true"
-fi
+# new gen assistant for android 11 and below:
+[ $TARGET_BUILD_BRING_NEWGEN_ASSISTANT == true ] && setprop --system "ro.opa.eligible_device" "true"
 
-if [ $TARGET_BUILD_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU == true ]; then
-	console_print "Enabling Mobile data toggle in the power menu.."
-	addCSCxmlValues "CscFeature_Framework_SupportDataModeSwitchGlobalAction" "TRUE"
-fi
+# brings mobile data toggle in the power menu:
+[ $TARGET_BUILD_ADD_MOBILE_DATA_TOGGLE_IN_POWER_MENU == true ] && addCSCxmlValues "CscFeature_Framework_SupportDataModeSwitchGlobalAction" "TRUE"
 
-if [ $TARGET_BUILD_FORCE_FIVE_BAR_NETICON == true ]; then
-	console_print "Enabling 5 network bars..."
-	addCSCxmlValues "CscFeature_SystemUI_ConfigMaxRssiLevel" "5"
-fi
+# enables 5 network bars:
+[ $TARGET_BUILD_FORCE_FIVE_BAR_NETICON == true ] && addCSCxmlValues "CscFeature_SystemUI_ConfigMaxRssiLevel" "5"
 
-if [ $TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING == true ]; then
-	console_print "Forcing the system to not close music apps while recording a video..."
-	addCSCxmlValues "CscFeature_Camera_CamcorderDoNotPauseMusic" "TRUE"
-fi
+# Forces the system to not close music apps while recording a video
+[ $TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_MUSIC_WHILE_RECORDING == true ] && addCSCxmlValues "CscFeature_Camera_CamcorderDoNotPauseMusic" "TRUE"
 
+# Enables network speed bar in qs:
 if [ $TARGET_BUILD_ADD_NETWORK_SPEED_WIDGET == true ]; then
-	console_print "Enabling network speed bar in qs.."
 	addCSCxmlValues "CscFeature_Setting_SupportRealTimeNetworkSpeed" "TRUE"
 	[ "$BUILD_TARGET_SDK_VERSION" -ge "34" ] && addCSCxmlValues "CscFeature_Common_SupportZProjectFunctionInGlobal" "TRUE"
 fi
 
-if [ $TARGET_BUILD_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING == true ]; then
-	console_print "Forcing system to not close the camera app while calling..."
-	addCSCxmlValues "CscFeature_Camera_EnableCameraDuringCall" "TRUE"
-fi
+# forces system to not close the camera app while calling
+[ $TARGET_BUILD_FORCE_SYSTEM_TO_NOT_CLOSE_CAMERA_WHILE_CALLING == true ] && addCSCxmlValues "CscFeature_Camera_EnableCameraDuringCall" "TRUE"
 
-if [ $TARGET_BUILD_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER == true ]; then
-	console_print "Adding call recording feature in samsung dialler, please note that I'm not responsible for legal actions against you!"
-	addCSCxmlValues "CscFeature_VoiceCall_ConfigRecording" "RecordingAllowedByMenu"
-fi
+# Adds call recording feature in samsung dialer
+[ $TARGET_BUILD_ADD_CALL_RECORDING_IN_SAMSUNG_DIALER == true ] && addCSCxmlValues "CscFeature_VoiceCall_ConfigRecording" "RecordingAllowedByMenu"
 
 if [ $BUILD_TARGET_DISABLE_KNOX_PROPERTIES == true ]; then
-	console_print "Disabling Knox and applying rmm fix.."
 	setprop --system "ro.securestorage.knox" "false"
 	setprop --system "ro.security.vaultkeeper.native" "0"
 	# Thanks salvo!
@@ -690,41 +647,33 @@ if [ $BUILD_TARGET_DISABLE_KNOX_PROPERTIES == true ]; then
 	addCSCxmlValues "CscFeature_Knox_SupportKnoxGuard" "FALSE"
 fi
 
+# Disables Wifi calling
 if [ $TARGET_BUILD_DISABLE_WIFI_CALLING == true ]; then
-	console_print "Disabling Wifi calling.."
 	addCSCxmlValues "CscFeature_Setting_SupportWifiCall" "FALSE"
 	addCSCxmlValues "CscFeature_Setting_SupportWiFiCallingMenu" "FALSE"
 else 
-	console_print "Enabling Wifi calling.."
+# does the opposite.
 	addCSCxmlValues "CscFeature_Setting_SupportWifiCall" "TRUE"
 	addCSCxmlValues "CscFeature_Setting_SupportWiFiCallingMenu" "TRUE"
 fi
 
+# removes junk on setup:
 if [ $TARGET_BUILD_SKIP_SETUP_JUNKS == true ]; then
-	console_print "Disabling junks on setup...."
 	addCSCxmlValues "CscFeature_Setting_SkipWifiActvDuringSetupWizard" "FALSE"
 	addCSCxmlValues "CscFeature_Setting_SkipStepsDuringSamsungSetupWizard" "TRUE"
 fi
 
-if [ $BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK == true ]; then
-	console_print "Blocking notification sounds on playbacks.."
-	addCSCxmlValues "CscFeature_Video_BlockNotiSoundDuringStreaming" "TRUE"
-fi
+# Blocks notification sounds on playbacks:
+[ $BLOCK_NOTIFICATION_SOUNDS_DURING_PLAYBACK == true ] && addCSCxmlValues "CscFeature_Video_BlockNotiSoundDuringStreaming" "TRUE"
 
-if [ $TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL == true ]; then
-	addCSCxmlValues "CscFeature_Video_SupportPlayDuringCall" "TRUE"
-	console_print "Forced the system to play media while call..."
-fi
+# Forces the system to play media while call
+[ $TARGET_BUILD_FORCE_SYSTEM_TO_PLAY_SMTH_WHILE_CALL == true ] && addCSCxmlValues "CscFeature_Video_SupportPlayDuringCall" "TRUE"
 
-if [ $FORCE_ENABLE_POP_UP_PLAYER_ON_SVP == true ]; then
-	addCSCxmlValues "CscFeature_Video_EnablePopupPlayer" "TRUE"
-	console_print "Forced samsung video player to work on pop-up window..."
-fi
+# Forces samsung video player to work on pop-up window
+[ $FORCE_ENABLE_POP_UP_PLAYER_ON_SVP == true ] && addCSCxmlValues "CscFeature_Video_EnablePopupPlayer" "TRUE"
 
-if [ $TARGET_BUILD_FORCE_DISABLE_SETUP_WIZARD == true ]; then
-	console_print "Disabling Setup Wizard...."
-	addCSCxmlValues "CscFeature_SetupWizard_DisablePrivacyPolicyAgreement" "TRUE"
-fi
+# critical - disables setup wizard:
+[ $TARGET_BUILD_FORCE_DISABLE_SETUP_WIZARD == true ] && addCSCxmlValues "CscFeature_SetupWizard_DisablePrivacyPolicyAgreement" "TRUE"
 
 # init - ellen + bro board | Courtesy: @BrotherBoard
 if [[ ${TARGET_INCLUDE_HORIZONUX_ELLEN} == true || ${TARGET_INCLUDE_HORIZON_TOUCH_FIX} == true ]]; then
@@ -734,7 +683,6 @@ if [[ ${TARGET_INCLUDE_HORIZONUX_ELLEN} == true || ${TARGET_INCLUDE_HORIZON_TOUC
 	chcon u:object_r:system_file:s0 "${SYSTEM_DIR}/bin/bashScriptLoader"
 	chown root:shell "${SYSTEM_DIR}/bin/bashScriptLoader"
 	if [ ${TARGET_INCLUDE_HORIZONUX_ELLEN} == true ]; then
-		console_print "HorizonUX Ellen is enabled, please note that this feature is experimental and may cause bootloops, if you face any bootloops, please dm me with the logs."
 		setprop --system "persist.horizonux.ellen" "available"
 		cp -af "./src/horizon/rom_tweaker_script/horizonux_ellen.sh" "${SYSTEM_DIR}/bin/" || abort "Failed to move horizonux_ellen.sh to ${SYSTEM_DIR}/bin/" "build.sh"
 		chmod 755 "${SYSTEM_DIR}/bin/horizonux_ellen.sh"
@@ -742,7 +690,6 @@ if [[ ${TARGET_INCLUDE_HORIZONUX_ELLEN} == true || ${TARGET_INCLUDE_HORIZON_TOUC
 		chown root:shell "${SYSTEM_DIR}/bin/horizonux_ellen.sh"
 	fi
 	if [ ${TARGET_INCLUDE_HORIZON_TOUCH_FIX} == true ]; then
-		console_print "Adding brotherboard's GSI touch fix..."
 		setprop --system "persist.horizonux.brotherboard.touch_fix" "available"
 		cp -af "./src/horizon/rom_tweaker_script/brotherboard_touch_fix.sh" "${SYSTEM_DIR}/bin/"
 		chmod 755 "${SYSTEM_DIR}/bin/brotherboard_touch_fix.sh"
@@ -753,19 +700,22 @@ if [[ ${TARGET_INCLUDE_HORIZONUX_ELLEN} == true || ${TARGET_INCLUDE_HORIZON_TOUC
 fi
 
 if [ $TARGET_BUILD_MAKE_DEODEXED_ROM == true ]; then
-	console_print "Deodexing the rom.."
 	for deletableO_VDexFiles in ${SYSTEM_DIR}/app/*/*/*.odex ${SYSTEM_DIR}/app/*/*/*.vdex ${SYSTEM_DIR}/priv-app/*/*/*.odex ${SYSTEM_DIR}/priv-app/*/*/*.vdex \
 		${PRODUCT_DIR}/app/*/*/*.odex ${PRODUCT_DIR}/priv-app/*/*/*.vdex \
 		${VENDOR_DIR}/app/*/*/*.odex ${VENDOR_DIR}/priv-app/*/*/*.vdex \
 		$SYSTEM_EXT_DIR/app/*/*/*.odex $SYSTEM_EXT_DIR/app/*/*/*.vdex $SYSTEM_EXT_DIR/priv-app/*/*/*.odex $SYSTEM_EXT_DIR/priv-app/*/*/*.vdex; do
 		[ -f "${deletableO_VDexFiles}" ] && rm -rf "${deletableO_VDexFiles}"
 	done
-	console_print "Deodexed the rom successfully!"
 fi
 
-if [[ ${TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES} == true && ${BUILD_TARGET_SDK_VERSION} == 35 ]]; then
-	console_print "Enabling Voice Memo on Samsung Notes..."
-	addFloatXMLValues "SEC_FLOATING_FEATURE_VOICERECORDER_CONFIG_DEF_MODE" "normal,interview,voicememo"
+# should enable voice Memo on Samsung Notes:
+[[ ${TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES} == true && ${BUILD_TARGET_SDK_VERSION} == 35 ]] && addFloatXMLValues "SEC_FLOATING_FEATURE_VOICERECORDER_CONFIG_DEF_MODE" "normal,interview,voicememo"
+
+# verify if the device is capable of running Generative AI and it's related actions.
+if [ "${BUILD_TARGET_IS_CAPABLE_FOR_GENERATIVE_AI}" == true ]; then
+	addFloatXMLValues "BUILD_TARGET_SUPPORTS_GENERATIVE_AI_OBJECT_ERASER" "$(stringFormat -u ${BUILD_TARGET_SUPPORTS_GENERATIVE_AI_OBJECT_ERASER})"
+	addFloatXMLValues "BUILD_TARGET_SUPPORTS_GENERATIVE_AI_REFLECTION_ERASER" "$(stringFormat -u ${BUILD_TARGET_SUPPORTS_GENERATIVE_AI_REFLECTION_ERASER})"
+	addFloatXMLValues "BUILD_TARGET_SUPPORTS_GENERATIVE_AI_UPSCALER" "$(stringFormat -u ${BUILD_TARGET_SUPPORTS_GENERATIVE_AI_UPSCALER})"
 fi
 
 # Use xmlstarlet to update the version inside vendor-ndk
@@ -777,7 +727,6 @@ fi
 if [ ${TARGET_BUILD_ADD_SCREENRESOLUTION_CHANGER} == true ]; then
 	[[ -z ${BUILD_TARGET_SCREEN_WIDTH} || -z "${BUILD_TARGET_SCREEN_HEIGHT}" ]] && abort "The screen resolution is not specified on the property file."
 	if [[ ${BUILD_TARGET_SCREEN_WIDTH} =~ ^[0-9]+$ && ${BUILD_TARGET_SCREEN_HEIGHT} =~ ^[0-9]+$ && ${BUILD_TARGET_SCREEN_WIDTH} -eq 1080 && ${BUILD_TARGET_SCREEN_HEIGHT} -eq 2340 ]]; then
-		console_print "Building screen resolution controller app, Thanks to @Yanndroid"
 		. "${SCRIPTS[1]}"
 		rm -rf "${SYSTEM_DIR}/priv-app/screenResolution"
 		tar -C "./src/horizon/packages/" -xf "${DECODEDAPKTOOLPATHS[5]}.tar"
@@ -788,12 +737,11 @@ if [ ${TARGET_BUILD_ADD_SCREENRESOLUTION_CHANGER} == true ]; then
 		chown root:root "${SYSTEM_DIR}/priv-app/screenResolution/screenResolution.apk"
 		chcon u:object_r:system_file:s0 "${SYSTEM_DIR}/priv-app/screenResolution/screenResolution.apk"
 	else
-		console_print "Your display resolution is not valid, skipping the building process..."
+		console_print "Your display resolution is not valid for adding screen resolution controller app, skipping the building process..."
 	fi
 fi
 
 if [[ "${BUILD_TARGET_SDK_VERSION}" == "34|35" && $BRINGUP_CN_SMARTMANAGER_DEVICE == true ]]; then
-	console_print "Replacing stock smartmanager and device care with the chinese version..."
 	mkdir -p "./local_build/etc/permissions/" "./local_build/etc/app/SmartManager_v6_DeviceSecurity" \
 	"./local_build/etc/app/SmartManager_v6_DeviceSecurity_CN" "./local_build/etc/priv-app/SmartManager_v5" "./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity" \
 	"./local_build/etc/priv-app/SmartManagerCN" "./local_build/etc/priv-app/SmartManager_v6_DeviceSecurity_CN" "./local_build/etc/priv-app/SAppLock" "./local_build/etc/priv-app/Firewall";
@@ -871,7 +819,6 @@ fi
 
 # let's extend audio offload buffer size to 256kb and plug some of our things.
 debugPrint "build.sh: End of the script, running misc stuffs.."
-console_print "Running misc jobs..."
 addCSCxmlValues "CscFeature_Setting_InfinitySoftwareUpdate" "TRUE"
 addCSCxmlValues "CscFeature_Setting_DisableMenuSoftwareUpdate" "TRUE"
 addCSCxmlValues "CscFeature_Settings_GOTA" "TRUE"
@@ -942,12 +889,12 @@ if [ ${BUILD_TARGET_ENABLE_VULKAN_UI_RENDERING} == true ]; then
 				fi
 			;;
 		0x00402000|0x004020A2|0x00403000|0x004030105) # Vulkan 1.2, 1.2.162, 1.3, 1.3.261
-				console_print "Your device met the requirements of ui rendering in vulkan. It could render UI elements via Vulkan but may cause performance issues."
+				warns "Your device met the requirements of ui rendering in vulkan. It could render UI elements via Vulkan but may cause performance issues." "FORCE_VULKAN_UI_SHADING"
 				setprop --vendor "ro.hwui.use_vulkan" "true"
 				setprop --system "ro.hwui.use_vulkan" "true"
 			;;
 		*) # Unknown or unsupported Vulkan version
-				console_print "Unsupported or unknown Vulkan version detected: ${BUILD_TARGET_GPU_VULKAN_VERSION}."
+				warns "Unsupported or unknown Vulkan version detected: ${BUILD_TARGET_GPU_VULKAN_VERSION}." "FORCE_VULKAN_UI_SHADING"
 			;;
 	esac
 fi
@@ -984,3 +931,6 @@ if [ -f "./localFirmwareBuildPending" ]; then
 		buildImage "./local_build/etc/imageSetup/product" "/product"
 	fi
 fi
+console_print "Build ended at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
+console_print "Total build time: $(printf '%02d:%02d:%02d\n' $((BUILD_DURATION/3600)) $((BUILD_DURATION%3600/60)) $((BUILD_DURATION%60))) (hh:mm:ss)"
+console_print "Please verify if the requested features were available or not."
