@@ -981,6 +981,6 @@ if [ -f "./localFirmwareBuildPending" ]; then
 	else
 		buildImage "./local_build/etc/imageSetup/system" "/"
 		buildImage "./local_build/etc/imageSetup/vendor" "/vendor"
-		buildImage "./local_build/etc/imageSetup/product" "/product" 
+		buildImage "./local_build/etc/imageSetup/product" "/product"
 	fi
 fi

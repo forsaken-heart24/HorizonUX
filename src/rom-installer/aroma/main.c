@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     if(strcmp(argv[1], "--aroma") == 0) {
         FILE *aromaConfig = fopen("./META-INF/com/google/android/aroma-config", "wb");
         if(!aromaConfig) {
-            printf("\e[0;31mPlease either make \"META-INF/com/google/android/\" directory or simply execute this in the cloned dir (to be exact, im talking about HorizonUX/src/ directory)\e[0;37m\n");
+            printf("\e[0;31mPlease either make \"META-INF/com/google/android/\" directory or simply execute this in the cloned dir (to be exact, im talking about HorizonUX/src/rom-installer/aroma/ directory)\e[0;37m\n");
             return 1;
         }
         fprintf(aromaConfig, "ini_set(\"force_colorspace\", \"rgba\");\n");
@@ -119,9 +119,20 @@ int main(int argc, char *argv[]) {
     else if(strcmp(argv[1], "--installer") == 0) {
         FILE *updater_script = fopen("./META-INF/com/google/android/updater-script", "wb");
         if(!updater_script) {
-            printf("\e[0;31mERROR: Please either make \"META-INF/com/google/android/\" directory or simply execute this in the cloned dir (to be exact, im talking about HorizonUX/src/ directory)\e[0;37m\n");
+            printf("\e[0;31mERROR: Please either make \"META-INF/com/google/android/\" directory or simply execute this in the cloned dir (to be exact, im talking about HorizonUX/src/rom-installer/aroma/ directory)\e[0;37m\n");
             return 1;
         }
+        fprintf(updater_script, "# unpack busybox, util functions and stuff\n");
+        fprintf(updater_script, "export TMPDIR=\"/dev/tmp\"\n");
+        fprintf(updater_script, "export INSTALLER=\"$TMPDIR/install\"\n");
+        fprintf(updater_script, "export OUTFD=\"$2\"\n");
+        fprintf(updater_script, "export ZIPFILE=\"$3\"\n");
+        fprintf(updater_script, "mkdir -p \"$INSTALLER\" || exit 1\n");
+        fprintf(updater_script, "for file in scripts/util_functions.sh scripts/busybox; do\n");
+        fprintf(updater_script, "    unzip -o \"${ZIPFILE}\" \"$file\" -d \"${INSTALLER}/\" || exit 1\n");
+        fprintf(updater_script, "done\n\n");
+        fprintf(updater_script, "# uhrm idk bro:\n");
+        fprintf(updater_script, "chmod +x scripts/util_functions.sh\n\n");
         fprintf(updater_script, "# import the functions and variables.\nsource \"${INSTALLER}/scripts/util_functions.sh\"\n\n");
         fprintf(updater_script, "# put your flashable images list here:\n");
         fprintf(updater_script, "flashables=\"");

@@ -36,7 +36,7 @@ SAVIOUR_SRCS = $(LOADER_SRCS)
 # Main source path
 LOADER_MAIN = ./src/bashScriptLoader/main.c
 SAVIOUR_MAIN = ./src/bootloopSaviour/main.c
-AROMA_MAIN = ./src/aroma_installer/main.c
+AROMA_MAIN = ./src/rom-installer/aroma/main.c
 
 # Error logs path
 ERR_LOG = ./local_build/logs/compilerErrors.log
@@ -139,6 +139,6 @@ test: test_loader test_bootloopsaviour
 
 # Clean up
 clean:
-	@rm -f $(LOADER_OUTPUT) $(SAVIOUR_OUTPUT) $(ERR_LOG)
+	@rm -f $(LOADER_OUTPUT) $(SAVIOUR_OUTPUT) $(AROMA_OUTPUT) $(ERR_LOG)
 
 .PHONY: all loader bootloop_saviour aromaInstaller test_bootloopsaviour test_loader test_aromaInstaller check_compiler test clean help

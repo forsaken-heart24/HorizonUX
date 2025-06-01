@@ -18,7 +18,7 @@
 
 function grep_prop() {
     [[ -z "$1" || -z "$2" || ! -f "$2" ]] && return 1
-    grep -E "^$1=" "$2" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"' || echo ""
+    grep -E "^$1=" "$2" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"'
 }
 
 function downloadRequestedFile() {
@@ -61,7 +61,7 @@ function setprop() {
     elif stringFormat --lower "$1" | grep -q "custom"; then
         propVariableName="$3"
         propValue="$4"
-        propFile=$(if [ -f "$2" ]; then echo "$2"; else echo "$HORIZON_VENDOR_PROPERTY_FILE"; fi)
+        propFile=$([ -f "$2" ] && echo "$2" || echo "$HORIZON_VENDOR_PROPERTY_FILE")
     elif stringFormat --lower "$1" | grep -q "deleteifExpectationsMet"; then
         propFile="$2"
         propVariableName="$3"
@@ -73,8 +73,7 @@ function setprop() {
         propValue="$4"
         sed -i "/^${propVariableName}=/d" "$propFile"
     fi
-    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile} > ${propFile}.tmp
-    mv ${propFile}.tmp ${propFile}
+    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile}
 }
 
 function abort() {
@@ -246,7 +245,6 @@ function tinkerWithCSCFeaturesFile() {
         --decode)
             for EXPECTED_CSC_FEATURE_XML_PATH in $PRODUCT_DIR/omc/*/conf/cscfeature.xml $OPTICS_DIR/configs/carriers/*/*/conf/system/cscfeature.xml; do
                 [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}" ] || continue
-                [ -f "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" ] || continue
                 file "${EXPECTED_CSC_FEATURE_XML_PATH}" | grep -q data || continue
                 debugPrint "tinkerWithCSCFeaturesFile(): File chosen: $EXPECTED_CSC_FEATURE_XML_PATH"
                 if java -jar "$decoder_jar" -i "${EXPECTED_CSC_FEATURE_XML_PATH}" -o "${EXPECTED_CSC_FEATURE_XML_PATH}__decoded.xml" &>>$thisConsoleTempLogFile; then
@@ -283,8 +281,7 @@ function changeXMLValues() {
 
     # do checks and put ts shyt in log
     debugPrint "changeXMLValues(): Arguments: $1 $2 $3"
-    [ -z "$file" ] && abort "Error: No XML file specified!" "changeXMLValues"
-    [ ! -f "$file" ] && abort "Error: XML file '${file}' not found!" "changeXMLValues"
+    [[ -z "$file" || ! -f "$file" ]] && abort "Error: No XML file specified or file is not found." "changeXMLValues"
 
     # Check if the feature code is already set to the desired value
     if xmlstarlet sel -t -v "count(//${feature_code}[text() = '${feature_code_value}'])" "$file" | grep -q '1'; then
@@ -312,8 +309,7 @@ function changeYAMLValues() {
     local file="$3"
 
     # do checks and put ts shyt in log
-    [ -z "$file" ] && abort "Error: No file specified!" "changeYAMLValues"
-    [ ! -f "$file" ] && abort "Error: File '$file' not found!" "changeYAMLValues"
+    [[ -z "$file" || ! -f "$file" ]] && abort "Error: No file specified or the file is not found." "changeYAMLValues"
     debugPrint "changeYAMLValues(): Arguments: $1 $2 $3"
 
     # ok lets go
@@ -325,8 +321,7 @@ function ask() {
     local answer
     printf "[\e[0;35m$(date +%d-%m-%Y) \e[0;37m- \e[0;32m$(date +%H:%M%p)\e[0;37m] / [:\e[0;36mMESSAGE\e[0;37m:] / [:\e[0;32mJOB\e[0;37m:] -\e[0;33m $1\e[0;37m (y/n) : "
     read answer
-    answer="$(echo "$answer" | tr '[:upper:]' '[:lower:]')"
-    [[ "${answer}" == "y" || "${answer}" == "yes" ]]
+    [[ "$(echo "$answer" | tr '[:upper:]' '[:lower:]')" == "y|yes" ]]
 }
 
 function removeAttributes() {
@@ -583,10 +578,9 @@ function manageCameraFeatures() {
 }
 
 function parseBuildValues() {
-    local file="$1"
     while IFS='=' read -r key value; do
         echo "$key ${value:-<empty>}"
-    done < "$file"
+    done < "$1"
 }
 
 function replaceTargetBuildProperties() {

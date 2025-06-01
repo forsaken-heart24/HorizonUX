@@ -1,0 +1,14 @@
+# unpack busybox, util functions and stuff
+export TMPDIR="/dev/tmp"
+export INSTALLER="$TMPDIR/install"
+export OUTFD="$2"
+export ZIPFILE="$3"
+mkdir -p "$INSTALLER" || exit 1
+for file in META-INF/com/google/android/updater-script scripts/util_functions.sh scripts/busybox; do
+    unzip -o "$3" "$file" -d "${INSTALLER}/" || exit 1
+done
+
+# execute META-INF/com/google/android/updater-script to run actions:
+chmod +x META-INF/com/google/android/updater-script scripts/util_functions.sh
+chmod 755 scripts/busybox
+${INSTALLER}/META-INF/com/google/android/updater-script

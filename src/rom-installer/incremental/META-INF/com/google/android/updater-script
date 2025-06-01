@@ -1,0 +1,38 @@
+# import the functions and variables.
+source "${INSTALLER}/scripts/util_functions.sh"
+
+# device codename / model detection, better put your device's codename / model for checking it
+# the "|" works as a separator.
+supportedDeviceCodenameList="surya|karna"
+
+# now the real functions start!
+consolePrint "########################################################################"
+consolePrint "   _  _     _   _            _                _   ___  __ "
+consolePrint " _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \ \/ / "
+consolePrint "|_  ..  _| | |_| |/ _ \| '__| |_  / _ \| '_ \| | | |\  /  "
+consolePrint "|_      _| |  _  | (_) | |  | |/ / (_) | | | | |_| |/  \  "
+consolePrint "  |_||_|   |_| |_|\___/|_|  |_/___\___/|_| |_|\___//_/\_\ "
+consolePrint "                                                         "
+consolePrint "########################################################################"
+getprop ro.product.system.device | grep -qE "${supportedDeviceCodenameList}" || abort "This build is made for ${supportedDeviceCodenameList} not for your device."
+unmountPartitions && consolePrint "Successfully unmounted partitions!" || abort "Failed to unmount partitions, please try again after a reboot."
+consolePrint "Horizon - Birds for Galaxy A30 | Built by Luna"
+[ "$(acpi)" -le "25" ] && abort "Please atleast charge your device to 30% to continue the installation"
+# implement custom actions here
+consolePrint "                                              "
+consolePrint "              ******       ******"
+consolePrint "            **********   **********"
+consolePrint "          ************* *************"
+consolePrint "         *****************************"
+consolePrint "         *****************************"
+consolePrint "         *****************************"
+consolePrint "          ***************************"
+consolePrint "            ***********************"
+consolePrint "              *******************"
+consolePrint "                ***************"
+consolePrint "                  ***********"
+consolePrint "                    *******"
+consolePrint "                      ***"
+consolePrint "                       *"
+consolePrint "Thank you dear user for considering my project"
+consolePrint "let us know your thoughts on our official chat."
