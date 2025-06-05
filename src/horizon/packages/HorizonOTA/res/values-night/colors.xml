@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mesa_app_version_text_baseaboutactivity">#ff747474</color>
+    <color name="mesa_bottombtn_bg_baseaboutactivity">#ff1f1f1f</color>
+    <color name="mesa_changelog_content_color">#ffe0e0e0</color>
+    <color name="mesa_changelogview_subtext_color">#ff909090</color>
+    <color name="mesa_changelogview_super_bg_color">#ff1a1a1a</color>
+    <color name="mesa_layoutpref_help_image_bg_color">#ff171717</color>
+    <color name="mesa_ota_downloadactivity_desc_color">#ff999999</color>
+    <color name="mesa_widget_body_text_color">@color/sesl_dialog_body_text_color_dark</color>
+</resources>

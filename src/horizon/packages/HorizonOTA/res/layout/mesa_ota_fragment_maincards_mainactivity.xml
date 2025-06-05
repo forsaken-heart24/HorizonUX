@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_horizontal" android:orientation="vertical" android:id="@id/mesa_container_maincards_ota_mainactivity" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.mesalabs.ten.update.ui.widget.UpdateStatusView android:id="@id/mesa_usv_maincards_ota_mainactivity" android:layout_width="fill_parent" android:layout_height="wrap_content" />
+    <View android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="16.0dip" />
+    <com.mesalabs.ten.update.ui.widget.ChangelogView android:id="@id/mesa_cv_maincards_ota_mainactivity" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginBottom="16.0dip" />
+    <TextView android:textAppearance="?android:textAppearanceListItem" android:textSize="15.0sp" android:textColor="?secondaryTextColor" android:id="@id/mesa_preinstall_warning_ota_mainactivity" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/sesl_list_item_padding_horizontal" android:layout_marginTop="4.0dip" android:layout_marginRight="@dimen/sesl_list_item_padding_horizontal" android:layout_marginBottom="20.0dip" android:text="@string/mesa_pre_install_warning" android:lineSpacingExtra="4.0sp" android:layout_marginHorizontal="@dimen/sesl_list_item_padding_horizontal" />
+    <com.mesalabs.cerberus.ui.widget.RoundLinearLayout android:orientation="vertical" android:background="@drawable/mesa_content_area_bg" android:layout_width="fill_parent" android:layout_height="wrap_content">
+        <com.mesalabs.ten.update.ui.widget.CardView android:id="@id/mesa_card_all_ota_mainactivity" android:layout_width="fill_parent" android:layout_height="wrap_content" app:IconDrawable="@drawable/mesa_ota_card_ic_update" app:TitleText="@string/mesa_ota_card_dwinst_title" app:isDividerViewVisible="true" />
+        <com.mesalabs.ten.update.ui.widget.CardView android:id="@id/mesa_card_fwinfo_ota_mainactivity" android:layout_width="fill_parent" android:layout_height="wrap_content" app:DescText="@string/mesa_ota_card_fw_info_summary" app:IconDrawable="@drawable/mesa_ota_card_ic_fw_info" app:TitleText="@string/mesa_firmware_info" app:isDividerViewVisible="false" />
+    </com.mesalabs.cerberus.ui.widget.RoundLinearLayout>
+    <View android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="16.0dip" />
+</LinearLayout>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.samsung.android.ui.preference.internal.SeslPreferenceImageView android:id="@id/mesa_imageview_colorpickerpref" android:focusable="false" android:clickable="false" android:layout_width="30.0dip" android:layout_height="30.0dip" android:paddingEnd="?android:listPreferredItemPaddingEnd" />
+</LinearLayout>

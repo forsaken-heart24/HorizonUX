@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="mesa_bgservice_freq_entries">
+        <item>@string/mesa_bgservice_freq_60min_pref_sum</item>
+        <item>@string/mesa_bgservice_freq_3h_pref_sum</item>
+        <item>@string/mesa_bgservice_freq_6h_pref_sum</item>
+        <item>@string/mesa_bgservice_freq_12h_pref_sum</item>
+        <item>@string/mesa_bgservice_freq_24h_pref_sum</item>
+        <item>@string/mesa_bgservice_freq_7d_pref_sum</item>
+    </string-array>
+    <string-array name="mesa_bgservice_freq_values">
+        <item>3600</item>
+        <item>10800</item>
+        <item>21600</item>
+        <item>43200</item>
+        <item>86400</item>
+        <item>604800</item>
+    </string-array>
+    <string-array name="mesa_creditspage_lib_desc">
+        <item>@string/mesa_credits_androidx_description</item>
+        <item>@string/mesa_credits_gmaterial_description</item>
+        <item>@string/mesa_credits_oneui_description</item>
+        <item>@string/mesa_credits_fetch_description</item>
+        <item>@string/mesa_credits_waitingdots_description</item>
+    </string-array>
+    <array name="mesa_creditspage_lib_icon">
+        <item>@drawable/mesa_credits_androidx_icon</item>
+        <item>@drawable/mesa_credits_gmaterial_icon</item>
+        <item>@drawable/mesa_credits_oneui_icon</item>
+        <item>@drawable/mesa_credits_fetch_icon</item>
+        <item>@drawable/mesa_credits_waitingdots_icon</item>
+    </array>
+    <string-array name="mesa_creditspage_lib_title">
+        <item>@string/mesa_credits_androidx_title</item>
+        <item>@string/mesa_credits_gmaterial_title</item>
+        <item>@string/mesa_credits_oneui_title</item>
+        <item>@string/mesa_credits_fetch_title</item>
+        <item>@string/mesa_credits_waitingdots_title</item>
+    </string-array>
+    <string-array name="mesa_creditspage_lib_web">
+        <item>https://developer.android.com/jetpack/androidx</item>
+        <item>https://github.com/material-components/material-components-android</item>
+        <item>https://developer.samsung.com/one-ui</item>
+        <item>https://github.com/tonyofrancis/Fetch</item>
+        <item>https://github.com/tajchert/WaitingDots</item>
+    </string-array>
+    <array name="mesa_empty_array" />
+    <string-array name="mesa_networktype_pref_entries">
+        <item>@string/mesa_wifinetworkonly_pref_sum</item>
+        <item>@string/mesa_mobileorwifi_pref_sum</item>
+    </string-array>
+    <string-array name="mesa_networktype_pref_values">
+        <item>1</item>
+        <item>0</item>
+    </string-array>
+</resources>

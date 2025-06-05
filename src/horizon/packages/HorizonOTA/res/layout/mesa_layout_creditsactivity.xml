@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content">
+        <TextView android:textAppearance="?android:textAppearanceListItem" android:textSize="15.0sp" android:textColor="@color/mesa_widget_body_text_color" android:id="@id/mesa_textview_creditsactivity" android:paddingTop="@dimen/sesl_list_divider_inset" android:paddingBottom="@dimen/sesl_list_divider_inset" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/mesa_credits_desc" android:lineSpacingExtra="4.0sp" android:paddingStart="@dimen/sesl_list_item_padding_horizontal" android:paddingEnd="@dimen/sesl_list_item_padding_horizontal" />
+    </LinearLayout>
+    <com.samsung.android.ui.recyclerview.widget.SeslRecyclerView android:id="@id/mesa_recyclerview_creditsactivity" android:background="?cardBgColor" android:scrollbars="vertical" android:clipToPadding="false" android:layout_width="fill_parent" android:layout_height="0.0dip" android:layout_weight="1.0" />
+</LinearLayout>

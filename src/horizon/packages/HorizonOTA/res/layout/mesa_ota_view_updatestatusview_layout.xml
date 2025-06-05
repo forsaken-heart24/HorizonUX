@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:paddingLeft="32.0dip" android:paddingRight="32.0dip" android:layout_width="fill_parent" android:layout_height="@dimen/mesa_updatestatusview_size" android:paddingHorizontal="32.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.samsung.android.ui.widget.SeslProgressBar android:layout_gravity="center" android:id="@id/mesa_progress_updatestatusview" android:layout_width="@dimen/mesa_updatestatusview_icon_size" android:layout_height="@dimen/mesa_updatestatusview_icon_size" android:indeterminate="true" style="?android:progressBarStyle" />
+    <LinearLayout android:layout_gravity="center_horizontal" android:orientation="horizontal" android:id="@id/mesa_container_updatestatusview" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <TextView android:textSize="@dimen/mesa_updatestatusview_text_size" android:textStyle="normal" android:textColor="?primaryTextColor" android:ellipsize="end" android:gravity="start|center" android:id="@id/mesa_textview_updatestatusview" android:layout_width="0.0dip" android:layout_height="fill_parent" android:maxLines="2" android:layout_weight="1.0" android:lineSpacingExtra="4.0sp" android:fontFamily="@string/sesl_font_family_regular" android:textAlignment="viewStart" />
+        <ImageView android:layout_gravity="center" android:id="@id/mesa_imageview_updatestatusview" android:layout_width="@dimen/mesa_updatestatusview_icon_size" android:layout_height="@dimen/mesa_updatestatusview_icon_size" android:scaleType="centerInside" android:layout_marginStart="8.0dip" app:tint="@color/mesa_ota_primary_dark_color_light" />
+    </LinearLayout>
+</FrameLayout>

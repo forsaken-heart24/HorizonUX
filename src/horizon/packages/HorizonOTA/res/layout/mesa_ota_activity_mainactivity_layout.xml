@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.mesalabs.cerberus.ui.widget.RoundFrameLayout android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="0.0dip" android:layout_weight="1.0" app:roundedCorners="bottom_left|bottom_right">
+        <com.samsung.android.ui.coordinatorlayout.widget.SeslCoordinatorLayout android:orientation="vertical" android:id="@id/mesa_coordinatorlayout_ota_mainactivity" android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="fill_parent">
+            <include layout="@layout/mesa_view_appbar_layout" />
+            <com.mesalabs.cerberus.ui.widget.RoundNestedScrollView android:orientation="vertical" android:background="?round_and_bgColor" android:scrollbars="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent" android:fillViewport="true" android:overScrollMode="always" app:layout_behavior="@string/sesl_appbar_scrolling_view_behavior" app:roundedCorners="top_left|top_right">
+                <FrameLayout android:id="@id/mesa_fragmentcontainer_ota_mainactivity" android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+            </com.mesalabs.cerberus.ui.widget.RoundNestedScrollView>
+        </com.samsung.android.ui.coordinatorlayout.widget.SeslCoordinatorLayout>
+    </com.mesalabs.cerberus.ui.widget.RoundFrameLayout>
+    <LinearLayout android:gravity="center" android:orientation="vertical" android:id="@id/mesa_bottomlayout_ota_mainactivity" android:paddingTop="20.0dip" android:paddingBottom="24.0dip" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="wrap_content">
+        <androidx.appcompat.widget.AppCompatButton android:enabled="false" android:textSize="17.0sp" android:textStyle="normal" android:textColor="#fffafafa" android:id="@id/mesa_bottombtn_ota_mainactivity" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="@dimen/mesa_ota_bottombtn_min_width" android:minHeight="@dimen/mesa_ota_bottombtn_min_height" android:maxLines="1" app:backgroundTint="?colorPrimary" />
+    </LinearLayout>
+</LinearLayout>

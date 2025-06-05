@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector android:tint="@color/mesa_ota_card_ic_firmware_info_color" android:height="40.0dip" android:width="40.0dip" android:viewportWidth="40.0" android:viewportHeight="40.0"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillColor="@android:color/black" android:pathData="M20,10.2C14.6,10.2 10.2,14.6 10.2,20C10.2,25.4 14.6,29.8 20,29.8C25.4,29.8 29.8,25.4 29.8,20C29.8,14.6 25.4,10.2 20,10.2ZM20,13.3C20.8,13.3 21.4,13.9 21.4,14.7C21.4,15.5 20.8,16.1 20,16.1C19.2,16.1 18.6,15.5 18.6,14.7C18.6,13.9 19.2,13.3 20,13.3ZM21.4,26L19.2,26L19.2,19.8L17.8,19.8L17.8,17.6L21.4,17.6L21.4,26Z" android:strokeColor="#00000000" android:strokeWidth="1.0" android:fillType="nonZero" />
+</vector>

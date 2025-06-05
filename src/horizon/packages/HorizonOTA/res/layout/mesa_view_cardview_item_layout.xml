@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:gravity="center_vertical" android:id="@id/mesa_container_cardview" android:layout_width="fill_parent" android:layout_height="wrap_content" android:minHeight="?android:listPreferredItemHeightSmall">
+        <View android:id="@id/mesa_divider_cardview" android:background="?listDividerColor" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="@dimen/mesa_menuview_divider_height" android:layout_marginStart="@dimen/mesa_menuview_divider_margin_start" android:layout_marginEnd="@dimen/mesa_menuview_divider_margin_end" />
+        <LinearLayout android:gravity="center_vertical" android:id="@id/mesa_linearlayout_cardview" android:background="?android:selectableItemBackground" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingStart="?android:listPreferredItemPaddingStart" android:paddingEnd="?android:listPreferredItemPaddingEnd">
+            <LinearLayout android:orientation="vertical" android:paddingTop="14.0dip" android:paddingBottom="14.0dip" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0">
+                <TextView android:textAppearance="?textAppearanceListItem" android:id="@id/mesa_titletext_cardview" android:fadingEdge="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="5" />
+                <TextView android:textAppearance="?android:textAppearanceListItemSecondary" android:textColor="?android:textColorSecondary" android:id="@id/mesa_desctext_cardview" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="10" android:textDirection="locale" />
+            </LinearLayout>
+            <TextView android:textSize="@dimen/mesa_menuview_badge_text_size" android:textColor="@color/sesl_primary_text_color_dark" android:gravity="center" android:layout_gravity="center_vertical" android:id="@id/mesa_badge_cardview" android:background="@drawable/mesa_badge_icon" android:focusable="false" android:visibility="gone" android:clickable="false" android:layout_width="wrap_content" android:layout_height="wrap_content" android:scaleType="centerInside" android:text="N" android:singleLine="true" android:fontFamily="sec-roboto-medium" android:textAlignment="center" />
+        </LinearLayout>
+    </RelativeLayout>
+</merge>

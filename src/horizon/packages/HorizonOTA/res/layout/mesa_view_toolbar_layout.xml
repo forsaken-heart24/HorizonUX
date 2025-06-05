@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.Toolbar android:id="@id/mesa_toolbar_toolbarlayout" android:layout_width="fill_parent" android:layout_height="?actionBarSize" android:paddingStart="@dimen/sesl_action_bar_content_inset" app:popupTheme="@style/mesa_AppStyle.DayNight"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout android:gravity="center_vertical" android:layout_width="fill_parent" android:layout_height="?actionBarSize">
+        <com.mesalabs.cerberus.ui.widget.ToolbarImageButton android:id="@id/mesa_toolbarhome_toolbarlayout" android:visibility="gone" android:layout_width="@dimen/mesa_toolbar_imagebutton_width" android:layout_height="?actionBarSize" android:scaleType="center" android:minWidth="@dimen/mesa_toolbar_imagebutton_width" android:layout_marginStart="8.0dip" />
+        <TextView android:textColor="?actionMenuTextColor" android:id="@id/mesa_toolbartitle_toolbarlayout" android:background="@android:color/transparent" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:textDirection="locale" style="@style/mesa_CollapsedActionBarTitleTextStyle" />
+        <RelativeLayout android:gravity="end|center" android:layout_width="fill_parent" android:layout_height="?actionBarSize">
+            <LinearLayout android:orientation="horizontal" android:id="@id/mesa_overflowcontainer_toolbarlayout" android:layout_width="wrap_content" android:layout_height="?actionBarSize" android:paddingEnd="8.0dip" />
+            <View android:layout_gravity="center|top" android:id="@id/mesa_popupanchor_toolbarlayout" android:layout_width="1.0px" android:layout_height="1.0px" android:layout_marginTop="12.0dip" android:layout_toEndOf="@id/mesa_overflowcontainer_toolbarlayout" />
+        </RelativeLayout>
+    </LinearLayout>
+</androidx.appcompat.widget.Toolbar>

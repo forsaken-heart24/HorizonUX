@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="vertical" android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="wrap_content">
+        <com.mesalabs.cerberus.ui.widget.SwitchBar android:theme="?seslSwitchBarStyle" android:id="@id/mesa_switchbar_baseswitchbaractivity" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/mesa_switchbar_padding_bottom" />
+    </LinearLayout>
+    <FrameLayout android:id="@id/mesa_fragmentcontainer_baseswitchbaractivity" android:background="?cardBgColor" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+</LinearLayout>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:id="@id/mesa_container_download_ota_mainactivity" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.mesalabs.ten.update.ui.widget.DownloadProgressView android:id="@id/mesa_dpv_download_ota_mainactivity" android:layout_width="fill_parent" android:layout_height="wrap_content" />
+    <View android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="16.0dip" />
+    <com.mesalabs.ten.update.ui.widget.ChangelogView android:id="@id/mesa_cv_download_ota_mainactivity" android:layout_width="fill_parent" android:layout_height="wrap_content" />
+    <View android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="16.0dip" />
+    <TextView android:textAppearance="?android:textAppearanceListItem" android:textSize="15.0sp" android:textColor="?secondaryTextColor" android:id="@id/mesa_preinstall_warning_download_ota_mainactivity" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/sesl_list_item_padding_horizontal" android:layout_marginTop="4.0dip" android:layout_marginRight="@dimen/sesl_list_item_padding_horizontal" android:layout_marginBottom="20.0dip" android:text="@string/mesa_pre_install_warning" android:lineSpacingExtra="4.0sp" android:layout_marginHorizontal="@dimen/sesl_list_item_padding_horizontal" />
+</LinearLayout>

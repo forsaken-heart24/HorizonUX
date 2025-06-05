@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.samsung.android.ui.appbar.SeslAppBarLayout android:id="@id/mesa_appbar_appbarlayout" android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="fill_parent" style="@style/mesa_AppBarLayoutStyle"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.samsung.android.ui.appbar.SeslCollapsingToolbarLayout android:id="@id/mesa_colltoolbar_appbarlayout" android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="fill_parent" app:layout_scrollFlags="exitUntilCollapsed|scroll" app:toolbarId="@id/mesa_toolbar_appbarlayout" style="?collapsedToolbarLayoutStyle">
+        <androidx.appcompat.widget.Toolbar android:layout_gravity="bottom" android:id="@id/mesa_toolbar_appbarlayout" android:layout_width="fill_parent" android:layout_height="?actionBarSize" android:paddingStart="@dimen/sesl_action_bar_content_inset" app:layout_collapseMode="pin" app:popupTheme="@style/mesa_AppStyle.DayNight">
+            <LinearLayout android:gravity="center_vertical" android:layout_width="fill_parent" android:layout_height="?actionBarSize">
+                <com.mesalabs.cerberus.ui.widget.ToolbarImageButton android:id="@id/mesa_toolbarhome_appbarlayout" android:visibility="gone" android:layout_width="@dimen/mesa_toolbar_imagebutton_width" android:layout_height="?actionBarSize" android:scaleType="center" android:minWidth="@dimen/mesa_toolbar_imagebutton_width" android:layout_marginStart="8.0dip" />
+                <TextView android:textColor="?actionMenuTextColor" android:id="@id/mesa_toolbartitle_appbarlayout" android:background="@android:color/transparent" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:alpha="0.0" android:textDirection="locale" style="@style/mesa_CollapsedActionBarTitleTextStyle" />
+                <RelativeLayout android:gravity="end|center" android:layout_width="fill_parent" android:layout_height="?actionBarSize">
+                    <LinearLayout android:orientation="horizontal" android:id="@id/mesa_overflowcontainer_appbarlayout" android:layout_width="wrap_content" android:layout_height="?actionBarSize" android:paddingEnd="8.0dip" android:layout_alignParentEnd="true" />
+                    <View android:layout_gravity="center|top" android:id="@id/mesa_popupanchor_appbarlayout" android:layout_width="1.0px" android:layout_height="1.0px" android:layout_marginEnd="12.0dip" android:layout_alignParentEnd="true" />
+                </RelativeLayout>
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.samsung.android.ui.appbar.SeslCollapsingToolbarLayout>
+</com.samsung.android.ui.appbar.SeslAppBarLayout>

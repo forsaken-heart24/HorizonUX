@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.samsung.android.ui.coordinatorlayout.widget.SeslCoordinatorLayout android:id="@id/mesa_coordinatorlayout_baseactivity" android:background="?round_and_bgColor" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <include layout="@layout/mesa_view_appbar_layout" />
+    <FrameLayout android:id="@id/mesa_container_baseactivity" android:layout_width="fill_parent" android:layout_height="fill_parent" app:layout_behavior="@string/sesl_appbar_scrolling_view_behavior" />
+</com.samsung.android.ui.coordinatorlayout.widget.SeslCoordinatorLayout>

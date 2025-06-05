@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <include android:id="@id/material_hour_text_input" layout="@layout/material_chip_input_combo" />
+    <include layout="@layout/material_clock_display_divider" />
+    <include android:id="@id/material_minute_text_input" layout="@layout/material_chip_input_combo" />
+</merge>

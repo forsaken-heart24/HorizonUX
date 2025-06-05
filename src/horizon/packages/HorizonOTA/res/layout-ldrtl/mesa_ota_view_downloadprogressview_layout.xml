@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:id="@id/mesa_container_ota_changelogview" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginLeft="24.0dip" android:layout_marginTop="8.0dip" android:layout_marginRight="24.0dip" android:layout_marginBottom="8.0dip" android:layout_marginHorizontal="24.0dip" android:layout_marginVertical="8.0dip">
+        <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginLeft="10.0dip" android:layout_marginRight="10.0dip" android:layout_marginHorizontal="10.0dip">
+            <pl.tajchert.waitingdots.DotsTextView android:textSize="20.0sp" android:textColor="?primaryTextColor" android:gravity="start" android:id="@id/mesa_progresstitledots_ota_downloadprogressview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@string/sesl_font_family_regular" app:autoplay="true" app:jumpHeight="10" app:period="1000" />
+            <TextView android:textSize="20.0sp" android:textColor="?primaryTextColor" android:gravity="start" android:id="@id/mesa_progresstitle_ota_downloadprogressview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@string/sesl_font_family_regular" />
+        </LinearLayout>
+        <ProgressBar android:id="@id/mesa_progressbar_ota_downloadprogressview" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip" android:layout_marginBottom="10.0dip" android:maxHeight="24.0dip" android:max="100" android:progressDrawable="@drawable/mesa_ota_download_progressbar" android:minHeight="24.0dip" android:layout_marginVertical="10.0dip" style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Horizontal" />
+        <TextView android:textSize="14.0sp" android:textColor="@color/mesa_ota_downloadactivity_desc_color" android:id="@id/mesa_progressbody_ota_downloadprogressview" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginLeft="10.0dip" android:layout_marginRight="10.0dip" android:fontFamily="@string/sesl_font_family_regular" android:textDirection="locale" android:layout_marginHorizontal="10.0dip" />
+    </LinearLayout>
+</merge>
