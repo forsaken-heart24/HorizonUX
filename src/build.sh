@@ -36,6 +36,7 @@ randomQuote="${quotes[$RANDOM % ${#quotes[@]}]}"
 BUILD_START_TIME=$(date +%s)
 BUILD_END_TIME=$(date +%s)
 BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+sameOldFirmwarePackage=false
 
 # Trap the SIGINT signal (Ctrl+C) and call handle_sigint when it's caught
 trap 'abort "Aborting the build....."' SIGINT
@@ -62,7 +63,6 @@ for i in system/product/priv-app system/product/etc system/product/overlay \
 		system/etc/permissions system/product/etc/permissions custom_recovery_with_fastbootd/ \
 		system/etc/init/ tmp/hux/ etc/extract/super_extract etc/imageSetup/product etc/imageSetup/system etc/imageSetup/vendor etc/imageSetup/optics etc/downloadedContents \
 		etc/buildedContents etc/buildNInfo; do
-			[ -f "./local_build/${i}" ] || continue
 			mkdir -p "./local_build/$i"
 			debugPrint "build.sh: Making ./local_build/${i} directory.."
 done
@@ -106,20 +106,45 @@ compareDefaultMakeConfigs
 console_print "Starting to build HorizonUX ${CODENAME} - v${CODENAME_VERSION_REFERENCE_ID} on ${BUILD_USERNAME}'s computer..."
 console_print "Build started at $(date +%I:%M%p) on $(date +%d\ %B\ %Y)"
 
+# sets sameOldFirmwarePackage to true to skip some extraction steps.
+[ "$(unzip -p "$argOne" ".uuid" 2>/dev/null)" == "$(grep_prop "previousBuildZipUUID" "./local_build/etc/buildNInfo/build.prop" 2>/dev/null)" ] && sameOldFirmwarePackage=true
+
 # check:
 if [ -n "$argOne" ]; then
 	if stringFormat --lower "$(file $argOne)" | grep -q zip; then
 		if unzip -l "$argOne" | grep -qE "AP_|HOME_CSC"; then
 			# skip extracting if the archives were found.
-			if [[ -f "$(echo -e ./local_build/etc/extract/AP_*.tar.md5)" && -f "$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)" && "$(unzip -p "$argOne" ".uuid")" == "$(grep_prop "previousBuildZipUUID" "./local_build/etc/buildNInfo/build.prop")" ]]; then
+			if [[ -f "$(echo -e ./local_build/etc/extract/AP_*.tar.md5)" && -f "$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)" && "${sameOldFirmwarePackage}" == "true" ]]; then
 				console_print "Skipping firmware extraction, target firmware files are already extracted and saved."
 				extractedAPFilePath="$(echo -e ./local_build/etc/extract/AP_*.tar.md5)"
 				extractedHomeCSCFilePath="$(echo -e ./local_build/etc/extract/HOME_CSC_*.tar.md5)"
-			elif [ "$(grep_prop "buildExtractedStuff_archive" "./local_build/etc/buildNInfo/build.prop")" == "HOME_CSC" && "$(unzip -p "$argOne" ".uuid")" == "$(grep_prop "previousBuildZipUUID" "./local_build/etc/buildNInfo/build.prop")" ]; then
+			elif [[ "$(grep_prop "buildExtractedStuff_archive" "./local_build/etc/buildNInfo/build.prop")" == "HOME_CSC" && "${sameOldFirmwarePackage}" == "true" ]]; then
 				console_print "Previous build was forcefully closed for some reason, extracting HOME_CSC again..."
 				extractedAPFilePath="$(echo -e ./local_build/etc/extract/AP_*.tar.md5)"
 				extractedHomeCSCFilePath="$(unzip -o $argOne $(unzip -l $argOne | grep HOME_CSC | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')"
 				[ -z "${extractedHomeCSCFilePath}" ] && abort "Failed to extract HOME_CSC from $argOne" "build.sh"
+			elif [[ -f "./localFirmwareBuildPending" && "${sameOldFirmwarePackage}" == "true" ]]; then
+				for COMMON_FIRMWARE_BLOCKS in ./local_build/etc/extract/super_extract/*.img; do
+					echo "$(basename "${COMMON_FIRMWARE_BLOCKS}" .img)" | grep -qE "system|vendor|product" || continue
+					mountPath="./local_build/etc/imageSetup/$(basename ${COMMON_FIRMWARE_BLOCKS} .img)"
+					mkdir -p "${mountPath}"
+					if stringFormat -l "$(file "${COMMON_FIRMWARE_BLOCKS}")" | grep -q "sparse"; then
+						simg2img "${COMMON_FIRMWARE_BLOCKS}" "${COMMON_FIRMWARE_BLOCKS}_rawFactor" &>/dev/null || abort "Failed to convert $(basename ${COMMON_FIRMWARE_BLOCKS} .img) into an raw image, please try again later.."
+						rm -rf "${COMMON_FIRMWARE_BLOCKS}"
+						mv "${COMMON_FIRMWARE_BLOCKS}_rawFactor" "${COMMON_FIRMWARE_BLOCKS}"
+					fi
+					setupLocalImage "${COMMON_FIRMWARE_BLOCKS}" "${mountPath}"
+				done
+				for images in ./local_build/etc/extract/*.img; do
+					echo $images | grep -qE "system|vendor|product|optics" || continue
+					console_print "Setting up previous iteration.."
+					logInterpreter "Trying to extract ${images}.img from an LZ4 archive..." "lz4 -d ./local_build/etc/extract/${images}.img.lz4 ./local_build/etc/extract/${images}.img" || abort "Failed to extract $images from an lz4 archive." "build.sh"
+					rm -rf ./local_build/etc/extract/${images}.img.lz4
+					logInterpreter "Converting $images from sparse to raw image factor...." "simg2img ./local_build/etc/extract/${images}.img ./local_build/etc/extract/${images}_raw.img"
+					rm ./local_build/etc/extract/${images}.img
+					mv ./local_build/etc/extract/${images}_raw.img ./local_build/etc/extract/${images}.img
+					setupLocalImage ./local_build/etc/extract/${images}.img ./local_build/etc/imageSetup/${images}
+				done
 			else
 				# generate a uuid value to identify a file:
 				logInterpreter "Trying to generate a uuid hash for $argOne" "uuidgen > .uuid" || abort "Failed to generate uuid hash for the zip file? check if uuidgen exists or not."
@@ -127,7 +152,7 @@ if [ -n "$argOne" ]; then
 				setprop --custom "./local_build/etc/buildNInfo/build.prop" "previousBuildZipUUID" "$(cat .uuid)"
 				rm .uuid
 				# unzip -o test.zip nos/README_Kernel.txt -d nos | grep inflating | awk '{print $2}'
-				[[ "$(grep_prop "buildExtractedStuff_archive" "./local_build/etc/buildNInfo/build.prop")" == "AP" && "$(unzip -p "$argOne" ".uuid")" == "$(grep_prop "previousBuildZipUUID" "./local_build/etc/buildNInfo/build.prop")" ]] && console_print "Previous build was forcefully closed for some reason, extracting everything again..."
+				[[ "$(grep_prop "buildExtractedStuff_archive" "./local_build/etc/buildNInfo/build.prop")" == "AP" && "${sameOldFirmwarePackage}" == "true" ]] && console_print "Previous build was forcefully closed for some reason, extracting everything again..."
 				console_print "Trying to extract $(unzip -l $argOne | grep AP_ | awk '{print $4}') from the archive...."
 				extractedAPFilePath=$(setprop --custom "./local_build/etc/buildNInfo/build.prop" "buildExtractedStuff_archive" "AP"; unzip -o $argOne $(unzip -l $argOne | grep AP_ | awk '{print $4}') -d ./local_build/etc/extract/ | grep inflating | awk '{print $2}')
 				[ -z "${extractedAPFilePath}" ] && abort "Failed to extract AP from $argOne" "build.sh"
@@ -150,6 +175,7 @@ if [ -n "$argOne" ]; then
 				rm ./local_build/etc/extract/${cscStuff}.img
 				mv ./local_build/etc/extract/${cscStuff}_raw.img ./local_build/etc/extract/${cscStuff}.img
 				setupLocalImage ./local_build/etc/extract/${cscStuff}.img ./local_build/etc/imageSetup/${cscStuff}
+				tinkerWithCSCFeaturesFile --decode
 			done
 			for androidOS in super system vendor; do
 				if [ "${androidOS}" == "super" ]; then

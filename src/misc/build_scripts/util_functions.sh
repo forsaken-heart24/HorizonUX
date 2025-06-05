@@ -45,35 +45,55 @@ function downloadRequestedFile() {
 
 function setprop() {
     local propFile
-    local propVariableName="$2"
-    local propValue="$3"
-    if stringFormat --lower "$1" | grep -q "prism"; then
-        propFile=${HORIZON_PRISM_PROPERTY_FILE}
-    elif stringFormat --lower "$1" | grep -q "product"; then
-        propFile=${HORIZON_PRODUCT_PROPERTY_FILE}
-    elif stringFormat --lower "$1" | grep -q "system"; then
-        propFile=${HORIZON_SYSTEM_PROPERTY_FILE}
-    elif stringFormat --lower "$1" | grep -q "system_ext"; then
-        propFile=${HORIZON_SYSTEM_EXT_PROPERTY_FILE}
-    elif stringFormat --lower "$1" | grep -q "vendor"; then
-        propFile=${HORIZON_VENDOR_PROPERTY_FILE}
-    # setprop --custom "/vendor/odm/etc/build.prop" "ro.is_siam" "true"
-    elif stringFormat --lower "$1" | grep -q "custom"; then
-        propVariableName="$3"
-        propValue="$4"
-        propFile=$([ -f "$2" ] && echo "$2" || echo "$HORIZON_VENDOR_PROPERTY_FILE")
-    elif stringFormat --lower "$1" | grep -q "deleteifExpectationsMet"; then
-        propFile="$2"
-        propVariableName="$3"
-        propValue="$4"
-        [ "$(grep_prop "$propVariableName" "${propFile}")" == "${propValue}" ] && sed -i "/^${propVariableName}=/d" "$propFile"
-    elif stringFormat --lower "$1" | grep -q "force-delete"; then
-        propFile="$2"
-        propVariableName="$3"
-        propValue="$4"
-        sed -i "/^${propVariableName}=/d" "$propFile"
-    fi
-    awk -v pat="^${propVariableName}=" -v value="${propVariableName}=${propValue}" '{ if ($0 ~ pat) print value; else print $0; }' ${propFile}
+    local propVariableName
+    local propValue
+
+    case "$(stringFormat --lower "$1")" in
+        *prism*)
+            propFile="${HORIZON_PRISM_PROPERTY_FILE}"
+        ;;
+        *product*)
+            propFile="${HORIZON_PRODUCT_PROPERTY_FILE}"
+        ;;
+        *system_ext*)
+            propFile="${HORIZON_SYSTEM_EXT_PROPERTY_FILE}"
+        ;;
+        *system*)
+            propFile="${HORIZON_SYSTEM_PROPERTY_FILE}"
+        ;;
+        *vendor*)
+            propFile="${HORIZON_VENDOR_PROPERTY_FILE}"
+        ;;
+        *custom*)
+            propFile="$2"
+            propVariableName="$3"
+            propValue="$4"
+            [[ ! -f "$propFile" ]] && propFile="$HORIZON_VENDOR_PROPERTY_FILE"
+        ;;
+        *deleteifexpectationsmet*)
+            propFile="$2"
+            propVariableName="$3"
+            propValue="$4"
+            [[ "$(grep_prop "$propVariableName" "$propFile")" == "$propValue" ]] && sed -i "/^${propVariableName}=.*/d" "$propFile"
+        ;;
+        *force-delete*)
+            propFile="$2"
+            propVariableName="$3"
+            sed -i "/^${propVariableName}=.*/d" "$propFile"
+        ;;
+        *)
+            echo "Invalid setprop target: $1"
+            return 1
+        ;;
+    esac
+
+    # Normal setprop case
+    [[ -z "$propVariableName" ]] && propVariableName="$2"
+    [[ -z "$propValue" ]] && propValue="$3"
+
+    # Delete existing line, then append the new one
+    sed -i "/^${propVariableName}=.*/d" "$propFile"
+    echo "${propVariableName}=${propValue}" >> "$propFile"
 }
 
 function abort() {
