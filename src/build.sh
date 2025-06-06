@@ -750,6 +750,21 @@ if [ ${TARGET_BUILD_FIX_ANDROID_SYSTEM_DEVICE_WARNING} == true ]; then
 	xmlstarlet ed -L -u "/manifest/vendor-ndk/version" -v "${BUILD_TARGET_VENDOR_SDK_VERSION}" "${SYSTEM_EXT_DIR}/etc/vintf/manifest.xml" || abort "Failed to fix android warning, please try again" "build.sh"
 fi
 
+if [ ${TARGET_BUILD_ENABLE_SEARCLE} == true ]; then
+	touch "$SYSTEM_DIR/etc/sysconfig/google_searcle.xml"
+	{
+		echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+		echo "<config>"
+		echo "    <!-- This is for update Searcle for Samsung from play store -->"
+		echo "    <feature name=\"com.samsung.feature.EXPERIENCE_CTS\" />"
+		echo "</config>"
+	} >> "$SYSTEM_DIR/etc/sysconfig/google_searcle.xml"
+	chmod 644 "$SYSTEM_DIR/etc/sysconfig/google_searcle.xml"
+	chown 0 "$SYSTEM_DIR/etc/sysconfig/google_searcle.xml"
+	chgrp 0 "$SYSTEM_DIR/etc/sysconfig/google_searcle.xml"
+	chgrp u:object_r:system_file:s0 "$SYSTEM_DIR/etc/sysconfig/google_searcle.xml"
+fi
+
 if [ ${TARGET_BUILD_ADD_SCREENRESOLUTION_CHANGER} == true ]; then
 	[[ -z ${BUILD_TARGET_SCREEN_WIDTH} || -z "${BUILD_TARGET_SCREEN_HEIGHT}" ]] && abort "The screen resolution is not specified on the property file."
 	if [[ ${BUILD_TARGET_SCREEN_WIDTH} =~ ^[0-9]+$ && ${BUILD_TARGET_SCREEN_HEIGHT} =~ ^[0-9]+$ && ${BUILD_TARGET_SCREEN_WIDTH} -eq 1080 && ${BUILD_TARGET_SCREEN_HEIGHT} -eq 2340 ]]; then

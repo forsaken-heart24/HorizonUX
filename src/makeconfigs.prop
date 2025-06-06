@@ -151,14 +151,14 @@ TARGET_FLOATING_FEATURE_SUPPORTS_DOLBY_IN_GAMES=false
 # deodex'es the rom. learn about deodex'ing here: https://xdaforums.com/t/complete-guide-what-is-odex-and-deodex-rom.2200349/
 TARGET_BUILD_MAKE_DEODEXED_ROM=false
 
-# safetycore stub app made by me, include this if you really want to
-TARGET_INCLUDE_SAFETYCORESTUB=false
-
 # brings voice memo in notes.
 TARGET_FLOATING_FEATURE_ENABLE_VOICE_MEMO_ON_NOTES=false
 
 # Adds screen resolution switcher to devices with 2340x1080 resolution. Thanks to @Yanndroid
 TARGET_BUILD_ADD_SCREENRESOLUTION_CHANGER=false
+
+# brings searcle (circle to search)
+TARGET_BUILD_ENABLE_SEARCLE=false
 
 ############################################# Exclusive HorizonUX Features #############################################
 # this feature includes an prop level workaround that is used to avoid smoky distortion specifically to those LDAC Bluetooth earphones and DAC's under $30 (probably), this sets special re-sampling tweaks in the system level.
