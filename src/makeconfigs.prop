@@ -21,7 +21,7 @@
 MY_KEYSTORE_ALIAS="Horizon_test"
 MY_KEYSTORE_PASSWORD="ayyochill24"
 MY_KEYSTORE_PATH="./test-keys/HorizonUX-testkey.jks"
-MY_KEYSTORE_ALIAS_KEY_PASSWORD="${MY_KEYSTORE_ALIAS}"
+MY_KEYSTORE_ALIAS_KEY_PASSWORD="ayyochill24"
 
 # replace these with your dir
 SYSTEM_DIR=

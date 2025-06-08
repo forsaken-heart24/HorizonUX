@@ -10,5 +10,5 @@
     <FileSize type="long">480000000</FileSize>
     <WebsiteURL>https://forum.xda-developers.com/apps/magisk/dev-magisk-canary-channel-bleeding-edge-t3839337</WebsiteURL>
     <ChangelogHeader>https://raw.githubusercontent.com/forsaken-heart24/HorizonUX/rom-update/update-banner.png</ChangelogHeader>
-    <ChangelogURL>https://raw.githubusercontent.com/forsaken-heart24/HorizonUX/rom-update/r8q/changelog</ChangelogURL>
+    <ChangelogURL>https://raw.githubusercontent.com/forsaken-heart24/HorizonUX/rom-update/r8q/changelogs</ChangelogURL>
 </OnOTAInfo>

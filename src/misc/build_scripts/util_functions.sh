@@ -16,6 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# fix makefile:
+[ -z "${thisConsoleTempLogFile}" ] && thisConsoleTempLogFile="./local_build/logs/hux_build.log"
+[ -z "${TMPFILE}" ] && TMPFILE="$(mktemp)"
+
 function grep_prop() {
     [[ -z "$1" || -z "$2" || ! -f "$2" ]] && return 1
     grep -E "^$1=" "$2" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"'
@@ -100,9 +104,13 @@ function abort() {
     echo -e "\e[0;31m$1\e[0;37m" >&2
     debugPrint "$2(): $1"
     sleep 0.5
-    tinkerWithCSCFeaturesFile --encode
-    rm -rf $TMPDIR $TMPFILE ./local_build/etc/extract/*.img ./local_build/etc/extract/*.img.lz4 ./localFirmwareBuildPending
-    sudo umount ./local_build/etc/imageSetup/* &>/dev/null
+    # i dont want this to run when i run abort on makefile or even on some instances, 
+    # why $3? because i dont provide $3 on everything except makefile.
+    if [ -z "$3" ]; then
+        tinkerWithCSCFeaturesFile --encode
+        rm -rf $TMPDIR $TMPFILE ./local_build/etc/extract/*.img ./local_build/etc/extract/*.img.lz4 ./localFirmwareBuildPending
+        sudo umount ./local_build/etc/imageSetup/* &>/dev/null
+    fi
     exit 1
 }
 
@@ -148,6 +156,7 @@ function changeDefaultLanguageConfiguration() {
 function buildAndSignThePackage() {
     local extracted_dir_path="$1"
     local app_path="$2"
+    local skipSign="$3"
     local apkFileName
     local signed_apk
     local apk_file
@@ -181,10 +190,12 @@ function buildAndSignThePackage() {
     [ ! -f "$apk_file" ] && abort "No APK found in $extracted_dir_path/dist/" "buildAndSignThePackage"
 
     # Signing the APK
-    if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
-        signed_apk="$(java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" 2>>$thisConsoleTempLogFile | grep -oP 'src/.*?-aligned-debugSigned\.apk')"
-    else
-        signed_apk="$(java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" 2>>$thisConsoleTempLogFile | grep -oP 'src/.*?-aligned-debugSigned\.apk')"
+    if [[ -n "${skipSign}" && "${skipSign}" == "true" ]]; then
+        if [[ -f "$MY_KEYSTORE_PATH" && -n $MY_KEYSTORE_ALIAS && -n $MY_KEYSTORE_PASSWORD && -n $MY_KEYSTORE_ALIAS_KEY_PASSWORD ]]; then
+            signed_apk="$(java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" --ks "$MY_KEYSTORE_PATH" --ksAlias "$MY_KEYSTORE_ALIAS" --ksPass "$MY_KEYSTORE_PASSWORD" --ksKeyPass "$MY_KEYSTORE_ALIAS_KEY_PASSWORD" 2>>$thisConsoleTempLogFile | grep -oP 'src/.*?-aligned-debugSigned\.apk')"
+        else
+            signed_apk="$(java -jar ./src/dependencies/bin/signer.jar --apk "$apk_file" 2>>$thisConsoleTempLogFile | grep -oP 'src/.*?-aligned-debugSigned\.apk')"
+        fi
     fi
 
     # Ensure signed APK exists
@@ -192,7 +203,7 @@ function buildAndSignThePackage() {
 
     # Move signed APK to target directory and do a cleanup
     mv "$signed_apk" "$app_path/"
-    rm -rf "$extracted_dir_path/build" "$extracted_dir_path/dist/"
+    rm -rf "$extracted_dir_path/build" "$extracted_dir_path/dist/" "$extracted_dir_path/original/"
 }
 
 function catchDuplicatesInXML() {
