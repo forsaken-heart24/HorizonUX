@@ -28,4 +28,7 @@ Wondering if your device is supported? Check the list here:
 You are free to use this project for personal or commercial purposes, but please provide proper credit.  
 Failure to do so may violate the **GNU General Public License v3 (GPL-3.0)**.
 
+## ⚖️ Licensing
+You can check that out in the website mentioned below the about section of this project.
+
 ---
