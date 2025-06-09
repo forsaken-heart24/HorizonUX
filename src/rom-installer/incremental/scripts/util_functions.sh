@@ -9,6 +9,11 @@ mkdir -p $IMAGES $INSTALLER $LOW_LEVEL_PARTITIONS_BACKUP_VOID_AREA || exit 1
 chmod 755 "$INSTALLER/scripts/busybox"
 
 # functions:
+function grep_prop() {
+    [[ -z "$1" || -z "$2" || ! -f "$2" ]] && return 1
+    grep -E "^$1=" "$2" 2>>"$thisConsoleTempLogFile" | cut -d '=' -f2- | tr -d '"'
+}
+
 function busybox() {
     $INSTALLER/scripts/busybox "$@"
 }
@@ -64,5 +69,21 @@ function installImages() {
             consolePrint "Successfully installed ${blockname}!"
         ;;
     esac
+}
+
+function checkBuildID() {
+    local buildIDFromZIp="$1"
+    local aromaTraces="$(echo /tmp/checkbox* | head -n 1)"
+    if [ -f "${aromaTraces}" ]; then
+    amiMountedOrNot "/system" || mount /system
+    amiMountedOrNot "/system_root" || mount /system_root
+    local systemPath=$([ -f "/system/system/build.prop" ] && echo "/system/system" || [ -f "/system_root/system/build.prop" ] && echo "/system_root/system")
+    [ -z "${systemPath}" ] && abort "Failed to retrieve the previous build id, please don't wipe system or vendor before the installation."
+    local currentSystemBuildID=$(grep_prop "ro.horizonux.buildid" "${systemPath}/build.prop")
+    if [ ${currentSystemBuildID} -eq ${buildIDFromZIp} ]; then
+        consolePrint "You are not supposed to flash this on the same build id, but it's not a problem, just ignore."
+    elif [ ${buildIDFromZIp} -ge ${currentSystemBuildID} ]; then
+        abort "Failed to run the installer instance due to the buiid id from zip is greater than the current installed system's build id."
+    fi
 }
 # functions:

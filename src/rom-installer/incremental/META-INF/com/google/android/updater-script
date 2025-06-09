@@ -5,6 +5,9 @@ source "${INSTALLER}/scripts/util_functions.sh"
 # the "|" works as a separator.
 supportedDeviceCodenameList="surya|karna"
 
+# to check build id and abort if the id is older.
+checkBuildID buildIDPlacebo
+
 # now the real functions start!
 consolePrint "########################################################################"
 consolePrint "   _  _     _   _            _                _   ___  __ "

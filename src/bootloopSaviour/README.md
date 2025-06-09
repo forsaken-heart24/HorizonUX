@@ -5,7 +5,7 @@
 - Don't forget to change it, else the program won't get compiled or will have any random issues.
 ```bash
 cd HorizonUX
-make ANDROID_SDK_VERSION=<sdk version here> bootloop_saviour
+make SDK=<sdk version here> bootloop_saviour
 ```
 
 ## What Does This Do?

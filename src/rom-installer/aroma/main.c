@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <time.h>
 #include <nya-aroma-config.h>
 
 int help(char *execBinName) {
@@ -139,6 +140,7 @@ int main(int argc, char *argv[]) {
         for(int i = 0; i < numberOfFlashables; i++) fprintf(updater_script, "%s -> %s -> %s ", filePath[i], flashSource[i], flashableType[i]);
         fprintf(updater_script, "\"");
         fprintf(updater_script, "\n\n# device codename / model detection, better put your device's codename / model for checking it\n# the \"|\" works as a separator.\nsupportedDeviceCodenameList=\"%s\"", supportedDeviceCodenames);
+        fprintf(updater_script, "\n\n# to check build id and abort if the id is older.\ncheckBuildID \"%d\"", buildID());
         fprintf(updater_script, "\n\n# now the real functions start!\nconsolePrint \"########################################################################\"");
         fprintf(updater_script, "\nconsolePrint \"   _  _     _   _            _                _   ___  __ \"");
         fprintf(updater_script, "\nconsolePrint \" _| || |_  | | | | ___  _ __(_)_______  _ __ | | | \\ \\/ / \"");

@@ -91,7 +91,7 @@ Options:\n"
 - Please edit src/include/nya-aroma-config.h before generating one.
 ```bash
 cd HorizonUX
-make ANDROID_SDK_VERSION=<sdk version here> aromaInstaller
+make SDK=<sdk version here> aromaInstaller
 ```
 
 ## To maintainers:

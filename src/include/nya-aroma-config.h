@@ -3,6 +3,16 @@
 // rom codename:
 char *codename = "Birds";
 
+// rom buildID:
+int buildID(void) {
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    // date +"%Y%m%d"
+    char buffer[9];
+    strftime(buffer, sizeof(buffer), "%Y%m%d", tm_info);
+    return atoi(buffer);
+}
+
 // rom maintainer / author:
 char *mainAuth = "Luna";
 
