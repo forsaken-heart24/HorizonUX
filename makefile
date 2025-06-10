@@ -108,11 +108,10 @@ UN1CAUpdater: checkKey checkJava
 		[ -z "$${SkipSign}" ] && abort "- SkipSign is not mentioned, either set it to true to skip signing or false to sign." "MAKE" "NULL"; \
 		console_print "Building UN1CA updater for Horizon.."; \
 		tar -C ./src/horizon/packages/HorizonOTA/ -xf ./src/horizon/packages/HorizonOTA/HorizonOTASmaliFiles.tar 2>/dev/null || abort "Failed to extract the tar file to build the package."; \
-		rm -rf ./src/horizon/packages/HorizonOTA/dist/ ./src/horizon/packages/HorizonOTA/original/ ./src/horizon/packages/HorizonOTA/build/ 2>/dev/null; \
 		for file in ./src/horizon/packages/HorizonOTA/smali_classes15/com/mesalabs/ten/update/ota/ROMUpdate\$$LoadUpdateManifest.smali ./src/horizon/packages/HorizonOTA/smali_classes16/com/mesalabs/ten/update/ota/utils/Constants.smali; do \
 			sed -i "s|https://raw.githubusercontent.com/forsaken-heart24/HorizonUX/updaterConfigs/r8q/ota-manifest.xml|$${OTA_MANIFEST_URL}|g" "$${file}" || abort "- Failed to change manifest provider in $$file" "MAKE" "NULL"; \
 		done; \
-		java -jar $(APKTOOL_JAR) build "./src/horizon/packages/HorizonOTA/" || abort "- Failed to build the application." "MAKE" "NULL"; \
+		java -jar $(APKTOOL_JAR) build "./src/horizon/packages/HorizonOTA/" &>>$(ERR_LOG) || abort "- Failed to build the application. Please check $(ERR_LOG) for the logs." "MAKE" "NULL"; \
 		if [ "$${SkipSign}" = "true" ]; then \
 			console_print "Skipping signing process..."; \
 		else \
@@ -207,6 +206,6 @@ test: test_loader test_bootloopsaviour
 
 # Clean up
 clean:
-	@rm -f $(LOADER_OUTPUT) $(SAVIOUR_OUTPUT) $(AROMA_OUTPUT) $(ERR_LOG)
+	@rm -f $(LOADER_OUTPUT) $(SAVIOUR_OUTPUT) $(AROMA_OUTPUT) $(ERR_LOG) ./src/horizon/packages/HorizonOTA/dist/ ./src/horizon/packages/HorizonOTA/original/ ./src/horizon/packages/HorizonOTA/build/
 
 .PHONY: all loader bootloop_saviour aromaInstaller UN1CAUpdater test_bootloopsaviour test_loader test_aromaInstaller check_compiler test clean help
