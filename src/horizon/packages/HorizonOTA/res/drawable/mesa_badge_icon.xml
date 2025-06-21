@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<layer-list
-  xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:height="@dimen/mesa_widget_badge_size" android:width="@dimen/mesa_widget_badge_size">
-        <bitmap android:src="@drawable/mesa_badge_icon_circle" android:tint="@color/sesl_menu_badge_background_color" />
-    </item>
-</layer-list>

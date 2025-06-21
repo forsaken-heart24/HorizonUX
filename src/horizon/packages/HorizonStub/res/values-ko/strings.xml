@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">HorizonStub</string>
-    <string name="message_not_supported">"이 작업을 처리할 수 있는 앱이 없습니다"</string>
-    <string name="stub_name">없음</string>
-</resources>

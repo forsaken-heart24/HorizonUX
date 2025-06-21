@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">HorizonStub</string>
-    <string name="message_not_supported">"You don't have an app that can handle this task"</string>
-    <string name="stub_name">None</string>
-</resources>
